@@ -123,7 +123,9 @@ class Terminal(TestAdapter.Adapter):
 																								showEvts=verbose, showSentEvts=verbose, showRecvEvts=verbose )
 		
 		self.parent = parent
-
+		self.logEventSent = logEventSent
+		self.logEventReceived = logEventReceived
+		
 		self.codec  = None
 		self.ADP_SSH = None
 		self.ADP_SSH = client.Client(parent=parent, login=login, password=password, privateKey=privateKey, privateKeyPath=privateKeyPath,
@@ -186,7 +188,8 @@ class Terminal(TestAdapter.Adapter):
 		summary, tpl_term = screen
 		new_tpl = self.encapsule(lower_event=copy.deepcopy(self.lower_event), layer_term=tpl_term)
 		new_tpl.addRaw( tpl_term.get("data") )
-		self.logRecvEvent( shortEvt = summary, tplEvt = new_tpl ) 
+		if self.logEventReceived:
+			self.logRecvEvent( shortEvt = summary, tplEvt = new_tpl ) 
 
 	def handleConnectionFailed(self, err):
 		"""
@@ -279,7 +282,8 @@ class Terminal(TestAdapter.Adapter):
 			tpl = self.ssh().sendData(dataRaw=text +"\n")
 			new_tpl = self.encapsule( lower_event=tpl, layer_term=templates_term.term_data(data=text+"\n") )
 			new_tpl.addRaw(text)
-			self.logSentEvent( shortEvt = "send text", tplEvt = new_tpl )
+			if self.logEventSent:
+				self.logSentEvent( shortEvt = "send text", tplEvt = new_tpl )
 			ret = True
 		return ret
 		
@@ -297,7 +301,8 @@ class Terminal(TestAdapter.Adapter):
 			
 			new_tpl = self.encapsule( lower_event=tpl, layer_term=templates_term.term_data(data="clear\n") )
 	
-			self.logSentEvent( shortEvt = "clear screen", tplEvt = new_tpl )
+			if self.logEventSent:
+				self.logSentEvent( shortEvt = "clear screen", tplEvt = new_tpl )
 			ret = True
 		return ret
 
@@ -318,7 +323,9 @@ class Terminal(TestAdapter.Adapter):
 			
 			new_tpl = self.encapsule( lower_event=tpl, layer_term=templates_term.term_data(data=key) )
 			new_tpl.addRaw(key)
-			self.logSentEvent( shortEvt = "send key", tplEvt = new_tpl )
+			
+			if self.logEventSent:
+				self.logSentEvent( shortEvt = "send key", tplEvt = new_tpl )
 			ret = True
 		return ret
 		
@@ -331,7 +338,8 @@ class Terminal(TestAdapter.Adapter):
 		lower_event = TestTemplates.TemplateMessage()
 		new_tpl = self.encapsule( lower_event=lower_event, layer_term=templates_term.term_open(ip=self.cfg['dst-ip'],
 																					port=self.cfg['dst-port'], login=self.ssh().cfg['login']) )
-		self.logSentEvent( shortEvt = "open", tplEvt = new_tpl )
+		if self.logEventSent:
+			self.logSentEvent( shortEvt = "open", tplEvt = new_tpl )
 		
 		tpl = self.ssh().connect()
 		
@@ -345,7 +353,8 @@ class Terminal(TestAdapter.Adapter):
 			if self.lower_event is None: lower_evt = TestTemplates.TemplateMessage()
 
 			new_tpl = self.encapsule( lower_event=lower_evt, layer_term=templates_term.term_close() )
-			self.logSentEvent( shortEvt = "close", tplEvt = new_tpl )
+			if self.logEventSent:
+				self.logSentEvent( shortEvt = "close", tplEvt = new_tpl )
 
 			tpl = self.ssh().disconnect()
 

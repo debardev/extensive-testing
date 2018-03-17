@@ -2354,7 +2354,7 @@ class MyHighlighter( QSyntaxHighlighter ):
 
         # cache
         brush = QBrush( Qt.darkBlue, Qt.SolidPattern )
-        pattern = QRegExp( "\[!CACHE:[\w-]+(:[\w-]+)*:\]" )
+        pattern = QRegExp( Settings.instance().readValue( key='Editor/parameter-custom-cache' ) )
         pattern.setMinimal( True )
         caches.setForeground( brush )
         caches.setFontWeight( QFont.Bold )
@@ -2362,7 +2362,7 @@ class MyHighlighter( QSyntaxHighlighter ):
 
         # input
         brush2 = QBrush( Qt.darkCyan, Qt.SolidPattern )
-        pattern2 = QRegExp( "\[!INPUT:[\w-]+:\]" )
+        pattern2 = QRegExp( Settings.instance().readValue( key='Editor/parameter-custom-input' ) )
         pattern2.setMinimal( True )
         inputs.setForeground( brush2 )
         inputs.setFontWeight( QFont.Bold )
@@ -2371,14 +2371,14 @@ class MyHighlighter( QSyntaxHighlighter ):
         # comment
         brush3 = QBrush( Qt.red, Qt.SolidPattern )
 
-        pattern3 = QRegExp( "^#.*$" )
+        pattern3 = QRegExp( Settings.instance().readValue( key='Editor/parameter-custom-comment' )  )
         pattern3.setMinimal( True )
         comment.setForeground( brush3 )
         ruleComment = HighlightingRule( pattern3, comment )
 
         # capture
         brush4 = QBrush( Qt.darkYellow, Qt.SolidPattern )
-        pattern4 = QRegExp( "\[!CAPTURE:[\w-]+(:.*)?:\]" )
+        pattern4 = QRegExp( Settings.instance().readValue( key='Editor/parameter-custom-capture' ) )
         pattern4.setMinimal( True )
         captures.setForeground( brush4 )
         captures.setFontWeight( QFont.Bold )

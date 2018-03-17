@@ -32,6 +32,8 @@ TestLibraryLib.setVersion("base_v900")
 __RN__ = """Date: xx/xx/2018
 What's new
 	1. (major) split between base and extra adapters
+	2. (minor) terminal: added the possibility of not logging sent messages from terminal adapter (pull request #7)
+	3. (minor) ssl/tcp/http server: the certificate and key files can now be added from parameters (pull request #7)
 Issues fixed
 	1. none
 """

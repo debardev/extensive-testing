@@ -1071,6 +1071,9 @@ class DiagramScene(QGraphicsScene):
         
         self.endItem = None
 
+        self.gridLines = []
+        self.drawGrid()
+
     def setMode(self, mode):
         """
         Set mode
@@ -1088,7 +1091,49 @@ class DiagramScene(QGraphicsScene):
         On key release event
         """
         super(DiagramScene, self).keyReleaseEvent(event)
+        
+    def setOpacity(self,opacity):
+        for line in self.gridLines:
+            line.setOpacity(opacity)
+            
+    def drawGrid(self):
+        """
+        """
+        self.setSceneRect( QRectF(0, 0, GRAPHIC_SCENE_SIZE, GRAPHIC_SCENE_SIZE) )
 
+        self.setItemIndexMethod(QGraphicsScene.NoIndex)
+
+        pen = QPen(QColor(255,0,100), 1, Qt.SolidLine)
+
+        block_size_x = 40
+        block_size_y = 40
+        nb_blocks_x = GRAPHIC_SCENE_SIZE//block_size_x
+        nb_blocks_y = GRAPHIC_SCENE_SIZE//block_size_y
+
+        for x in range(0,nb_blocks_x+1):
+            xc = x * block_size_x
+            self.gridLines.append(self.addLine(xc,0,xc,GRAPHIC_SCENE_SIZE,pen))
+
+        for y in range(0,nb_blocks_y+1):
+            yc = y * block_size_y
+            self.gridLines.append(self.addLine(0,yc,GRAPHIC_SCENE_SIZE,yc,pen))
+            
+        # set opacity of the grid
+        self.setOpacity(0.3)
+
+    def setGridVisible(self,visible=True):
+        """
+        """
+        for line in self.gridLines:
+            line.setVisible(visible)
+
+    def deleteGrid(self):
+        """
+        """
+        for line in self.gridLines:
+            self.removeItem(line)
+        del self.gridLines[:]
+        
     def mousePressEvent(self, mouseEvent):
         """
         On mouse press event
@@ -1207,7 +1252,6 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         self.dockToolbarTest.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         
         self.scene = DiagramScene(self)
-        self.scene.setSceneRect(QRectF(0, 0, GRAPHIC_SCENE_SIZE, GRAPHIC_SCENE_SIZE))
 
         self.view = QGraphicsView(self.scene)
         self.view.setRenderHint(QPainter.Antialiasing)
@@ -2298,7 +2342,8 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         """
         # begin to clear the scene
         self.scene.clear()
-
+        self.scene.drawGrid()
+        
         # and draw all items
         maxItemId = self.itemId
         for graphicalItem in actions:

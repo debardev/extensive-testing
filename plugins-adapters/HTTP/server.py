@@ -215,7 +215,8 @@ class Server(TestAdapter.Adapter):
 	def __init__(self, parent, name=None, debug=False, shared=False, agentSupport=False, agent=None,
 														 bindIp = '', bindPort=0,  sslSupport=False,  strictMode=False, octetStreamSupport=True, 
 														 manStreamSupport=True, websocketMode=False, truncateBody=False,
-														  logEventSent=True, logEventReceived=True):
+														  logEventSent=True, logEventReceived=True, checkCert=AdapterSSL.CHECK_CERT_NO, 
+														 certfile="/tmp/cert.file",keyfile="/tmp/key.file"):
 		"""
 		HTTP server, based on TCP server adapter.
 		
@@ -245,6 +246,15 @@ class Server(TestAdapter.Adapter):
 
 		@param sslSupport: activate SSL channel (default=False)
 		@type sslSupport: boolean
+		
+		@param checkCert: SutAdapters.SSL.CHECK_CERT_NO | SutAdapters.SSL.CHECK_CERT_OPTIONAL | SutAdapters.SSL.CHECK_CERT_REQUIRED
+		@type checkCert: strconstant
+
+		@param certFile:  certificate file (default=/tmp/cert.file)
+		@type certFile:   string
+		
+		@param keyFile:  key file (default=/tmp/key.file)
+		@type keyFile:   string
 		"""
 		# check the agent
 		if agentSupport and agent is None:
@@ -267,10 +277,7 @@ class Server(TestAdapter.Adapter):
 			self.cfg['agent'] = agent
 			self.cfg['agent-name'] = agent['name']
 		self.cfg['agent-support'] = agentSupport
-		
-#		self.TIMER_ALIVE_AGT = TestAdapter.Timer(parent=self, duration=20, name="keepalive-agent", callback=self.aliveAgent,
-#																																logEvent=False, enabled=True)
-																																
+
 		self.logEventSent = logEventSent
 		self.logEventReceived = logEventReceived
 		self.cfg['http_truncate_body'] = truncateBody
@@ -285,7 +292,8 @@ class Server(TestAdapter.Adapter):
 		
 		self.ADP_TCP = AdapterTCP.Server(parent=parent, bindIp = bindIp, bindPort=bindPort, separatorDisabled=True, 
 																													logEventSent=False, logEventReceived=False, agent=agent, shared=shared,
-																													agentSupport=agentSupport, sslSupport=sslSupport)
+																													agentSupport=agentSupport, sslSupport=sslSupport,
+																													checkCert=checkCert, certfile=certfile,keyfile=keyfile)
 		self.ADP_TCP.onClientIncomingData = self.onClientIncomingData	
 		self.ADP_TCP.onClientNoMoreData = self.onClientNoMoreData
 		

@@ -4,5 +4,6 @@
 	What's new
 		1. (major) update helper to support extra and generic packages
 		2. (minor) merge contribution of the pull request "ET Mac Client #5"
+		3. (minor) regexp added in settings file for custom parameter, update to support pull request #7
 	Issues Fixed
-		1. (minor) xxx
+		1. (medium) fix regression: unable to zoom in/out in test editor

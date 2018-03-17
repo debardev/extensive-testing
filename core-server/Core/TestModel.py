@@ -392,10 +392,14 @@ INPUT_CUSTOM = """
 				cache_args = cache_args[1:]
 			new_line = new_line.replace(c, "%s" % v, 1)
 
-		inputs = re.findall("\[!INPUT:[\w-]+\:\]", new_line)
+		inputs = re.findall("\[!INPUT:[\w-]+(?:\:[\w-]+)*\:\]", new_line)
 		for c in inputs:
-			inputs_args = c.split(":")[1:-1]
-			v = input(inputs_args[0])
+			input_args = c.split(":")[1:-1]
+			v = input(input_args[0])
+			i = 1
+			while isinstance(v, dict):
+				v = v[input_args[i]]
+				i=i+1   
 			new_line = new_line.replace(c, "%s" % v, 1)
             
 		captures = re.findall("\[!CAPTURE:[\w-]+(?:\:.*?)?\:\]", new_line)

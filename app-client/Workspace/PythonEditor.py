@@ -819,11 +819,16 @@ class PyEditor(QsciScintilla, Logger.ClassLogger):
         Use ctrl+wheel to zoom in/out
         """
         if Qt.ControlModifier & ev.modifiers():
-            if ev.delta() > 0:
+            if QtHelper.IS_QT5:
+                delta = ev.angleDelta().y()
+            else:
+                delta = ev.delta()
+
+            if delta > 0:
                 self.zoomIn()
             else:
                 self.zoomOut()
-                
+                    
             # update margin size
             self.onLinesChanged()
         else:
