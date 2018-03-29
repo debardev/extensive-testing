@@ -34,8 +34,10 @@ What's new
 	1. (major) split between base and extra adapters
 	2. (minor) terminal: added the possibility of not logging sent messages from terminal adapter (pull request #7)
 	3. (minor) ssl/tcp/http server: the certificate and key files can now be added from parameters (pull request #7)
+	4. (minor) ssl/tcp/http: new ciphers client side argument 
+	5. (medium) telnet: support new option 36 to 39
 Issues fixed
-	1. none
+	1. (minor) fix bad option code in telnet
 """
 
 __DESCRIPTION__ = """This library contains all adapters available to test your SUT (System Under Test).

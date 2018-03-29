@@ -1,5 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource prefix="/">
+   <file>../LICENSE-HTML</file>
+   <file>../CONTRIBUTORS-HTML</file>
    <file>toolbox.png</file>
    <file>close.png</file>
    <file>about.png</file>

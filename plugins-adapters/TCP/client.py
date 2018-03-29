@@ -71,7 +71,7 @@ class Client(TestAdapterLib.Adapter):
 								debug=False, logEventSent=True, logEventReceived=True, parentName=None,
 								agentSupport=False, agent=None, shared=False, 
 								caCerts=None, checkHost=False, hostCn=None, verbose=True, 
-								certfile=None, keyfile=None
+								certfile=None, keyfile=None, clientCiphers=None
 						):
 		"""
 		This class enable to use TCP as client only, with support and dns resolution.
@@ -176,6 +176,9 @@ class Client(TestAdapterLib.Adapter):
 
 		@param keyfile: path to the key file (default=None)
 		@type keyfile: string/none
+
+		@param clientCiphers: ciphers client side (default=None)
+		@type clientCiphers: string/none
 		"""
 		# check agent
 		if agentSupport and agent is None:
@@ -256,7 +259,7 @@ class Client(TestAdapterLib.Adapter):
 																						logEventSent=logEventSent, logEventReceived=logEventReceived, 
 																						shared=shared, name=name, caCerts=caCerts, checkHost=checkHost, 
 																						host=hostCn, verbose=verbose,
-																						keyfile=keyfile,certfile=certfile)
+																						keyfile=keyfile,certfile=certfile; clientCiphers=clientCiphers)
 		
 		# dns client
 		self.dns = AdapterDNS.Client(parent=parent, debug=debug, logEventSent=True, logEventReceived=True,

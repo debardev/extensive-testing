@@ -76,7 +76,7 @@ class HostnameFailed(Exception):
 class Client(TestAdapterLib.Adapter):
 	def __init__ (self, parent, sslVersion=SSLv23, checkCert=CHECK_CERT_NO, debug=False, name=None,
 											logEventSent=True, logEventReceived=True, shared=False, caCerts=None, checkHost=False, 
-											host=None, verbose=True, certfile=None,keyfile=None):
+											host=None, verbose=True, certfile=None,keyfile=None, clientCiphers=None):
 		"""
 		@param parent: parent testcase
 		@type parent: testcase
@@ -108,6 +108,7 @@ class Client(TestAdapterLib.Adapter):
 		self.cfg['host'] = host
 		self.cfg['keyfile'] = keyfile
 		self.cfg['certfile'] = certfile
+		self.cfg['ciphers'] = clientCiphers
 		
 		self.sslCipher = ''
 		self.sslVersion = ''
@@ -182,7 +183,8 @@ class Client(TestAdapterLib.Adapter):
 																							ssl_version=ver,
 																							server_hostname=_host ,
 																							keyfile=self.cfg['keyfile'],
-																							certfile=self.cfg['certfile']
+																							certfile=self.cfg['certfile'],
+																							ciphers=self.cfg['ciphers']
 																			)
 				else:
 					sock = ssl.SSLSocket(

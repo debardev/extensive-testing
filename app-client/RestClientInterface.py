@@ -1595,7 +1595,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def addProbe(self, probeName, probeType, probeDescription):
         """
-        Add probe
+        Add a probe
         """
         _json = { 'probe-name': probeName, 'probe-type': probeType,
                   'probe-description': probeDescription}
@@ -1604,7 +1604,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeAgent(self, agentName):
         """
-        Add agent
+        Remove a agent
         """
         _json = { 'agent-name': agentName}
         self.makeRequest( uri=CMD_AGENTS_REMOVE, request=HTTP_POST, _json=_json )
@@ -1612,7 +1612,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeProbe(self, probeName):
         """
-        Add probe
+        Remove a probe
         """
         _json = { 'probe-name': probeName}
         self.makeRequest( uri=CMD_PROBES_REMOVE, request=HTTP_POST, _json=_json )
@@ -1620,7 +1620,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def connectAgent(self, agentName, agentType, agentDescription, agentBoot):
         """
-        Add agent
+        Connect a local agent in the server
         """
         _json = { 'agent-name': agentName, 'agent-type': agentType,
                   'agent-description': agentDescription, 'agent-boot': agentBoot}
@@ -1629,7 +1629,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def connectProbe(self, probeName, probeType, probeDescription, probeBoot):
         """
-        Add probe
+        Connect a local probe in the server
         """
         _json = { 'probe-name': probeName, 'probe-type': probeType,
                   'probe-description': probeDescription, 'probe-boot': probeBoot}
@@ -1638,7 +1638,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def checkClientUpdate(self, recheck=False):
         """
-        Add probe
+        Check if an update of the client is available
         """
         _json = self.application().getCurrentVersion()
         _json['recheck'] = recheck
@@ -1647,7 +1647,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def downloadClient(self, clientName):
         """
-        Add probe
+        Download the client
         """
         _json = { 'client-name': clientName, 'client-platform': sys.platform }
         self.makeRequest( uri=CMD_CLIENTS_DOWNLOAD, request=HTTP_POST, _json=_json )
@@ -1655,14 +1655,14 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def getContextAll(self):
         """
-        Add probe
+        Get server context
         """
         self.makeRequest( uri=CMD_CONTEXT_ALL, request=HTTP_GET, _json={} )
 
     @calling_rest
     def moveFileAdapters(self, filePath, fileName, fileExt, newPath):
         """
-        Add probe
+        move adapter file
         """
         _json = { 
                     "source": { "file-path": filePath,
@@ -1675,7 +1675,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def moveFileTests(self, filePath, fileName, fileExt, fileProject, newPath, newProject):
         """
-        Add probe
+        move test file
         """
         _json = { 
                     "source": { "project-id": int(fileProject),
@@ -1690,7 +1690,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def moveFileLibraries(self, filePath, fileName, fileExt, newPath):
         """
-        Add probe
+        move library file
         """
         _json = { 
                     "source": {  "file-path": filePath,
@@ -1703,7 +1703,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def renameFileAdapters(self, filePath, fileName, fileExt, newName):
         """
-        Add probe
+        rename adapter file
         """
         _json = { 
                     "source": { "file-path": filePath,
@@ -1714,23 +1714,24 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         self.makeRequest( uri=CMD_ADAPTERS_FILE_RENAME, request=HTTP_POST, _json=_json )
 
     @calling_rest
-    def renameFileTests(self, filePath, fileName, fileExt, fileProject, newName):
+    def renameFileTests(self, filePath, fileName, fileExt, fileProject, newName, update_location=False):
         """
-        Add probe
+        rename test file
         """
         _json = { 
                     "source": { "project-id": int(fileProject),
                                 "file-path": filePath,
                                 "file-name": fileName,
                                 "file-extension": fileExt },
-                    "destination": { "file-name": newName }
+                    "destination": { "file-name": newName },
+                    "update_location": update_location
                 }
         self.makeRequest( uri=CMD_TESTS_FILE_RENAME, request=HTTP_POST, _json=_json )
         
     @calling_rest
     def renameFileLibraries(self, filePath, fileName, fileExt, newName):
         """
-        Add probe
+        rename library file
         """
         _json = { 
                     "source": {  "file-path": filePath,
@@ -1743,7 +1744,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def duplicateFileAdapters(self, filePath, fileName, fileExt, newPath, newName):
         """
-        Add probe
+        Duplicate adapter file
         """
         _json = { 
                     "source": { "file-path": filePath,
@@ -1757,7 +1758,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def duplicateFileTests(self, filePath, fileName, fileExt, fileProject, newPath, newName, newProject):
         """
-        Add probe
+        Duplicate test file
         """
         _json = { 
                     "source": { "project-id": int(fileProject),
@@ -1774,7 +1775,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def duplicateFileLibraries(self, filePath, fileName, fileExt, newPath, newName):
         """
-        Add probe
+        Duplicate library file
         """
         _json = { 
                     "source": {  "file-path": filePath,
@@ -1788,7 +1789,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeFileAdapters(self, filePath):
         """
-        Add probe
+        Remove adapter file
         """
         _json = { "file-path": filePath }
         self.makeRequest( uri=CMD_ADAPTERS_FILE_REMOVE, request=HTTP_POST, _json=_json )
@@ -1796,7 +1797,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeFileTests(self, filePath, fileProject):
         """
-        Add probe
+        Remove test file
         """
         _json = { "project-id": int(fileProject), "file-path": filePath}
         self.makeRequest( uri=CMD_TESTS_FILE_REMOVE, request=HTTP_POST, _json=_json )
@@ -1804,7 +1805,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeFileLibraries(self, filePath):
         """
-        Add probe
+        Remove library file
         """
         _json = { "file-path": filePath }
         self.makeRequest( uri=CMD_LIBRARIES_FILE_REMOVE, request=HTTP_POST, _json=_json )
@@ -1812,7 +1813,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def moveFolderAdapters(self, folderPath, folderName, newPath):
         """
-        Add probe
+        move folder in adapters
         """
         _json = { 
                     "source": { "directory-path": folderPath,
@@ -1824,7 +1825,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def moveFolderLibraries(self, folderPath, folderName, newPath):
         """
-        Add probe
+        Move folder in libraries 
         """
         _json = { 
                     "source": { "directory-path": folderPath,
@@ -1836,7 +1837,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def moveFolderTests(self, folderPath, folderName, folderProject, newPath, newProject):
         """
-        Add probe
+        Move folder in tests
         """
         _json = { 
                     "source": { "project-id": int(folderProject),
@@ -1859,6 +1860,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def scheduleTests(self, tests, postponeMode, postponeAt, parallelMode):
         """
+        Schedule several tests in server side
         """
         _json = { "tests": tests, "postpone-mode": postponeMode,
                   "postpone-at": postponeAt, "parallel-mode": parallelMode}
@@ -1867,6 +1869,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def scheduleTest(self, req, wdocument=None):
         """
+        Schedule a test
         """
         if wdocument is not None:
             path = wdocument.getShortName( withAsterisk = False )
@@ -1879,6 +1882,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def scheduleTestTpg(self, req, wdocument=None):
         """
+        Schedule a test
         """
         if wdocument is not None:
             path = wdocument.getShortName( withAsterisk = False )
@@ -1917,12 +1921,13 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     
     @calling_rest
     def openFileTests(self, projectId, filePath, ignoreLock=False, readOnly=False, 
-                      customParam=None, actionId=None, destinationId=None):
+                      customParam=None, actionId=None, destinationId=None, extra={}):
         """
         add snapshot
         """
         _json = { "project-id": projectId, "file-path": filePath,
-                  "ignore-lock": ignoreLock, "read-only": readOnly}
+                  "ignore-lock": ignoreLock, "read-only": readOnly,
+                  "extra": extra}
         if customParam is not None:
             _json["custom-param"] = customParam
         if actionId is not None:
@@ -1951,7 +1956,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def addFolderLibraries(self, folderPath, folderName):
         """
-        Add probe
+        Add folder in libraries
         """
         _json = { "directory-path": folderPath,"directory-name": folderName }
         self.makeRequest( uri=CMD_LIBRARIES_FOLDER_ADD, request=HTTP_POST, _json=_json )
@@ -1959,7 +1964,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def addFolderAdapters(self, folderPath, folderName):
         """
-        Add probe
+        Add folder in adapters
         """
         _json = { "directory-path": folderPath,"directory-name": folderName}
         self.makeRequest( uri=CMD_ADAPTERS_FOLDER_ADD, request=HTTP_POST, _json=_json )
@@ -1967,7 +1972,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def addFolderTests(self, projectId, folderPath, folderName):
         """
-        Add probe
+        Add folder in tests
         """
         _json = { "project-id": int(projectId), "directory-path": folderPath, 
                   "directory-name": folderName }
@@ -1976,7 +1981,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def renameFolderLibraries(self, folderPath, folderName, newName):
         """
-        Add probe
+        Rename folder in libraries
         """
         _json = { 
                     "source": { "directory-path": folderPath,
@@ -1988,7 +1993,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def renameFolderAdapters(self, folderPath, folderName, newName):
         """
-        Add probe
+        Rename folder in adapters
         """
         _json = { 
                     "source": { "directory-path": folderPath,
@@ -2000,7 +2005,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def renameFolderTests(self, projectId, folderPath, folderName, newName):
         """
-        Add probe
+        Rename folder in tests
         """
         _json = { 
                     "source": { "project-id": projectId, 
@@ -2013,7 +2018,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeFolderLibraries(self, folderPath):
         """
-        Add probe
+        Remove folder from libraries
         """
         _json = { "directory-path": folderPath}
         self.makeRequest( uri=CMD_LIBRARIES_FOLDER_REMOVE, request=HTTP_POST, _json=_json )
@@ -2021,7 +2026,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeFolderAdapters(self, folderPath):
         """
-        Add probe
+        Remove folder from adapters
         """
         _json = { "directory-path": folderPath }
         self.makeRequest( uri=CMD_ADAPTERS_FOLDER_REMOVE, request=HTTP_POST, _json=_json )
@@ -2029,7 +2034,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeFolderTests(self, projectId, folderPath):
         """
-        Add probe
+        Remove folder from tests
         """
         _json = { "project-id": projectId, "directory-path": folderPath }
         self.makeRequest( uri=CMD_TESTS_FOLDER_REMOVE, request=HTTP_POST, _json=_json )
@@ -2037,7 +2042,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeFoldersLibraries(self, folderPath):
         """
-        Add probe
+        Remove folders from libraries
         """
         _json = { "directory-path": folderPath}
         self.makeRequest( uri=CMD_LIBRARIES_FOLDER_REMOVE_ALL, request=HTTP_POST, _json=_json )
@@ -2045,7 +2050,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeFoldersAdapters(self, folderPath):
         """
-        Add probe
+        Remove folders from adapters
         """
         _json = { "directory-path": folderPath }
         self.makeRequest( uri=CMD_ADAPTERS_FOLDER_REMOVE_ALL, request=HTTP_POST, _json=_json )
@@ -2053,7 +2058,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def removeFoldersTests(self, projectId, folderPath):
         """
-        Add probe
+        Remove folders from tests
         """
         _json = { "project-id": projectId, "directory-path": folderPath }
         self.makeRequest( uri=CMD_TESTS_FOLDER_REMOVE_ALL, request=HTTP_POST, _json=_json )
@@ -2061,7 +2066,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def duplicateFolderTests(self, folderPath, folderName, folderProject, newPath, newName, newProject):
         """
-        Add probe
+        Duplicate folder in tests
         """
         _json = { 
                     "source": { "project-id": int(folderProject),
@@ -2076,7 +2081,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def duplicateFolderAdapters(self, folderPath, folderName, newPath, newName):
         """
-        Add probe
+        Duplicate folder in adapters
         """
         _json = { 
                     "source": { "directory-path": folderPath,
@@ -2089,7 +2094,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def duplicateFolderLibraries(self, folderPath, folderName, newPath, newName):
         """
-        Add probe
+        Duplicate folder in libraries
         """
         _json = { 
                     "source": { "directory-path": folderPath,
@@ -2102,7 +2107,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def listingTests(self, projectId, forSaveAs=False, forRuns=False):
         """
-        Add probe
+        Get a listing of all tests
         """
         _json = { "project-id": int(projectId), 'for-saveas': forSaveAs, 'for-runs': forRuns}
         self.makeRequest( uri=CMD_TESTS_LISTING, request=HTTP_POST, _json=_json )
@@ -2110,38 +2115,42 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     @calling_rest
     def listingAdapters(self):
         """
-        Add probe
+        Get a listing of all adapters
         """
         self.makeRequest( uri=CMD_ADAPTERS_LISTING, request=HTTP_GET, _json={} )
 
     @calling_rest
     def listingLibraries(self):
         """
-        Add probe
+        Get a listing of all libraries
         """
         self.makeRequest( uri=CMD_LIBRARIES_LISTING, request=HTTP_GET, _json={} )
         
     @calling_rest
     def checkTestSyntax(self, req):
         """
+        Check the syntax of a test
         """
         self.makeRequest( uri=CMD_TESTS_CHECK_SYNTAX, request=HTTP_POST, _json=req )
         
     @calling_rest
     def checkTestSyntaxTpg(self, req):
         """
+        Check the syntax of a test
         """
         self.makeRequest( uri=CMD_TESTS_CHECK_SYNTAX_TPG, request=HTTP_POST, _json=req )
         
     @calling_rest
     def createTestDesign(self, req):
         """
+        Create a test design of the provided test
         """
         self.makeRequest( uri=CMD_TESTS_CREATE_DESIGN, request=HTTP_POST, _json=req )
         
     @calling_rest
     def createTestDesignTpg(self, req):
         """
+        Create a test design of the test
         """
         self.makeRequest( uri=CMD_TESTS_CREATE_DESIGN_TPG, request=HTTP_POST, _json=req )   
 
@@ -2214,48 +2223,56 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onGetTrReports(self, details):
         """
+        Called on response
         """
         self.trace("on get reports")
         self.GetTrReports.emit( details )
         
     def onGetTrReviews(self, details):
         """
+        Called on response
         """
         self.trace("on get reviews")
         self.GetTrReviews.emit(details["review"], details["xml-review"])        
         
     def onGetTrDesigns(self, details):
         """
+        Called on response
         """
         self.trace("on get designs")
         self.GetTrDesigns.emit(details["design"], details["xml-design"])
         
     def onGetTrVerdicts(self, details):
         """
+        Called on response
         """
         self.trace("on get verdicts")
         self.GetTrVerdicts.emit(details["verdict"], details["xml-verdict"])        
         
     def onGetTrImage(self, details):
         """
+        Called on response
         """
         self.trace("on get image")
         self.GetTrImage.emit( details['image'] )
         
     def onGetTrRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on test result removed")
         self.refreshTr(partialRefresh=True, projectId=details['project-id'] )
     
     def onGetTrListing(self, details):
         """
+        Called on response
         """
         self.trace("on test result listing")
         self.RefreshResults.emit(details["listing"])
     
     def onGetTrReseted(self, details):
         """
+        Called on response
         """
         self.trace("on test result reseted")
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2267,6 +2284,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onGetTrDownloaded(self, details):
         """
+        Called on response
         """
         self.trace("on download test result")
         content = base64.b64decode(details["result"])
@@ -2298,6 +2316,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
                        
     def onGetTrZipped(self, details):
         """
+        Called on response
         """
         self.trace("on test result zipped")
         
@@ -2305,6 +2324,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     
     def onGetTrUncomplete(self, details):
         """
+        Called on response
         """
         self.trace("on download partial test result")
         
@@ -2326,47 +2346,55 @@ class RestClientInterface(QObject, Logger.ClassLogger):
 
     def onCommentAdded(self, details):
         """
+        Called on response
         """
         self.trace("on comment added")
         self.CommentTrAdded.emit( details["comments"] )
         
     def onCommentsDeleted(self, details):
         """
+        Called on response
         """
         self.trace("on comments deleted")
         self.CommentsTrDeleted.emit()
         
     def onTasksReplayed(self, details):
         """
+        Called on response
         """
         self.trace("on tasks replayed")
 
     def onTasksDesign(self, details):
         """
+        Called on response
         """
         self.trace("on tasks design")
         self.GetTrDesigns.emit(details["design"], details["xml-design"]) 
         
     def onTasksVerdict(self, details):
         """
+        Called on response
         """
         self.trace("on tasks verdict")
         self.GetTrVerdicts.emit(details["verdict"], details["xml-verdict"])
         
     def onTasksReview(self, details):
         """
+        Called on response
         """
         self.trace("on tasks review")
         self.GetTrReviews.emit(details["review"], details["xml-review"])        
         
     def onTasksComment(self, details):
         """
+        Called on response
         """
         self.trace("on tasks comment")
         self.InformationMsg.emit( self.tr("Task comment") , self.tr("Comment added!") )
         
     def onTasksKill(self, details):
         """
+        Called on response
         """
         self.trace("on task killed")
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2378,6 +2406,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTasksKillAll(self, details):
         """
+        Called on response
         """
         self.trace("on task killed")
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2389,6 +2418,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTasksKillSelective(self, details):
         """
+        Called on response
         """
         self.trace("on task killed")
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2400,6 +2430,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTasksCancel(self, details):
         """
+        Called on response
         """
         self.trace("on task cancelled")
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2411,6 +2442,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTasksCancelAll(self, details):
         """
+        Called on response
         """
         self.trace("on task cancelled")
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2420,6 +2452,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTasksCancelSelective(self, details):
         """
+        Called on response
         """
         self.trace("on task cancelled")
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2429,6 +2462,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     
     def onMetricsReset(self, details):
         """
+        Called on response
         """
         self.trace("on tests metrics reseted")
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2439,11 +2473,13 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onMetricsTestsDurationWriting(self, details):
         """
+        Called on response
         """
         self.trace("on tests metrics duration writing added")
         
     def onSessionContext(self, details):
         """
+        Called on response
         """
         self.trace("on session context")
         
@@ -2451,6 +2487,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     
     def onSystemUsages(self, details):
         """
+        Called on response
         """
         self.trace("on system usages")
 
@@ -2458,6 +2495,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onBuildDocumentations(self, details):
         """
+        Called on response
         """
         self.trace("on build documentations")
         
@@ -2473,6 +2511,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onCacheDocumentations(self, details):
         """
+        Called on response
         """
         self.trace("on build documentations")
         
@@ -2480,72 +2519,84 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onUnlockTests(self, details):
         """
+        Called on response
         """
         self.trace("on unlock tests")
         self.WarningMsg.emit( self.tr("Unlock all files") , self.tr("All tests unlocked") )
         
     def onUnlockAdapters(self, details):
         """
+        Called on response
         """
         self.trace("on unlock adapters")
         self.WarningMsg.emit( self.tr("Unlock all files") , self.tr("All adapters unlocked") )
         
     def onUnlockLibraries(self, details):
         """
+        Called on response
         """
         self.trace("on unlock libraries")
         self.WarningMsg.emit( self.tr("Unlock all files") , self.tr("All libraries unlocked") )
         
     def onBuildTestsSamples(self, details):
         """
+        Called on response
         """
         self.trace("on build tests samples")
         self.InformationMsg.emit( self.tr("Generate tests samples") , self.tr("Build done!") )
         
     def onBuildAdapters(self, details):
         """
+        Called on response
         """
         self.trace("on build adapters")
         self.InformationMsg.emit( self.tr("Generate adapters") , self.tr("Build done!") )
         
     def onBuildLibraries(self, details):
         """
+        Called on response
         """
         self.trace("on build libraries")
         self.InformationMsg.emit( self.tr("Generate libraries") , self.tr("Build done!") )
         
     def onRunningTasks(self, details):
         """
+        Called on response
         """
         self.trace("on running tasks")
         self.TasksRunning.emit( details["tasks-running"] )
         
     def onWaitingTasks(self, details):
         """
+        Called on response
         """
         self.trace("on waiting tasks")
         self.TasksWaiting.emit( details["tasks-waiting"] )
         
     def onHistoryTasks(self, details):
         """
+        Called on response
         """
         self.trace("on history tasks")
         self.TasksHistory.emit( details["tasks-history"] )
         
     def onHistoryTasksAll(self, details):
         """
+        Called on response
         """
         self.trace("on history all tasks")
         self.TasksHistory.emit( details["tasks-history"] )
         
     def onClearHistory(self, details):
         """
+        Called on response
         """
         self.trace("on history cleared")
         self.TasksHistoryCleared.emit()
         
     def onTaskReschedule(self, details):
         """
+        Called on response
         """
         self.trace("on task schedule")
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2557,30 +2608,35 @@ class RestClientInterface(QObject, Logger.ClassLogger):
        
     def onProbesRunning(self, details):
         """
+        Called on response
         """
         self.trace("on probes running")
         self.RefreshRunningProbes.emit(details['probes'])
         
     def onAgentsRunning(self, details):
         """
+        Called on response
         """
         self.trace("on agents running")
         self.RefreshRunningAgents.emit(details['agents'])
        
     def onProbesDefault(self, details):
         """
+        Called on response
         """
         self.trace("on probes default")
         self.RefreshDefaultProbes.emit(details['probes'])
         
     def onAgentsDefault(self, details):
         """
+        Called on response
         """
         self.trace("on agents default")
         self.RefreshDefaultAgents.emit(details['agents'])
         
     def onSyntaxAllAdapters(self, details):
         """
+        Called on response
         """
         self.trace("on syntax adapters")
         if details['syntax-status']:
@@ -2591,6 +2647,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onSyntaxAllLibraries(self, details):
         """
+        Called on response
         """
         self.trace("on syntax libraries")
         if details['syntax-status']:
@@ -2601,6 +2658,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     
     def onSyntaxAdapter(self, details):
         """
+        Called on response
         """
         if details["success"]:
             self.InformationMsg.emit( self.tr("Check syntax"), 
@@ -2612,6 +2670,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onSyntaxLibrary(self, details):
         """
+        Called on response
         """
         if details["success"]:
             self.InformationMsg.emit( self.tr("Check syntax"), 
@@ -2623,6 +2682,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
             
     def onGenericAdapters(self, details):
         """
+        Called on response
         """
         self.trace("on generic adapters")
         self.InformationMsg.emit( self.tr("Set the generic package of adapters") ,
@@ -2631,6 +2691,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
                 
     def onGenericLibraries(self, details):
         """
+        Called on response
         """
         self.trace("on generic libraries")
         self.InformationMsg.emit( self.tr("Set the generic library of adapters") ,
@@ -2639,6 +2700,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onDefaultAdapters(self, details):
         """
+        Called on response
         """
         self.trace("on default adapters")
         self.InformationMsg.emit( self.tr("Set the default package of adapters") ,
@@ -2647,6 +2709,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onDefaultLibraries(self, details):
         """
+        Called on response
         """
         self.trace("on default libraries")
         self.InformationMsg.emit( self.tr("Set the default package of libraries") , 
@@ -2655,54 +2718,63 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onBackupTests(self, details):   
         """
+        Called on response
         """
         self.trace("on backup tests")
         self.InformationMsg.emit( "Backup", "Backup created with success!" )
         
     def onBackupResults(self, details):   
         """
+        Called on response
         """
         self.trace("on backup results")
         self.InformationMsg.emit( "Backup", "Backup created with success!" )
         
     def onBackupAdapters(self, details):   
         """
+        Called on response
         """
         self.trace("on backup adapters")
         self.InformationMsg.emit( "Backup", "Backup created with success!" )
         
     def onBackupLibraries(self, details):   
         """
+        Called on response
         """
         self.trace("on backup libraries")
         self.InformationMsg.emit( "Backup", "Backup created with success!" )
         
     def onRemoveBackupsResults(self, details):
         """
+        Called on response
         """
         self.trace("on remove all backups results")
         self.InformationMsg.emit( "Delete backups", "All backups deleted with success!" )
         
     def onRemoveBackupsTests(self, details):
         """
+        Called on response
         """
         self.trace("on remove all backups tests")
         self.InformationMsg.emit( "Delete backups", "All backups deleted with success!" )
         
     def onRemoveBackupsAdapters(self, details):
         """
+        Called on response
         """
         self.trace("on remove all backups adapters")
         self.InformationMsg.emit( "Delete backups", "All backups deleted with success!" )
         
     def onRemoveBackupsLibraries(self, details):
         """
+        Called on response
         """
         self.trace("on remove all backups libraries") 
         self.InformationMsg.emit( "Delete backups", "All backups deleted with success!" )
     
     def onDownloadBackupResults(self, details):
         """
+        Called on response
         """
         self.trace("on download backup from results") 
         
@@ -2725,6 +2797,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     
     def onDownloadBackupTests(self, details):
         """
+        Called on response
         """
         self.trace("on download backup from tests") 
         
@@ -2747,6 +2820,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     
     def onDownloadBackupAdapters(self, details):
         """
+        Called on response
         """
         self.trace("on download backup from adapters") 
         
@@ -2769,6 +2843,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     
     def onDownloadBackupLibraries(self, details):
         """
+        Called on response
         """
         self.trace("on download backup from libraries") 
         
@@ -2791,6 +2866,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
          
     def onResetTests(self, details):
         """
+        Called on response
         """
         self.trace("on reset tests") 
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Common/systray-notifications' ) ):
@@ -2801,12 +2877,14 @@ class RestClientInterface(QObject, Logger.ClassLogger):
             
     def onResetAdapters(self, details):
         """
+        Called on response
         """
         self.trace("on reset adapters") 
         self.InformationMsg.emit( self.tr("Uninstall adapters") , self.tr("Uninstallation successfull!") )
         
     def onResetLibraries(self, details):
         """
+        Called on response
         """
         self.trace("on reset libraries") 
         self.InformationMsg.emit( self.tr("Uninstall libraries") , 
@@ -2814,78 +2892,91 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onStatisticsResults(self, details):
         """
+        Called on response
         """
         self.trace("on statistics results")
         self.RefreshStatsResults.emit(details['statistics'])
         
     def onStatisticsAdapters(self, details):
         """
+        Called on response
         """
         self.trace("on statistics adapters")
         self.RefreshStatsAdapters.emit(details['statistics'])
         
     def onStatisticsLibraries(self, details):
         """
+        Called on response
         """
         self.trace("on statistics libraries")
         self.RefreshStatsLibraries.emit(details['statistics'])
         
     def onStatisticsTests(self, details):
         """
+        Called on response
         """
         self.trace("on statistics tests")
         self.RefreshStatsTests.emit(details['statistics'])
        
     def onAgentsDisconnect(self, details):
         """
+        Called on response
         """
         self.trace("on agents disconnect")
         self.InformationMsg.emit( "Stop agent" , "Agent stopped!" )
         
     def onProbesDisconnect(self, details):
         """
+        Called on response
         """
         self.trace("on probes disconnect")
         self.InformationMsg.emit( "Stop probe" , "Probe stopped!" )
        
     def onAgentsConnect(self, details):
         """
+        Called on response
         """
         self.trace("on agents connect")
         self.InformationMsg.emit( 'Starting agent' , "Agent started!" )
         
     def onProbesConnect(self, details):
         """
+        Called on response
         """
         self.trace("on probes connect")
         self.InformationMsg.emit( 'Starting probe' , "Probes started!" )
        
     def onAgentsAdd(self, details):
         """
+        Called on response
         """
         self.trace("on agents add")
         self.InformationMsg.emit( "Add default agent" , "Default agent added!" )
         
     def onProbesAdd(self, details):
         """
+        Called on response
         """
         self.trace("on probes add")
         self.InformationMsg.emit( "Add default probe" , "Default probe added!" )
        
     def onAgentsRemove(self, details):
         """
+        Called on response
         """
         self.trace("on agents remove")
         self.InformationMsg.emit( "Delete default agent" , "Default agent deleted!" )
         
     def onProbesRemove(self, details):
         """
+        Called on response
         """
         self.trace("on probes add")
         self.InformationMsg.emit( "Delete default probe" , "Default probe deleted!" )
         
     def onClientAvailable(self, details):
         """
+        Called on response
         """
         self.trace("on client available")
         
@@ -2929,6 +3020,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
 
     def onClientDownload(self, details):
         """
+        Called on response
         """
         self.trace("on client downloaded")
   
@@ -2969,6 +3061,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
 
     def onSessionContextAll(self, details):
         """
+        Called on response
         """
         self.trace("on session context all")
         
@@ -2976,6 +3069,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFileMoved(self, details):
         """
+        Called on response
         """
         self.trace("on test file moved")
         
@@ -2983,6 +3077,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFolderMoved(self, details):
         """
+        Called on response
         """
         self.trace("on test folder moved")
    
@@ -2990,6 +3085,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFileRenamed(self, details):
         """
+        Called on response
         """
         self.trace("on test file renamed")
 
@@ -3003,6 +3099,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFolderRenamed(self, details):
         """
+        Called on response
         """
         self.trace("on test folder renamed")
         
@@ -3015,6 +3112,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFileDuplicated(self, details):
         """
+        Called on response
         """
         self.trace("on test file duplicated")
         
@@ -3022,6 +3120,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFolderDuplicated(self, details):
         """
+        Called on response
         """
         self.trace("on test folder duplicated")
         
@@ -3029,6 +3128,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFileRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on test file removed")
         
@@ -3036,6 +3136,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFolderRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on test folder removed")
         
@@ -3043,6 +3144,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFoldersRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on test folders removed")
         
@@ -3050,6 +3152,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFolderAdded(self, details):
         """
+        Called on response
         """
         self.trace("on test folder added")
         
@@ -3057,6 +3160,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsListing(self, details):
         """
+        Called on response
         """
         self.trace("on tests listing")
 
@@ -3067,6 +3171,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersListing(self, details):
         """
+        Called on response
         """
         self.trace("on adapters listing")
         
@@ -3074,6 +3179,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesListing(self, details):
         """
+        Called on response
         """
         self.trace("on libraries listing")
         
@@ -3081,6 +3187,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersFileMoved(self, details):
         """
+        Called on response
         """
         self.trace("on adapter file moved")
         
@@ -3088,6 +3195,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersFolderMoved(self, details):
         """
+        Called on response
         """
         self.trace("on adapter folder moved")
    
@@ -3095,6 +3203,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersFileRenamed(self, details):
         """
+        Called on response
         """
         self.trace("on adapter file renamed")
 
@@ -3106,6 +3215,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersFolderRenamed(self, details):
         """
+        Called on response
         """
         self.trace("on adapter folder renamed")
         
@@ -3117,6 +3227,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersFileDuplicated(self, details):
         """
+        Called on response
         """
         self.trace("on adapter file duplicated")
         
@@ -3124,6 +3235,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersFolderDuplicated(self, details):
         """
+        Called on response
         """
         self.trace("on adapter folder duplicated")
         
@@ -3131,6 +3243,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersFileRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on adapter file removed")
         
@@ -3138,6 +3251,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersFolderRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on adapter folder removed")
 
@@ -3145,6 +3259,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
 
     def onAdaptersFoldersRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on adapter folders removed")
 
@@ -3152,6 +3267,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersFolderAdded(self, details):
         """
+        Called on response
         """
         self.trace("on adapter folder added")
         
@@ -3159,6 +3275,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesFileMoved(self, details):
         """
+        Called on response
         """
         self.trace("on library file moved")
         
@@ -3166,6 +3283,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesFolderMoved(self, details):
         """
+        Called on response
         """
         self.trace("on library folder moved")
    
@@ -3173,6 +3291,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesFileRenamed(self, details):
         """
+        Called on response
         """
         self.trace("on library file renamed")
 
@@ -3185,6 +3304,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesFolderRenamed(self, details):
         """
+        Called on response
         """
         self.trace("on library folder renamed")
         
@@ -3196,6 +3316,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesFileDuplicated(self, details):
         """
+        Called on response
         """
         self.trace("on library file duplicated")
         
@@ -3203,6 +3324,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesFolderDuplicated(self, details):
         """
+        Called on response
         """
         self.trace("on library folder duplicated")
         
@@ -3210,6 +3332,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesFileRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on library file removed")
         
@@ -3217,6 +3340,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesFolderRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on library folder removed")
 
@@ -3224,6 +3348,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
 
     def onLibrariesFoldersRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on library folders removed")
 
@@ -3231,6 +3356,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
           
     def onLibrariesFolderAdded(self, details):
         """
+        Called on response
         """
         self.trace("on library folder added")
         
@@ -3238,6 +3364,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsSnapshotAdded(self, details):
         """
+        Called on response
         """
         self.trace("on snapshot added")
         
@@ -3245,6 +3372,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsSnapshotRestored(self, details):
         """
+        Called on response
         """
         self.trace("on snapshot added")
         
@@ -3253,6 +3381,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsSnapshotRemoved(self, details):
         """
+        Called on response
         """
         self.trace("on snapshot removed") 
         
@@ -3260,6 +3389,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsSnapshotRemovedAll(self, details):
         """
+        Called on response
         """
         self.trace("on snapshot removed all") 
         
@@ -3267,6 +3397,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFileOpened(self, details):
         """
+        Called on response
         """
         self.trace("on tests file opened") 
         if details["destination-id"] is not None and details["action-id"] is not None:
@@ -3289,6 +3420,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsFileUploaded(self, details):
         """
+        Called on response
         """
         self.trace("on tests file uploaded")
         
@@ -3331,6 +3463,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
                                              
     def onAdaptersFileOpened(self, details):
         """
+        Called on response
         """
         self.trace("on adapters file opened") 
         
@@ -3343,6 +3476,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
                                 
     def onAdaptersFileUploaded(self, details):
         """
+        Called on response
         """
         self.trace("on adapters file uploaded") 
         
@@ -3381,6 +3515,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
             
     def onLibrariesFileOpened(self, details):
         """
+        Called on response
         """
         self.trace("on libraries file opened") 
         
@@ -3393,6 +3528,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
                                     
     def onLibrariesFileUploaded(self, details):
         """
+        Called on response
         """
         self.trace("on libraries file uploaded") 
         
@@ -3431,21 +3567,25 @@ class RestClientInterface(QObject, Logger.ClassLogger):
             
     def onAdaptersFileUnlocked(self, details):
         """
+        Called on response
         """
         self.trace("on adapters file unlocked") 
         
     def onLibrariesFileUnlocked(self, details):
         """
+        Called on response
         """
         self.trace("on libraries file unlocked") 
         
     def onTestsFileUnlocked(self, details):
         """
+        Called on response
         """
         self.trace("on tests file unlocked") 
         
     def onAdaptersPackageAdded(self, details):
         """
+        Called on response
         """
         self.trace("on adapters package added") 
         
@@ -3453,6 +3593,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesPackageAdded(self, details):
         """
+        Called on response
         """
         self.trace("on libraries package added") 
         
@@ -3460,6 +3601,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onLibrariesLibraryAdded(self, details):
         """
+        Called on response
         """
         self.trace("on library added") 
         
@@ -3467,6 +3609,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersAdapterAdded(self, details):
         """
+        Called on response
         """
         self.trace("on adapter added") 
         
@@ -3474,6 +3617,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersAdapterWsdlUrlAdded(self, details):
         """
+        Called on response
         """
         self.trace("on adapter added from wsdl url")
         
@@ -3487,6 +3631,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onAdaptersAdapterWsdlFileAdded(self, details):
         """
+        Called on response
         """
         self.trace("on adapter added from wsdl file") 
         
@@ -3500,6 +3645,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         
     def onTestsDefaultAll(self, details):
         """
+        Called on response
         """
         self.trace("on default all tests") 
         
@@ -3511,6 +3657,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
           
     def onTestsCheckSyntax(self, details):
         """
+        Called on response
         """
         self.trace("on check test syntax")
         
@@ -3525,6 +3672,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
             
     def onTestsCreateDesign(self, details):
         """
+        Called on response
         """
         self.trace("on create test design")
         
@@ -3541,6 +3689,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
             
     def onTestsScheduled(self, details):
         """
+        Called on response
         """
         self.trace("on tests scheduled")
         
@@ -3552,6 +3701,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
             
     def onTestScheduled(self, details):
         """
+        Called on response
         """
         self.trace("on test scheduled")
 

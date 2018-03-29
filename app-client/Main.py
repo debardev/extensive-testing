@@ -37,13 +37,6 @@ __VERSION__ = '19.0.0'
 __AUTHOR__ = 'Denis Machard'
 # email of the main developer
 __EMAIL__ = 'd.machard@gmail.com'
-# list of contributors
-__CONTRIBUTORS__ = [ 
-                     " - Emmanuel Monsoro (logo, graphical abstract engine)", 
-                     " - Denys Bortovets (build mac version)" 
-                   ]
-# list of contributors
-__TESTERS__ = [ "Emmanuel Monsoro", "Thibault Lecoq"  ]
 # project start in year
 __BEGIN__="2010"
 # year of the latest build
@@ -56,21 +49,6 @@ REDIRECT_STD=False
 QT_WARNING_MODE=False
 # workspace offline, for dev only
 WORKSPACE_OFFLINE=False
-
-LICENSE="""<i>This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-<br /><br />
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-Lesser General Public License for more details.
-<br /><br />
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-MA 02110-1301 USA</i>"""
 
 # import standard modules
 import sys
@@ -3123,54 +3101,64 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         about.append( "%s: <a href='mailto:%s'>%s</a>" %(self.tr("Contact"), __EMAIL__,__EMAIL__) )
         about.append( "%s: <a href='%s'>%s</a>" % (self.tr("Home page"), url, url) )
         about.append( "" )
-        about.append( "%s:<br /><i>%s</i>" % (self.tr("Contributors"), '<br />'.join(__CONTRIBUTORS__)))
-        about.append( "" )
-        about.append( "%s: <i>%s</i>" % (self.tr("Testers"), ', '.join(__TESTERS__)))
+        
+        contrib = self.readFileRessources(filename=":/CONTRIBUTORS-HTML")
+        about.append( "%s:<br /><i>%s</i>" % (self.tr("Contributors"), contrib))
 
         about.append( "<hr />" )
         about.append( "%s <b>%s</b>" % (self.tr("Developed and maintained by"), __AUTHOR__) ) 
 
         about.append( "%s python %s (%s) - Qt %s - PyQt %s on %s" % (self.tr("Built with: "), 
-                                                                        platform.python_version(), 
-                                                                        platform.architecture()[0],
-                                                                        QT_VERSION_STR, PYQT_VERSION_STR,  
-                                                                        platform.system() )
+                                                                    platform.python_version(), 
+                                                                    platform.architecture()[0],
+                                                                    QT_VERSION_STR, PYQT_VERSION_STR,  
+                                                                    platform.system() )
                     )
         about.append( "%s %s" % (self.tr("Built time: "), __BUILDTIME__ )  )
         if QtHelper.str2bool(Settings.instance().readValue( key = 'Common/portable')): 
             about.append( "%s" % self.tr("Portable edition") )
         about.append( "<hr />" )
-        about.append( LICENSE ) 
+
+        lic = self.readFileRessources(filename=":/LICENSE-HTML")
+        about.append( "<i>%s</i>" % lic ) 
+        
         QMessageBox.about(self, "%s - %s" % (name, self.tr("About")), "<br />".join(about) )
 
     def releaseNotes (self):
         """
         Read the release notes
         """
-        rn = ''
-        try:
-            # open the release note from resources and read all
-            fh = QFile(":/releasenotes.txt")
-            fh.open(QFile.ReadOnly)
-            rn = fh.readAll()
-            
-            # convert qbytearray to str
-            if sys.version_info > (3,):
-                rn = unicode(rn, 'utf8') # to support python3 
-            else:
-                rn = unicode(rn)
-                
-            # close the file descriptor
-            fh.close()
-        except Exception as e:
-            self.error( "Unable to read release notes: " + str(e) )
-            
+        rn = self.readFileRessources(filename=":/releasenotes.txt")
+
         # open the dialog
         name = Settings.instance().readValue( key = 'Common/name' )
         rnDialog = RN.ReleaseNotesDialog( dialogName = name, parent = self)
         rnDialog.parseRn( text = rn )
         rnDialog.exec_()
 
+    def readFileRessources(self, filename):
+        """
+        Read a file from ressources
+        """
+        ct = ''
+        try:
+            # open the file  from resources and read all
+            fh = QFile(filename)
+            fh.open(QFile.ReadOnly)
+            ct = fh.readAll()
+            
+            # convert qbytearray to str
+            if sys.version_info > (3,):
+                ct = unicode(ct, 'utf8') # to support python3 
+            else:
+                ct = unicode(ct)
+                
+            # close the file descriptor
+            fh.close()
+        except Exception as e:
+            self.error( "Unable to read the file %s from ressources: %s " % ( filename, str(e)) )
+        return ct
+        
     def onRefreshTestsRepo(self, data, projectId, forSaveAs, forRuns):
         """
         """
@@ -3200,37 +3188,60 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         # for test plan
         if forDest == UCI.FOR_DEST_TP:
             if actionId == UCI.ACTION_ADD:
-                WWorkspace.WDocumentViewer.instance().addRemoteTestToTestplan( data=(str(path_file), str(name_file), 
-                                                                                str(ext_file), encoded_data, project), 
-                                                                                testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().addRemoteTestToTestplan( data=(str(path_file), 
+                                                                                   str(name_file), 
+                                                                                   str(ext_file), 
+                                                                                   encoded_data, 
+                                                                                   project), 
+                                                                               testParentId=testId )
             elif actionId == UCI.ACTION_INSERT_AFTER:
-                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestplan( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project),
-                                                                                  below=False, testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestplan( data=(str(path_file), 
+                                                                                      str(name_file), 
+                                                                                      str(ext_file), 
+                                                                                      encoded_data, 
+                                                                                      project),
+                                                                                  below=False, 
+                                                                                  testParentId=testId )
             elif actionId == UCI.ACTION_INSERT_BELOW:
-                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestplan( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project),
-                                                                                  below=True, testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestplan( data=(str(path_file), 
+                                                                                      str(name_file), 
+                                                                                      str(ext_file), 
+                                                                                      encoded_data, 
+                                                                                      project),
+                                                                                  below=True, 
+                                                                                  testParentId=testId )
                 
             elif actionId == UCI.ACTION_RELOAD_PARAMS:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestplan( data=(
-                                                                                        str(path_file), str(name_file), str(ext_file),
-                                                                                        encoded_data, testId, project
+                                                                                        str(path_file), 
+                                                                                        str(name_file), 
+                                                                                        str(ext_file),
+                                                                                        encoded_data, 
+                                                                                        testId,
+                                                                                        project
                                                                                         ) 
                                                                                  )
                 
             elif actionId == UCI.ACTION_MERGE_PARAMS:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestplan( data=(
-                                                                                        str(path_file), str(name_file), str(ext_file),
-                                                                                        encoded_data, testId, project
-                                                                                        )  ,
+                                                                                        str(path_file), 
+                                                                                        str(name_file), 
+                                                                                        str(ext_file),
+                                                                                        encoded_data, 
+                                                                                        testId, 
+                                                                                        project
+                                                                                        ),
                                                                                     mergeParameters=True
                                                                                  )
 
             elif actionId == UCI.ACTION_UPDATE_PATH:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestplan( data=(
-                                                                                        str(path_file), str(name_file), str(ext_file),
-                                                                                        encoded_data, testId, project
+                                                                                        str(path_file), 
+                                                                                        str(name_file), 
+                                                                                        str(ext_file),
+                                                                                        encoded_data,
+                                                                                        testId, 
+                                                                                        project
                                                                                         ),
                                                                                   parametersOnly=False
                                                                                  )
@@ -3241,37 +3252,55 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         # for test global
         elif forDest == UCI.FOR_DEST_TG:
             if actionId == UCI.ACTION_ADD:
-                WWorkspace.WDocumentViewer.instance().addRemoteTestToTestglobal( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project), 
-                                                                                        testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().addRemoteTestToTestglobal( data=(str(path_file), 
+                                                                                        str(name_file), 
+                                                                                        str(ext_file), 
+                                                                                        encoded_data, 
+                                                                                        project), 
+                                                                                 testParentId=testId )
             elif actionId == UCI.ACTION_INSERT_AFTER:
-                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestglobal( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project),
-                                                                                    below=False, testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestglobal( data=(str(path_file), 
+                                                                                          str(name_file), 
+                                                                                          str(ext_file), 
+                                                                                          encoded_data, 
+                                                                                          project),
+                                                                                    below=False, 
+                                                                                    testParentId=testId )
             elif actionId == UCI.ACTION_INSERT_BELOW:
-                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestglobal( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project),
-                                                                                    below=True, testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestglobal( data=(str(path_file),
+                                                                                          str(name_file), 
+                                                                                          str(ext_file),
+                                                                                          encoded_data, 
+                                                                                          project),
+                                                                                    below=True, 
+                                                                                    testParentId=testId )
             elif actionId == UCI.ACTION_RELOAD_PARAMS:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestglobal( data=(
-                                                                                            str(path_file), str(name_file), 
+                                                                                            str(path_file), 
+                                                                                            str(name_file), 
                                                                                             str(ext_file),
-                                                                                            encoded_data, testId, project
+                                                                                            encoded_data, 
+                                                                                            testId,
+                                                                                            project
                                                                                           ) 
                                                                                    )
             elif actionId == UCI.ACTION_MERGE_PARAMS:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestglobal( data=(
-                                                                                            str(path_file), str(name_file), 
+                                                                                            str(path_file), 
+                                                                                            str(name_file), 
                                                                                             str(ext_file),
-                                                                                            encoded_data, testId, project
+                                                                                            encoded_data, 
+                                                                                            testId, project
                                                                                           ) ,
                                                                                     mergeParameters=True
                                                                                    )
             elif actionId == UCI.ACTION_UPDATE_PATH:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestglobal( data=(
-                                                                                            str(path_file), str(name_file), 
+                                                                                            str(path_file), 
+                                                                                            str(name_file), 
                                                                                             str(ext_file),
-                                                                                            encoded_data, testId, project
+                                                                                            encoded_data, 
+                                                                                            testId, project
                                                                                           ),
                                                                                     parametersOnly=False
                                                                                    )
@@ -3281,12 +3310,16 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         # for all type of tests
         elif forDest == UCI.FOR_DEST_ALL:
             if actionId == UCI.ACTION_IMPORT_INPUTS:
-                WWorkspace.WDocumentProperties.instance().addRemoteTestConfigToTestsuite( data=(str(path_file), str(name_file), 
-                                                                                            str(ext_file),  encoded_data, project), 
+                WWorkspace.WDocumentProperties.instance().addRemoteTestConfigToTestsuite( data=(str(path_file), 
+                                                                                                str(name_file), 
+                                                                                                str(ext_file),  encoded_data, 
+                                                                                                project), 
                                                                                           inputs=True )
             elif actionId == UCI.ACTION_IMPORT_OUTPUTS:
-                WWorkspace.WDocumentProperties.instance().addRemoteTestConfigToTestsuite( data=(str(path_file), str(name_file), 
-                                                                                          str(ext_file), encoded_data, project),
+                WWorkspace.WDocumentProperties.instance().addRemoteTestConfigToTestsuite( data=(str(path_file), 
+                                                                                                str(name_file), 
+                                                                                                str(ext_file), encoded_data, 
+                                                                                                project),
                                                                                           inputs=False )
             else:
                 self.error( 'unknown action id for all: %s' % actionId )

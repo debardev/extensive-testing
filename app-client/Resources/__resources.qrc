@@ -1,5 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
+   <file>../LICENSE-HTML</file>
+   <file>../CONTRIBUTORS-HTML</file>
    <file>sandbox.png</file>
    <file>input-unused.png</file>
    <file>build.png</file>

@@ -6919,6 +6919,8 @@ class TestsFileOpen(Handler):
                   type: integer
                 action-id:
                   type: integer
+                extra:
+                  type: object
         responses:
           '200':
             schema :
@@ -6955,6 +6957,11 @@ class TestsFileOpen(Handler):
             _customParam = self.request.data.get("custom-param")
             _actId = self.request.data.get("action-id")
             _destId = self.request.data.get("destination-id")
+
+            # dbr13 >>>
+            update_location = self.request.data.get('extra', {}).get('update_location', False)
+            # dbr13 <<<
+
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -6996,7 +7003,23 @@ class TestsFileOpen(Handler):
         success, path_file, name_file, ext_file, project, data_base64, locked, locked_by = resultGetFile
         if success != Context.instance().CODE_OK:
             raise HTTP_500("Unable to open test file")
-
+            
+        # dbr13 >>>
+        # When we set checkbox in the Update->Location
+        if update_location:
+            file_path = path_file or '/'
+            old_file_name = self.request.data.get('extra')['file_name']
+            new_file_name = name_file
+            ext_file_name = ext_file
+            update_files_list = RepoTests.instance().updateLinkedScriptPath(project=projectId,
+                                                                            mainPath=file_path,
+                                                                            oldFilename=old_file_name,
+                                                                            newFilename=new_file_name,
+                                                                            extFilename=ext_file_name,
+                                                                            user_login=user_profile['login'])
+        # dbr13 <<<
+        
+        # I think we need add some info into return but I haven't thought about it yet =)
         return { "cmd": self.request.path, 
                  "file-content": data_base64,
                  "file-path": path_file,
@@ -7376,6 +7399,10 @@ class TestsFileRename(Handler):
                   properties:
                     file-name:
                       type: string
+                upload_location:
+                  required: [upload_location]
+                  properties:
+                    upload_location: boolean
         responses:
           '200':
             description: rename response
@@ -7418,6 +7445,10 @@ class TestsFileRename(Handler):
             if destination is None: raise EmptyValue("Please specify destination")
             newFileName = self.request.data.get("destination")["file-name"]
             if newFileName is None: raise EmptyValue("Please specify a destination file name")
+            
+            # dbr13 >>>
+            update_location = self.request.data.get("update_location", False)
+            # dbr13 <<<
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -7451,7 +7482,21 @@ class TestsFileRename(Handler):
             raise HTTP_403("Rename file denied")
         if success == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404("File does not exists")
-            
+
+
+        # dbr13 >>>
+        # When we set checkbox in the rename
+        if update_location:
+            update_files_list = RepoTests.instance().updateLinkedScriptPath(project=projectId,
+                                                                            mainPath=filePath,
+                                                                            oldFilename=fileName,
+                                                                            newFilename=newFileName,
+                                                                            extFilename=fileExt,
+                                                                            user_login=user_profile['login'])
+
+        # dbr13 >>>
+        # I think we need add some info into return but I haven't thought about it yet =)
+        
         return { "cmd": self.request.path, "message": "file sucessfully renamed", 
                  "project-id": projectId,
                  "file-path": filePath,

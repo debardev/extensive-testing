@@ -115,7 +115,8 @@ class Repository(RemoteRepository.Repository):
         self.createSamplesAction = QtHelper.createAction(self, "&Generate samples", self.generateSamples, 
                                                          icon = None, 
                                                          tip = 'Generate samples' )
-        self.setTestsDefaultAction = QtHelper.createAction(self, "&Set default versions", self.setDefaultVersionForAllTests, 
+        self.setTestsDefaultAction = QtHelper.createAction(self, "&Set default versions", 
+                                                           self.setDefaultVersionForAllTests, 
                                                            icon = None, 
                                                            tip = 'Set default version adapters and libraries for all tests' )
 
@@ -189,21 +190,29 @@ class Repository(RemoteRepository.Repository):
         if reply == QMessageBox.Yes:
             RCI.instance().buildSamples()
             
-    def moveRemoteFile(self, currentName, currentPath, currentExtension, newPath, project=0, newProject=0):
+    def moveRemoteFile(self, currentName, currentPath, currentExtension, 
+                       newPath, project=0, newProject=0):
         """
         Reimplemented from RemoteRepository
         Move file
         """
-        RCI.instance().moveFileTests(filePath=currentPath, fileName=currentName, fileExt=currentExtension, 
-                                     fileProject=project, newPath=newPath, newProject=newProject)
+        RCI.instance().moveFileTests(filePath=currentPath, 
+                                     fileName=currentName, 
+                                     fileExt=currentExtension, 
+                                     fileProject=project, 
+                                     newPath=newPath, 
+                                     newProject=newProject)
         
     def moveRemoteFolder(self, currentName, currentPath, newPath, project=0, newProject=0):
         """
         Reimplemented from RemoteRepository
         Move folder
         """
-        RCI.instance().moveFolderTests(folderPath=currentPath, folderName=currentName, folderProject=project, 
-                                       newPath=newPath, newProject=newProject)
+        RCI.instance().moveFolderTests(folderPath=currentPath, 
+                                       folderName=currentName, 
+                                       folderProject=project, 
+                                       newPath=newPath, 
+                                       newProject=newProject)
         
     def initialize(self, listing):
         """
@@ -213,9 +222,6 @@ class Repository(RemoteRepository.Repository):
 
         if UCI.RIGHTS_ADMIN in RCI.instance().userRights:
             self.createSamplesAction.setEnabled(True)
-
-        # if UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
-            # self.createSamplesAction.setEnabled(True)
 
         RemoteRepository.Repository.initialize(self, listing)
 
@@ -290,7 +296,8 @@ class Repository(RemoteRepository.Repository):
                                     forSaveAs=saveAsOnly, 
                                     forRuns=False)
         
-    def renameFile (self, mainPath, oldFileName, newFileName, extFile, project=0):
+    def renameFile (self, mainPath, oldFileName, newFileName, extFile, 
+                    project=0, update_location=False):
         """
         Reimplemented from RemoteRepository
         Rename file
@@ -306,13 +313,16 @@ class Repository(RemoteRepository.Repository):
 
         @param extFile: 
         @type extFile:
+
+        @param update_location:
+        @type update_location:
         """
         RCI.instance().renameFileTests( filePath=mainPath, 
                                         fileName=oldFileName, 
                                         fileExt=extFile, 
                                         fileProject=project,
-                                        newName=newFileName
-                                       )
+                                        newName=newFileName,
+                                        update_location=update_location )
                                              
     def renameFolder (self, mainPath, oldFolderName, newFolderName, project=0):
         """
@@ -333,7 +343,8 @@ class Repository(RemoteRepository.Repository):
                                          folderName = oldFolderName, 
                                          newName=newFolderName)
         
-    def duplicateFile (self, mainPath, oldFileName, newFileName, extFile, project=0, newProject=0, newPath=''):
+    def duplicateFile (self, mainPath, oldFileName, newFileName, extFile, 
+                       project=0, newProject=0, newPath=''):
         """
         Reimplemented from RemoteRepository
         Duplicate file
@@ -358,7 +369,8 @@ class Repository(RemoteRepository.Repository):
                                            newName=newFileName,
                                            newProject=newProject)
         
-    def duplicateFolder (self, mainPath, oldFolderName, newFolderName, project=0, newProject=0, newPath=''):
+    def duplicateFolder (self, mainPath, oldFolderName, newFolderName, 
+                         project=0, newProject=0, newPath=''):
         """
         Reimplemented from RemoteRepository
         Duplicate folder

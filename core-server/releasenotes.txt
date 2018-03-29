@@ -13,3 +13,4 @@
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only
+		3. (minor) test interop vsphere: error during clone virtual machine issue #11

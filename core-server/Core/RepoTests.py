@@ -898,13 +898,16 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         """
         # folders reserved
         mp = "%s/%s/" % (self.testsPath, project)
-        if os.path.normpath( "%s/%s" % (mp,unicode(pathFolder)) ) == os.path.normpath( "%s/@Recycle" % (mp) ) :
+        mp_full = os.path.normpath( "%s/%s" % (mp,unicode(pathFolder)) )
+        if mp_full == os.path.normpath( "%s/@Recycle" % (mp) ) :
             return self.context.CODE_FORBIDDEN
-        if os.path.normpath( "%s/%s" % (mp,unicode(pathFolder)) ) == os.path.normpath( "%s/@Sandbox" % (mp) ) :
+        if mp_full == os.path.normpath( "%s/@Sandbox" % (mp) ) :
             return self.context.CODE_FORBIDDEN
         # end of new
         
-        return RepoManager.RepoManager.delDir(self, pathFolder=pathFolder, project=project)
+        return RepoManager.RepoManager.delDir(self, 
+                                              pathFolder=pathFolder, 
+                                              project=project)
 
     def delDirAll(self, pathFolder, project=''):
         """
@@ -912,29 +915,38 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         """
         # folders reserved
         mp = "%s/%s/" % (self.testsPath, project)
-        if os.path.normpath( "%s/%s" % (mp,unicode(pathFolder)) ) == os.path.normpath( "%s/@Recycle" % (mp) ) :
+        mp_full = os.path.normpath( "%s/%s" % (mp,unicode(pathFolder)) ) 
+        if mp_full == os.path.normpath( "%s/@Recycle" % (mp) ) :
             return self.context.CODE_FORBIDDEN
-        if os.path.normpath( "%s/%s" % (mp,unicode(pathFolder)) ) == os.path.normpath( "%s/@Sandbox" % (mp) ) :
+        if mp_full == os.path.normpath( "%s/@Sandbox" % (mp) ) :
             return self.context.CODE_FORBIDDEN
         # end of new
          
-        return RepoManager.RepoManager.delDirAll(self, pathFolder=pathFolder, project=project)
+        return RepoManager.RepoManager.delDirAll(self, 
+                                                 pathFolder=pathFolder, 
+                                                 project=project)
   
-    def moveDir(self, mainPath, folderName, newPath, project='', newProject='', projectsList=[], renamedBy=None):
+    def moveDir(self, mainPath, folderName, newPath, project='', 
+                newProject='', projectsList=[], renamedBy=None):
         """
         Move a folder
         """
         # folders reserved new in v17
         mp = "%s/%s/" % (self.testsPath, project)
-        if os.path.normpath( "%s/%s/%s" % (mp, mainPath, unicode(folderName)) ) == os.path.normpath( "%s/@Recycle" % (mp) ) :
+        mp_full = os.path.normpath( "%s/%s/%s" % (mp, mainPath, unicode(folderName)) )
+        if mp_full == os.path.normpath( "%s/@Recycle" % (mp) ) :
             return (self.context.CODE_FORBIDDEN, mainPath, folderName, newPath, project)
-        if os.path.normpath( "%s/%s/%s" % (mp, mainPath, unicode(folderName)) ) == os.path.normpath( "%s/@Sandbox" % (mp) ) :
+        if mp_full == os.path.normpath( "%s/@Sandbox" % (mp) ) :
             return (self.context.CODE_FORBIDDEN, mainPath, folderName, newPath, project)
         # end of new
         
         # execute the rename function as before
-        ret = RepoManager.RepoManager.moveDir(self, mainPath=mainPath, folderName=folderName, newPath=newPath, 
-                                            project=project, newProject=newProject)
+        ret = RepoManager.RepoManager.moveDir(self, 
+                                              mainPath=mainPath, 
+                                              folderName=folderName, 
+                                              newPath=newPath, 
+                                              project=project, 
+                                              newProject=newProject)
         return ret
         
     def moveFile(self, mainPath, fileName, extFilename, newPath, project='', newProject='', 
@@ -943,8 +955,13 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         Move a file
         """
         # execute the rename function as before
-        ret = RepoManager.RepoManager.moveFile( self, mainPath=mainPath, fileName=fileName, extFilename=extFilename, 
-                                                newPath=newPath, project=project, newProject=newProject, 
+        ret = RepoManager.RepoManager.moveFile( self, 
+                                                mainPath=mainPath, 
+                                                fileName=fileName, 
+                                                extFilename=extFilename, 
+                                                newPath=newPath, 
+                                                project=project, 
+                                                newProject=newProject, 
                                                 supportSnapshot=supportSnapshot)
 
         return ret
@@ -955,14 +972,20 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         """
         # folders reserved new in v17
         mp = "%s/%s/" % (self.testsPath, project)
-        if os.path.normpath( "%s/%s/%s" % (mp, mainPath, unicode(oldPath)) ) == os.path.normpath( "%s/@Recycle" % (mp) ) :
+        mp_full = os.path.normpath( "%s/%s/%s" % (mp, mainPath, unicode(oldPath)) )
+        if mp_full == os.path.normpath( "%s/@Recycle" % (mp) ) :
             return (self.context.CODE_FORBIDDEN)
-        if os.path.normpath( "%s/%s/%s" % (mp, mainPath, unicode(oldPath)) ) == os.path.normpath( "%s/@Sandbox" % (mp) ) :
+        if mp_full == os.path.normpath( "%s/@Sandbox" % (mp) ) :
             return (self.context.CODE_FORBIDDEN)
         # end of new
         
-        return  RepoManager.RepoManager.duplicateDir(self, mainPath=mainPath, oldPath=oldPath, newPath=newPath, 
-                                                     project=project, newProject=newProject, newMainPath=newMainPath)
+        return  RepoManager.RepoManager.duplicateDir(self, 
+                                                     mainPath=mainPath, 
+                                                     oldPath=oldPath, 
+                                                     newPath=newPath, 
+                                                     project=project, 
+                                                     newProject=newProject, 
+                                                     newMainPath=newMainPath)
                                                      
     def renameDir(self, mainPath, oldPath, newPath, project='', projectsList=[], renamedBy=None):
         """
@@ -970,15 +993,19 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         """
         # folders reserved new in v17
         mp = "%s/%s/" % (self.testsPath, project)
-        if os.path.normpath( "%s/%s/%s" % (mp, mainPath, unicode(oldPath)) ) == os.path.normpath( "%s/@Recycle" % (mp) ) :
+        mp_full = os.path.normpath( "%s/%s/%s" % (mp, mainPath, unicode(oldPath)) )
+        if mp_full == os.path.normpath( "%s/@Recycle" % (mp) ) :
             return (self.context.CODE_FORBIDDEN, mainPath, oldPath, newPath, project)
-        if os.path.normpath( "%s/%s/%s" % (mp, mainPath, unicode(oldPath)) ) == os.path.normpath( "%s/@Sandbox" % (mp) ) :
+        if mp_full == os.path.normpath( "%s/@Sandbox" % (mp) ) :
             return (self.context.CODE_FORBIDDEN, mainPath, oldPath, newPath, project)
         # end of new
          
         # execute the rename function as before
-        ret = RepoManager.RepoManager.renameDir(self, mainPath=mainPath, oldPath=oldPath, newPath=newPath, 
-                                                     project=project)
+        ret = RepoManager.RepoManager.renameDir(self, 
+                                                mainPath=mainPath, 
+                                                oldPath=oldPath, 
+                                                newPath=newPath, 
+                                                project=project)
 
         return ret
         
@@ -990,17 +1017,170 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         And save the change in the history
         """
         # execute the rename function as before
-        ret = RepoManager.RepoManager.renameFile(   self, mainPath=mainPath, oldFilename=oldFilename, 
+        ret = RepoManager.RepoManager.renameFile(   self, mainPath=mainPath, 
+                                                    oldFilename=oldFilename, 
                                                     newFilename=newFilename,
-                                                    extFilename=extFilename, project=project, 
+                                                    extFilename=extFilename, 
+                                                    project=project, 
                                                     supportSnapshot=supportSnapshot )
 
         return ret
         
+    # dbr13 >>
+    def updateLinkedScriptPath(self, project, mainPath, oldFilename, 
+                               newFilename, extFilename, user_login):
+        """
+        """
+        # get current project name and accessible projects list for currnet user
+        project_name = ProjectsManager.instance().getProjectName(prjId=project)
+        projects = ProjectsManager.instance().getProjects(user=user_login)
+
+        updated_files_list = []
+
+        # create old and new file name
+        if mainPath != '/':
+            new_test_file_name = '%s:%s/%s.%s' % (project_name, 
+                                                  mainPath, 
+                                                  newFilename, 
+                                                  extFilename)
+
+            # for update location func
+            if oldFilename.rsplit(".")[-1] in [RepoManager.TEST_PLAN_EXT,
+                                               RepoManager.TEST_ABSTRACT_EXT,
+                                               RepoManager.TEST_UNIT_EXT,
+                                               RepoManager.TEST_SUITE_EXT]:
+                old_test_file_name = oldFilename
+            else:
+                # for rename func
+                old_test_file_name = '%s:%s/%s.%s' % (project_name, 
+                                                      mainPath, 
+                                                      oldFilename, 
+                                                      extFilename)
+        else:
+            new_test_file_name = '%s:%s.%s' % (project_name, 
+                                               newFilename, 
+                                               extFilename)
+
+            # for update location func
+            if oldFilename.rsplit(".")[-1] in [RepoManager.TEST_PLAN_EXT,
+                                               RepoManager.TEST_ABSTRACT_EXT,
+                                               RepoManager.TEST_UNIT_EXT,
+                                               RepoManager.TEST_SUITE_EXT]:
+
+                old_test_file_name = oldFilename
+            else:
+                # for rename func
+                old_test_file_name = '%s:%s.%s' % (project_name, 
+                                                   oldFilename, 
+                                                   extFilename)
+
+        for proj_id in projects:
+            project_id = proj_id['project_id']
+            _, _, listing, _ = self.getTree(project=project_id)
+
+            tests_tree_update_locations = self.getTestsForUpdate(listing=listing,
+                                                                 extFileName=extFilename)
+
+            files_paths = self.get_files_paths(tests_tree=tests_tree_update_locations)
+
+            for file_path in files_paths:
+                # init appropriate data model for current file path
+                if file_path.endswith(RepoManager.TEST_PLAN_EXT):
+                    doc = TestPlan.DataModel()
+                    ext_file_name = RepoManager.TEST_PLAN_EXT
+                elif file_path.endswith(RepoManager.TEST_GLOBAL_EXT):
+                    doc = TestPlan.DataModel(isGlobal=True)
+                    ext_file_name =RepoManager.TEST_GLOBAL_EXT
+                else:
+                    return "Bad file extension: %s" % file_path
+
+                absPath = '%s%s%s' % (self.testsPath, 
+                                      project_id, 
+                                      file_path)
+                res = doc.load(absPath=absPath)
+                test_files_list = doc.testplan['testplan']['testfile']
+
+                is_changed = False
+
+                for test_file in test_files_list:
+                    if old_test_file_name == test_file['file']:
+                        test_file['file'] = new_test_file_name
+                        test_file['extension'] = extFilename
+                        is_changed = True
+                if is_changed:
+                    file_content = doc.getRaw()
+                    f_path_list = file_path.split('/')
+                    path_file = '/'.join(f_path_list[:-1])
+                    name_file = f_path_list[-1][:-4]
+                    putFileReturn = self.uploadFile(pathFile=path_file, 
+                                                    nameFile=name_file,
+                                                    extFile=ext_file_name,
+                                                    contentFile=file_content, 
+                                                    login=user_login, 
+                                                    project=project_id,
+                                                    overwriteFile=True, 
+                                                    createFolders=False, 
+                                                    lockMode=True,
+                                                    binaryMode=True, 
+                                                    closeAfter=False)
+                    success, pathFile, nameFile, extFile, project,\
+                    overwriteFile, closeAfter, isLocked, lockedBy = putFileReturn
+                    updated_files_list.append({"code": success,
+                                               "file-path": pathFile,
+                                               "file-name": nameFile,
+                                               "file-extension": extFile,
+                                               "project-id":  project_id,
+                                               "overwrite":  overwriteFile,
+                                               "close-after": closeAfter,
+                                               "locked": isLocked,
+                                               "locked-by": lockedBy})
+        return updated_files_list
+
+    def getTestsForUpdate(self, listing, extFileName):
+        """
+        """
+        tests_list = []
+
+        extDict = {
+            RepoManager.TEST_ABSTRACT_EXT: [RepoManager.TEST_GLOBAL_EXT, RepoManager.TEST_PLAN_EXT],
+            RepoManager.TEST_UNIT_EXT: [RepoManager.TEST_GLOBAL_EXT, RepoManager.TEST_PLAN_EXT],
+            RepoManager.TEST_SUITE_EXT: [RepoManager.TEST_GLOBAL_EXT, RepoManager.TEST_PLAN_EXT],
+            RepoManager.TEST_PLAN_EXT: [RepoManager.TEST_GLOBAL_EXT]
+        }
+
+        for test in listing:
+            if test['type'] == 'file':
+                ext_test = test['name'].split('.')[-1]
+                req_exts = extDict[extFileName]
+                if extFileName in extDict and ext_test in req_exts:
+                    tests_list.append(test)
+            else:
+                if test['type'] == 'folder':
+                    tests_list.append(test)
+                    tests_list[-1]['content'] = (self.getTestsForUpdate(listing=test['content'],
+                                                                        extFileName=extFileName))
+        return tests_list
+
+    def get_files_paths(self, tests_tree, file_path='/'):
+        """
+        """
+        list_path = []
+        for test in tests_tree:
+            f_path = file_path
+            if test['type'] == 'file':
+                list_path.append('%s%s' % (f_path, test['name']))
+            else:
+                f_path += '%s/' % test['name']
+                list_path += self.get_files_paths(test['content'], 
+                                                  file_path=f_path)
+        return list_path
+
+    # dbr13 <<
+    
     def saveToHistory(self, oldPrjId, oldPath, newPrjId, newPath):
         """
         New in v17
-        Save all changes in files maded by users
+        Save all changes in files made by users
         Theses changes enable to fix testplan or testglobal
         """
         self.renameHistory[ oldPath ] =  { 
@@ -1136,7 +1316,9 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         # duplicate variable
         newVarName = "%s-COPY#%s" % (variable['name'], uniqid())
 
-        return self.addVariableInDB(projectId=variable["project_id"], variableName=newVarName, variableValue=variable["value"])
+        return self.addVariableInDB(projectId=variable["project_id"], 
+                                    variableName=newVarName, 
+                                    variableValue=variable["value"])
         
     def updateVariableInDB(self, variableId, variableName=None, variableValue=None, projectId=None):
         """

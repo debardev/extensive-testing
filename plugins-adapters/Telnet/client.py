@@ -392,8 +392,13 @@ class Client(TestAdapterLib.Adapter):
 			cmds_str = ''
 			if cmd in codec.TELNET_COMMANDS:
 				cmds_str = '%s' % codec.TELNET_COMMANDS[cmd]
+			else:
+				self.warning("telnet command not supported: %s" % cmd)
 			if opt in codec.TELNET_OPTIONS:
 				cmds_str += ' %s' % codec.TELNET_OPTIONS[opt]
+			else:
+				self.warning("telnet option not supported: %s" % opt)
+				cmd_str += ' Unsupported'
 			tpl_cmds.addKey(name="%s" % nb_cmd, data=cmds_str)
 			nb_cmd += 1
 			

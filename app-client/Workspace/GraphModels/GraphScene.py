@@ -159,8 +159,9 @@ class Arrow(QGraphicsLineItem, Logger.ClassLogger):
     check for collisions and selections. The class inherits QGraphicsLine item, 
     and draws the arrowhead and moves with the items it connects.
     """
-    def __init__(self, startItem, endItem, parent=None, scene=None, arrow_start_point = None, arrow_end_point = None, 
-                        toHotspotId=None, fromHotspotId=None):
+    def __init__(self, startItem, endItem, parent=None, scene=None, 
+                    arrow_start_point = None, arrow_end_point = None, 
+                    toHotspotId=None, fromHotspotId=None):
         """
         We set the start and end diagram items of the arrow. 
         The arrow head will be drawn where the line intersects the end item.
@@ -286,14 +287,19 @@ class Arrow(QGraphicsLineItem, Logger.ClassLogger):
 
         color = QColor(0, 0, 0)
         color.setNamedColor( COLOR_ARROW )
-        painter.setPen(QPen(color, 1))
+        painter.setPen(QPen(color, 2))
         painter.setBrush(QBrush(color))
         
-        # We then need to find the position at which to draw the arrowhead. The head should be drawn where 
-        # the line and the end item intersects. This is done by taking the line between each point in the polygon 
-        # and check if it intersects with the line of the arrow. Since the line start and end points are set to the 
-        # center of the items the arrow line should intersect one and only one of the lines of the polygon. Note that 
-        # the points in the polygon are relative to the local coordinate system of the item. We must therefore add the 
+        # We then need to find the position at which to draw the arrowhead. 
+        # The head should be drawn where 
+        # the line and the end item intersects. 
+        # This is done by taking the line between each point in the polygon 
+        # and check if it intersects with the line of the arrow. 
+        # Since the line start and end points are set to the 
+        # center of the items the arrow line should intersect one 
+        # and only one of the lines of the polygon. Note that 
+        # the points in the polygon are relative to the local coordinate 
+        # system of the item. We must therefore add the 
         # position of the end item to make the coordinates relative to the scene.
         if (self.startingPoint is None) or (self.endingPoint is None):
             p1 = myStartItem.pos()
@@ -371,10 +377,14 @@ class Arrow(QGraphicsLineItem, Logger.ClassLogger):
         if (self.myStartItem.collidesWithItem(self.myEndItem)):
             return
         
-        # We calculate the angle between the x-axis and the line of the arrow. We need to turn the arrow head to this angle 
-        # so that it follows the direction of the arrow. If the angle is negative we must turn the direction of the arrow.
-        # We can then calculate the three points of the arrow head polygon. One of the points is the end of the line, 
-        # which now is the intersection between the arrow line and the end polygon. Then we clear the arrowHead polygon 
+        # We calculate the angle between the x-axis and the line of the arrow. 
+        # We need to turn the arrow head to this angle 
+        # so that it follows the direction of the arrow. 
+        # If the angle is negative we must turn the direction of the arrow.
+        # We can then calculate the three points of the arrow head polygon. 
+        # One of the points is the end of the line, 
+        # which now is the intersection between the arrow line and the end polygon. 
+        # Then we clear the arrowHead polygon 
         # from the previous calculated arrow head and set these new points
         angle = math.acos(line.dx() / line.length())
         if line.dy() >= 0:
@@ -389,8 +399,10 @@ class Arrow(QGraphicsLineItem, Logger.ClassLogger):
         for point in [line.p1(), arrowP1, arrowP2]:
             self.arrowHead.append(point)
             
-        # If the line is selected, we draw two dotted lines that are parallel with the line of the arrow. 
-        # We do not use the default implementation, which uses boundingRect() because the QRect bounding rectangle 
+        # If the line is selected, we draw two dotted lines that are 
+        # parallel with the line of the arrow. 
+        # We do not use the default implementation, 
+        # which uses boundingRect() because the QRect bounding rectangle 
         # is considerably larger than the line.
         painter.drawLine(line)
         painter.drawPolygon(self.arrowHead)
@@ -1091,44 +1103,45 @@ class DiagramScene(QGraphicsScene):
         On key release event
         """
         super(DiagramScene, self).keyReleaseEvent(event)
-        
-    def setOpacity(self,opacity):
-        for line in self.gridLines:
-            line.setOpacity(opacity)
-            
+  
     def drawGrid(self):
         """
+        Draw background grid
         """
         self.setSceneRect( QRectF(0, 0, GRAPHIC_SCENE_SIZE, GRAPHIC_SCENE_SIZE) )
 
         self.setItemIndexMethod(QGraphicsScene.NoIndex)
 
-        pen = QPen(QColor(255,0,100), 1, Qt.SolidLine)
+        pen = QPen(QColor(0,0,100), 1, Qt.DotLine )
 
         block_size_x = 40
-        block_size_y = 40
+        block_size_y = 30
         nb_blocks_x = GRAPHIC_SCENE_SIZE//block_size_x
         nb_blocks_y = GRAPHIC_SCENE_SIZE//block_size_y
 
+        opacity = 0.2
         for x in range(0,nb_blocks_x+1):
             xc = x * block_size_x
-            self.gridLines.append(self.addLine(xc,0,xc,GRAPHIC_SCENE_SIZE,pen))
+            line_x = self.addLine(xc,0,xc,GRAPHIC_SCENE_SIZE,pen)
+            line_x.setOpacity(opacity)
+            self.gridLines.append(line_x)
 
         for y in range(0,nb_blocks_y+1):
             yc = y * block_size_y
-            self.gridLines.append(self.addLine(0,yc,GRAPHIC_SCENE_SIZE,yc,pen))
-            
-        # set opacity of the grid
-        self.setOpacity(0.3)
-
+            line_y = self.addLine(0,yc,GRAPHIC_SCENE_SIZE,yc,pen)
+            line_y.setOpacity(opacity)
+            self.gridLines.append(line_y)  
+          
     def setGridVisible(self,visible=True):
         """
+        Set the visibility of the grid
         """
         for line in self.gridLines:
             line.setVisible(visible)
 
     def deleteGrid(self):
         """
+        Delete the grid
         """
         for line in self.gridLines:
             self.removeItem(line)
@@ -1274,6 +1287,12 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         self.linePointerButton.setText("Arrow")
         self.linePointerButton.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         
+        self.gridAction = QtHelper.createAction(self, self.tr("Grid"), self.displayGrid, 
+                                                checkable=True, toggled=True, 
+                                                icon=QIcon(":/controls.png"),
+                                                tip = self.tr('Display grid') )
+        self.gridAction.setChecked(True)
+        
         self.pointerTypeGroup = QButtonGroup()
         self.pointerTypeGroup.addButton(self.pointerButton, DiagramScene.MoveItem)
         self.pointerTypeGroup.addButton(self.linePointerButton, DiagramScene.InsertLine)
@@ -1297,10 +1316,10 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         
         self.drawBox = QGroupBox("Draw")
         self.drawBox.setStyleSheet( """
-                                           QGroupBox { font: normal; border: 1px solid silver; border-radius: 2px; } 
-                                           QGroupBox { padding-bottom: 10px; background-color: #FAFAFA; } 
-                                           QGroupBox::title { subcontrol-position: bottom center;}
-                                       """ )
+                                   QGroupBox { font: normal; border: 1px solid silver; border-radius: 2px; } 
+                                   QGroupBox { padding-bottom: 10px; background-color: #FAFAFA; } 
+                                   QGroupBox::title { subcontrol-position: bottom center;}
+                               """ )
         layoutDrawBox = QHBoxLayout()
         layoutDrawBox.addWidget(self.dockToolbar)
         layoutDrawBox.setContentsMargins(0,0,0,0)
@@ -1308,10 +1327,10 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         
         self.clipBox = QGroupBox("Clipboard")
         self.clipBox.setStyleSheet( """
-                                           QGroupBox { font: normal; border: 1px solid silver; border-radius: 2px; } 
-                                           QGroupBox { padding-bottom: 10px; background-color: #FAFAFA; } 
-                                           QGroupBox::title { subcontrol-position: bottom center;}
-                                       """)
+                                   QGroupBox { font: normal; border: 1px solid silver; border-radius: 2px; } 
+                                   QGroupBox { padding-bottom: 10px; background-color: #FAFAFA; } 
+                                   QGroupBox::title { subcontrol-position: bottom center;}
+                                   """)
         layoutClipBox = QHBoxLayout()
         layoutClipBox.addWidget(self.dockToolbarClipboard)
         layoutClipBox.setContentsMargins(0,0,0,0)
@@ -1319,10 +1338,10 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         
         self.testBox = QGroupBox("Configure")
         self.testBox.setStyleSheet( """
-                                           QGroupBox { font: normal; border: 1px solid silver; border-radius: 2px; } 
-                                           QGroupBox { padding-bottom: 10px; background-color: #FAFAFA; } 
-                                           QGroupBox::title { subcontrol-position: bottom center;}
-                                       """ )
+                                   QGroupBox { font: normal; border: 1px solid silver; border-radius: 2px; } 
+                                   QGroupBox { padding-bottom: 10px; background-color: #FAFAFA; } 
+                                   QGroupBox::title { subcontrol-position: bottom center;}
+                               """ )
         layoutTestBox = QHBoxLayout()
         layoutTestBox.addWidget(self.dockToolbarTest)
         layoutTestBox.setContentsMargins(0,0,0,0)
@@ -1356,6 +1375,8 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         self.dockToolbar.addSeparator()
         self.dockToolbar.addAction(self.deleteAction)
         self.dockToolbar.setIconSize(QSize(16, 16))
+        self.dockToolbar.addSeparator()
+        self.dockToolbar.addAction(self.gridAction)
         
 
         self.dockToolbarClipboard.addAction(self.copyAction)
@@ -1364,6 +1385,12 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         
         self.dockToolbarTest.addAction(self.addStepAction)
         self.dockToolbarTest.setIconSize(QSize(16, 16))
+        
+    def displayGrid(self, toggled):
+        """
+        Display the grid or not
+        """
+        self.scene.setGridVisible(visible=toggled)
         
     def toolbar(self):
         """
@@ -1385,7 +1412,8 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         Create actions
         """
         self.addBreakpointAction = QtHelper.createAction(self, self.tr("&Breakpoint"), self.addBreakpoint )
-        self.deleteAction = QtHelper.createAction(self, "Delete", self.deleteItem,  icon = QIcon(":/param-delete.png"),
+        self.deleteAction = QtHelper.createAction(self, "Delete", self.deleteItem,  
+                                                    icon = QIcon(":/param-delete.png"),
                                                     tip = 'Delete item', shortcut='Delete' )
         self.copyAction = QtHelper.createAction(self, "Copy", self.copyItem,  icon = QIcon(":/param-copy.png"),
                                                     tip = 'Copy item', shortcut='Ctrl+C' )
@@ -1394,7 +1422,8 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         self.reloadAction = QtHelper.createAction(self, "Reload Item", self.reloadItem,  icon = None,
                                                     tip = 'Reload item from original' )
                                                     
-        self.addStepAction = QtHelper.createAction(self, self.tr("&Step"), self.addDesignStep, icon = QIcon(":/step-add.png"),
+        self.addStepAction = QtHelper.createAction(self, self.tr("&Step"), self.addDesignStep, 
+                                                    icon = QIcon(":/step-add.png"),
                                                     tip = self.tr('Add a new step') )
                                                     
         self.setDefault()
