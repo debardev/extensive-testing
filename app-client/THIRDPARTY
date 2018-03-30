@@ -1,9 +1,6 @@
 Copyright (c) 2010-2018 Denis Machard
-All rights reserved.
 
-This part is distributed under "GNU Lesser General Public License, Version 2.1" (see LICENSE-LGPLv21).
-
-Also following components are in use (see the source code or official sites for license details):
+Following components are in use (see the source code or official sites for license details):
 ------------------------------------
 Python:
 	Python Software Foundation License http://www.python.org/psf/license
@@ -28,8 +25,8 @@ Cx_Freeze:
 Pylint
 	GPL v3
 	PyChecker.py
-
-Sikuli
-	MIT License
-
-Java
+    
+--------------------------------------
+Icons:
+    Connect/Disconnect - Creative Commons - Mandarancio
+    WWW(modify) - Creative Commons - by vecteezy

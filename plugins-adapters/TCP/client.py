@@ -259,7 +259,8 @@ class Client(TestAdapterLib.Adapter):
 																						logEventSent=logEventSent, logEventReceived=logEventReceived, 
 																						shared=shared, name=name, caCerts=caCerts, checkHost=checkHost, 
 																						host=hostCn, verbose=verbose,
-																						keyfile=keyfile,certfile=certfile; clientCiphers=clientCiphers)
+																						keyfile=keyfile,certfile=certfile,
+																						clientCiphers=clientCiphers)
 		
 		# dns client
 		self.dns = AdapterDNS.Client(parent=parent, debug=debug, logEventSent=True, logEventReceived=True,

@@ -140,7 +140,7 @@
 		'about-rn-probes'				=> 'Probes',
         'about-rn-toolbox'				=> 'Toolbox',
 		'about-licenses'				=> 'Licenses',
-		'about-product-description'		=> 'Extensive Testing is an open and generic test automation framework designed to make integration and validation tests with a collaborative workspace environment. This environment is open source and try to save your time and make your life easier at work. Enjoy!',
+		'about-product-description'		=> 'ExtensiveTesting is a test and deployment automation framework for integration, regression and end-to-end usages. This environment is open source and try to save your time and make your life easier at work. Enjoy!',
 		'about-developped-by'			=> 'Main Developer/Maintener by',
 		'about-what'					=> 'What\'s it?',
 		'about-what-new'				=> 'What\'s new',

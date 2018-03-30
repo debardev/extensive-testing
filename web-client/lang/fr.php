@@ -140,7 +140,7 @@
 		'about-rn-probes'				=> 'Sondes',
         'about-rn-toolbox'				=> 'Outils',
 		'about-licenses'				=> 'Licences',
-		'about-product-description'		=> 'Extensive Testing est un framework de test générique et ouvert, il permet la conception de tests d\'intégrations et de validations. Cet environnement est open source et essaye de vous faire gagner du temps au travail. Amusez-vous!',
+		'about-product-description'		=> 'ExtensiveTesting est un framework de test et déploiement for des environnements d\'intégration, régression et tests de bout en bout. Cet environnement est open source et essaye de vous faire gagner du temps au travail. Amusez-vous!',
 		'about-developped-by'			=> 'Développé et maintenu par',
 		'about-what'					=> 'C\'est quoi?',
 		'about-what-new'				=> 'Les nouveautés',

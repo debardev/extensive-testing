@@ -3102,7 +3102,7 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         about.append( "%s: <a href='%s'>%s</a>" % (self.tr("Home page"), url, url) )
         about.append( "" )
         
-        contrib = self.readFileRessources(filename=":/CONTRIBUTORS-HTML")
+        contrib = self.readFileRessources(filename=":/CONTRIBUTORS")
         about.append( "%s:<br /><i>%s</i>" % (self.tr("Contributors"), contrib))
 
         about.append( "<hr />" )
@@ -3119,7 +3119,7 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
             about.append( "%s" % self.tr("Portable edition") )
         about.append( "<hr />" )
 
-        lic = self.readFileRessources(filename=":/LICENSE-HTML")
+        lic = self.readFileRessources(filename=":/TERMS")
         about.append( "<i>%s</i>" % lic ) 
         
         QMessageBox.about(self, "%s - %s" % (name, self.tr("About")), "<br />".join(about) )

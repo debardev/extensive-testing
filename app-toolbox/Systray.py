@@ -2486,12 +2486,12 @@ class Window(QDialog):
         about.append( "Website: <a href='%s'>%s</a>" % (url,url) )
         about.append( "" )
         
-        contrib = self.readFileRessources(filename=":/CONTRIBUTORS-HTML")
+        contrib = self.readFileRessources(filename=":/CONTRIBUTORS")
         about.append( "%s:<br /><i>%s</i>" % (self.tr("Contributors"), contrib))
         
         about.append( "<hr />")
         
-        lic = self.readFileRessources(filename=":/LICENSE-HTML")
+        lic = self.readFileRessources(filename=":/TERMS")
         about.append( "<i>%s</i>" % lic ) 
         QMessageBox.about(self, self.tr("About %s" % name ), "<br />".join(about) )
 

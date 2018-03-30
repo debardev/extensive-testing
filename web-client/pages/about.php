@@ -84,14 +84,10 @@
 
 			// body
 			$tabsbody = array();
-			$tb = "<h3>".$__LWF_APP_NAME." ".$__LWF_CFG['server-version']."</h3>".'<p>'.lang('about-product-description', $htmlentities=true).'<br /><br /><em>'.lang('about-developped-by').' '.$__LWF_APP_AUTHOR.'</em></p>';
+			$tb = "<h3>".$__LWF_APP_NAME." ".$__LWF_CFG['server-version']."</h3>".'<p>'.lang('about-product-description', $htmlentities=true).'<br />'.lang('about-developped-by').' '.$__LWF_APP_AUTHOR.'</p>';
+            
 			$tb .= '<h4>'.lang('contributors').'</h4>';
-			$tb .= '<br /><em>Emmanuel Monsoro (extensive testing logo, ssh console adapter)</em>';
-			$tb .= '<br /><em>Blaise Cador (security recommendations)</em>';
-			$tb .= '<br /><em>Jean-Luc Pascal (support excel writting mode)</em>';
-			$tb .= '<h4>'.lang('testers').'</h4>';
-			$tb .= '<em>Emmanuel Monsoro</em>';
-			$tb .= '<br /><em>Thibault Lecoq</em>';
+            $tb .= file_get_contents(ROOT.'CONTRIBUTORS');
 			$tabsbody[] = $tb;
 			echo construct_tabbody($tabsbody);
 		}
@@ -115,22 +111,18 @@
             
 			if ( $code == 200 ) {
 				// rn server
-				//$lines = $RESTAPI->decodeData($details['core'],  $json=False) ;
 				$tb = parseRn( explode("\n", $details['core']) );
 				$tabsbody[] = $tb;
 
 				// rn adapters
-				//$lines = $RESTAPI->decodeData($details['adapters'],  $json=False) ;
 				$tb = parseRn( explode("\n", $details['adapters']) );
 				$tabsbody[] = $tb;
 
 				// rn libraries
-				//$lines = $RESTAPI->decodeData($details['libraries'],  $json=False) ;
 				$tb = parseRn( explode("\n", $details['libraries']) );
 				$tabsbody[] = $tb;
 
 				// rn toolbox
-				//$lines = $RESTAPI->decodeData($details['toolbox'],  $json=False) ;
 				$tb = parseRn( explode("\n", $details['toolbox']) );
 				$tabsbody[] = $tb;
 
@@ -150,31 +142,8 @@
 			// body
 			$tabsbody = array();
 			$tb = "<h3>License agreements</h3>";
-			$tb .= "<p><i>This product is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-<br /><br />
-This product is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-Lesser General Public License for more details.
-<br /><br />
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-MA 02110-1301 USA</i></p>";
-		$tb .= "<h3>Others license agreements</h3>";
-		$tb .= "This website is part of the extensive testing project; you can redistribute it and/or
-modify it under the terms of the GNU General Public License, Version 3.
-<br /><br />
-This website is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU General Public License for more details.
-<br /><br />
-You should have received a copy of the GNU General Public License,
-along with this program. If not, see http://www.gnu.org/licenses/.";
+            $tb .= file_get_contents(ROOT.'TERMS');
+            
 			$tabsbody[] = $tb;
 			echo construct_tabbody($tabsbody);
 		}
