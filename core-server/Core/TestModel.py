@@ -2176,25 +2176,6 @@ def createTestGlobal ( dataTest, userName, testName, trPath, logFilename, withou
     te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1]
-# test_id = sys.argv[2]
-# replay_id = sys.argv[3]
-
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-
-# if sys.version_info > (3,):
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a+', 1) 
-# else:
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
 
     te.append(IMPORT_INTRO)
     
@@ -2325,83 +2306,6 @@ try:
 	TestLibrary.setVersionGeneric('%s') 
 	TestAdapter.setVersionGeneric('%s')   
 """ %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-
-	# !! generic local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-        # te.append("""
-		# raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        # te.append(""")
-# """)
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# !! generic local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-        # te.append("""
-		# raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        # te.append(""")	
-# """)
-
-    # te.append("""
-
-	# !! local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibraries
-		# SutLibraries.Default = SutLibraries""" % SutLibraries )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-    # te.append("""
-		# raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    # te.append(""")
-# """)
-    # te.append("""
-	# !! local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdapters
-		# SutAdapters.Default = SutAdapters""" % SutAdapters )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-    # te.append("""
-		# raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    # te.append(""")	
-# """)
-    # te.append("""
-	# if TestAdapter.isDeprecated():
-		# raise Exception('SUT adapter %s is deprecated')
-# """ % SutAdapters )
-    # te.append("""
-	# if TestLibrary.isDeprecated():
-		# raise Exception('SUT library %s is deprecated')
-# """ % SutLibraries )
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-	# try:
-		# SutLibraries.Generic = SutLibrariesGeneric
-	# except Exception as e:
-		# pass
-# """ )
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# try:
-		# SutAdapters.Generic = SutAdaptersGeneric
-	# except Exception as e:
-		# pass
-# """ )
 
     if not withoutProbes:
         te.append("""
@@ -2873,24 +2777,6 @@ def createTestPlan ( dataTest, userName, testName, trPath, logFilename, withoutP
     te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1]
-# test_id = sys.argv[2]
-# replay_id = sys.argv[3]
-
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-# if sys.version_info > (3,):
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a+', 1) 
-# else:
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
 
     te.append(IMPORT_INTRO)
     
@@ -3021,83 +2907,6 @@ try:
 	TestLibrary.setVersionGeneric('%s') 
 	TestAdapter.setVersionGeneric('%s')   
 """ %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-
-	# !! generic local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-        # te.append("""
-		# raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        # te.append(""")
-# """)
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# !! generic local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-        # te.append("""
-		# raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        # te.append(""")	
-# """)
-
-    # te.append("""
-
-	# !! local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibraries
-		# SutLibraries.Default = SutLibraries""" % SutLibraries )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-    # te.append("""
-		# raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    # te.append(""")
-# """)
-    # te.append("""
-	# !! local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdapters
-		# SutAdapters.Default = SutAdapters""" % SutAdapters )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-    # te.append("""
-		# raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    # te.append(""")	
-# """)
-    # te.append("""
-	# if TestAdapter.isDeprecated():
-		# raise Exception('SUT adapter %s is deprecated')
-# """ % SutAdapters )
-    # te.append("""
-	# if TestLibrary.isDeprecated():
-		# raise Exception('SUT library %s is deprecated')
-# """ % SutLibraries )
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-	# try:
-		# SutLibraries.Generic = SutLibrariesGeneric
-	# except Exception as e:
-		# pass
-# """ )
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# try:
-		# SutAdapters.Generic = SutAdaptersGeneric
-	# except Exception as e:
-		# pass
-# """ )
 
     if not withoutProbes:
         te.append("""
@@ -3519,25 +3328,6 @@ def createTestSuite (	dataTest, userName, testName, trPath, logFilename, without
     te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1] # task server id
-# test_id = sys.argv[2] # tab id of the test result in the gui
-# replay_id = sys.argv[3]
-
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-
-# if sys.version_info > (3,):
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a+', 1) 
-# else:
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
 
     te.append(IMPORT_INTRO)
     
@@ -3668,83 +3458,6 @@ try:
 	TestLibrary.setVersionGeneric('%s') 
 	TestAdapter.setVersionGeneric('%s')   
 """ %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-
-	# !! generic local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-        # te.append("""
-		# raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        # te.append(""")
-# """)
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# !! generic local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-        # te.append("""
-		# raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        # te.append(""")	
-# """)
-
-    # te.append("""
-
-	# !! local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibraries
-		# SutLibraries.Default = SutLibraries""" % SutLibraries )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-    # te.append("""
-		# raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    # te.append(""")
-# """)
-    # te.append("""
-	# !! local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdapters
-		# SutAdapters.Default = SutAdapters""" % SutAdapters )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-    # te.append("""
-		# raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    # te.append(""")	
-# """)
-    # te.append("""
-	# if TestAdapter.isDeprecated():
-		# raise Exception('SUT adapter %s is deprecated')
-# """ % SutAdapters )
-    # te.append("""
-	# if TestLibrary.isDeprecated():
-		# raise Exception('SUT library %s is deprecated')
-# """ % SutLibraries )
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-	# try:
-		# SutLibraries.Generic = SutLibrariesGeneric
-	# except Exception as e:
-		# pass
-# """ )
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# try:
-		# SutAdapters.Generic = SutAdaptersGeneric
-	# except Exception as e:
-		# pass
-# """ )
 
     if not withoutProbes:
         te.append("""
@@ -3913,25 +3626,6 @@ def createTestUnit (	dataTest, userName, testName, trPath, logFilename, withoutP
     te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1] # task server id
-# test_id = sys.argv[2] # tab id of the test result in the gui
-# replay_id = sys.argv[3]
-
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-
-# if sys.version_info > (3,):
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a+', 1) 
-# else:
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
 
     te.append(IMPORT_INTRO)
     
@@ -4061,83 +3755,6 @@ try:
 	TestLibrary.setVersionGeneric('%s') 
 	TestAdapter.setVersionGeneric('%s')   
 """ %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-
-	# !! generic local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-        # te.append("""
-		# raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        # te.append(""")
-# """)
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# !! generic local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-        # te.append("""
-		# raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        # te.append(""")	
-# """)
-
-    # te.append("""
-
-	# !! local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibraries
-		# SutLibraries.Default = SutLibraries""" % SutLibraries )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-    # te.append("""
-		# raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    # te.append(""")
-# """)
-    # te.append("""
-	# !! local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdapters
-		# SutAdapters.Default = SutAdapters""" % SutAdapters )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-    # te.append("""
-		# raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    # te.append(""")	
-# """)
-    # te.append("""
-	# if TestAdapter.isDeprecated():
-		# raise Exception('SUT adapter %s is deprecated')
-# """ % SutAdapters )
-    # te.append("""
-	# if TestLibrary.isDeprecated():
-		# raise Exception('SUT library %s is deprecated')
-# """ % SutLibraries )
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-	# try:
-		# SutLibraries.Generic = SutLibrariesGeneric
-	# except Exception as e:
-		# pass
-# """ )
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# try:
-		# SutAdapters.Generic = SutAdaptersGeneric
-	# except Exception as e:
-		# pass
-# """ )
 
     if not withoutProbes:
         te.append("""
@@ -4300,25 +3917,6 @@ def createTestAbstract (	dataTest, userName, testName, trPath, logFilename, with
     te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1] # task server id
-# test_id = sys.argv[2] # tab id of the test result in the gui
-# replay_id = sys.argv[3]
-
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-
-# if sys.version_info > (3,):
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a+', 1) 
-# else:
-	# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0)  
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
 
     te.append(IMPORT_INTRO)
     
@@ -4448,83 +4046,6 @@ try:
 	TestLibrary.setVersionGeneric('%s') 
 	TestAdapter.setVersionGeneric('%s')   
 """ %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-
-	# !! generic local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-        # te.append("""
-		# raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        # te.append(""")
-# """)
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# !! generic local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-        # te.append("""
-		# raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        # te.append(""")	
-# """)
-
-    # te.append("""
-
-	# !! local libraries adapters injection
-	# try:
-		# from SutLibraries import %s as SutLibraries
-		# SutLibraries.Default = SutLibraries""" % SutLibraries )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")
-    # te.append("""
-		# raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    # te.append(""")
-# """)
-    # te.append("""
-	# !! local adapters injection
-	# try:
-		# from SutAdapters import %s as SutAdapters
-		# SutAdapters.Default = SutAdapters""" % SutAdapters )
-    # te.append("""
-	# except Exception as e:
-		# sys.stderr.write( '%s\\n' % str(e) )""")	
-    # te.append("""
-		# raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    # te.append(""")	
-# """)
-    # te.append("""
-	# if TestAdapter.isDeprecated():
-		# raise Exception('SUT adapter %s is deprecated')
-# """ % SutAdapters )
-    # te.append("""
-	# if TestLibrary.isDeprecated():
-		# raise Exception('SUT library %s is deprecated')  
-# """ % SutLibraries )
-
-    # if SutLibrariesGeneric:
-        # te.append("""
-	# try:
-		# SutLibraries.Generic = SutLibrariesGeneric
-	# except Exception as e:
-		# pass
-# """ )
-
-    # if SutAdaptersGeneric:
-        # te.append("""
-	# try:
-		# SutAdapters.Generic = SutAdaptersGeneric
-	# except Exception as e:
-		# pass
-# """ )
 
     if not withoutProbes:
         te.append("""

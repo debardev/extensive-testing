@@ -80,14 +80,6 @@ def createSubTest(dataTest, descriptions, trPath, defaultLibrary='',
     # import static arguments
     te.append( TestModel.getStaticArgs() )
 
-    # te.append( """test_result_path = '%s'\n""" % trPath )
-
-    # te.append("""
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-# """)
-
     # import test executor libraries
     te.append( TestModel.IMPORT_TE_LIBS )
 

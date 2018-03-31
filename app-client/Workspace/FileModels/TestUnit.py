@@ -76,7 +76,8 @@ class DataModel(GenericModel.GenericModel):
     """
     Data model for test unit
     """
-    def __init__ (self, userName='unknown', testDef='', defLibrary='', defAdapter='', timeout="10.0", inputs=[], outputs=[]):
+    def __init__ (self, userName='unknown', testDef='', defLibrary='', 
+                  defAdapter='', timeout="10.0", inputs=[], outputs=[]):
         """
         This class describes the model of one script document, and provides a xml <=> python encoder
         The following xml :

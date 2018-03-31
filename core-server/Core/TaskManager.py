@@ -1246,10 +1246,12 @@ class Task(Logger.ClassLogger):
                                                     descriptions=self.dataTest['test-properties']['descriptions']['description'],
                                                     defaultLibrary=RepoLibraries.instance().getDefault(),
                                                     defaultAdapter=RepoAdapters.instance().getDefault(), 
-                                                    isTestUnit=isTu, isTestAbstract=isTa )
-                sub_tes.append( (isTu, isTa, self.testName, subte) )
+                                                    isTestUnit=isTu, 
+                                                    isTestAbstract=isTa )
+                sub_tes.append( (isTu, isTa, self.testName, subte, '') )
 
             if  isTp or isTg:
+                insideTp=''
                 for ts in self.dataTest['test-execution']:
                     isSubTu=False
                     isSubTa=False
@@ -1258,18 +1260,33 @@ class Task(Logger.ClassLogger):
                             isSubTu=True
                         if ts['extension'] == RepoManager.TEST_ABSTRACT_EXT:
                             isSubTa=True
+                        if ts['extension'] == RepoManager.TEST_PLAN_EXT and ts['separator'] == 'started':
+                            while ts['testpath'][:1] == '/':
+                                ts['testpath'] = ts['testpath'][1:]
+                            insideTp='%s:/%s/%s.%s' % (
+                                                       ts['testproject'],
+                                                       ts['testpath'],
+                                                       ts['testname'],
+                                                       ts['extension'],
+                                                    )
                             
+                        if ts['extension'] == RepoManager.TEST_PLAN_EXT and ts['separator'] == 'terminated':
+                            insideTp=''
                     if ts['enable'] == TestModel.TS_ENABLED:
-                        subte = SubTestModel.createSubTest( dataTest = ts, trPath=self.getTestPath(),
+                        subte = SubTestModel.createSubTest( dataTest = ts, 
+                                                        trPath=self.getTestPath(),
                                                         descriptions=self.dataTest['test-properties']['descriptions']['description'],
                                                         defaultLibrary=RepoLibraries.instance().getDefault(),
                                                         defaultAdapter=RepoAdapters.instance().getDefault(), 
-                                                        isTestUnit=isSubTu, isTestAbstract=isSubTa,
-                                                        isTestPlan=isTp, isTestGlobal=isTg )
-                        sub_tes.append( ( isSubTu, isSubTa, ts['file'], subte) )
+                                                        isTestUnit=isSubTu, 
+                                                        isTestAbstract=isSubTa,
+                                                        isTestPlan=isTp, 
+                                                        isTestGlobal=isTg )
+                        sub_tes.append( ( isSubTu, isSubTa, ts['file'], subte, insideTp) )
         except Exception as e:
             self.error( "parse test - unable to prepare sub te: %s" % str(e) )
-            return ( False, str(e) )
+            # return ( False, str(e) )
+            return (False, {'msg': str(e)})
         else:
             self.trace("Parse test: creating the main te")
             startTestLine = 0
@@ -1295,11 +1312,12 @@ class Task(Logger.ClassLogger):
             except Exception as e:
                 self.error( "parse test - unable to prepare te: %s" % str(e) )
                 self.wrongParseToFile( te=te)
-                return ( False, str(e) )
+                #return ( False, str(e) )
+                return (False, {'msg': str(e)})
             else:
                 self.trace( "compile all sub test executable" ) 
                 for i in xrange(len(sub_tes)):
-                    issub_tu, issub_ta, subtest_name, subtest_val = sub_tes[i]
+                    issub_tu, issub_ta, subtest_name, subtest_val, inside_tp = sub_tes[i]
                     
                     if sys.version_info > (3,):
                         subtest_val = subtest_val.decode("utf8")
@@ -1316,57 +1334,43 @@ class Task(Logger.ClassLogger):
                     try:
                         parser.suite(subtest_val).compile()
                     except SyntaxError as e:
-                        self.trace( "sub test syntax error: %s" % str(e) )
-                        lineno = e.lineno
+                        self.trace( "sub test (id=%s, testname=%s) syntax error: %s" % (i, subtest_name, str(e)) )
+                        line_err = (e.lineno-startTestLine) + 1
+                        # set the lineno to None to remove it from exception text
                         e.lineno = None
                         self.wrongParseToFile( te=subtest_val, subTest=True  )
-                        linerr = (lineno-startTestLine) + 1
-                        if 'testplan' in self.dataTest or 'testglobal' in self.dataTest:
-                            return ( False, "Test %s (line %s): %s" % (subtest_name, linerr, e) )
-                        else:
-                            return ( False, "Line %s: %s" % (linerr, e) )
+                        return (False, {'msg': str(e), 
+                                        'line': line_err, 
+                                        'testname': subtest_name,
+                                        'parent-testname': inside_tp })
+
                     except SystemError as e:
                         self.error( "sub test server limitation raised: %s" % str(e) )
-                        return ( False, "Limitation: this test is too big!" )
+                        return (False, {'msg': "Limitation: the test (%s) is too big!" % subtest_name})
                     except Exception as e:
                         self.error( 'unable to parse sub test %s' % Common.getBackTrace() )
                         e.lineno = None
                         self.wrongParseToFile( te=subtest_val, subTest=True  )
-                        return ( False, str(e) )
+                        return (False, {'msg': str(e), 'testname': subtest_name })
 
                 self.trace('Parse test: compiling main te')
                 try:
                     parser.suite(te).compile()
                 except SyntaxError as e:
                     self.trace( "syntax error: %s" % str(e) )
-                    lineno = e.lineno
-                    e.lineno = None
                     self.wrongParseToFile( te=te )
-                    if 'testplan' in self.dataTest or 'testglobal' in self.dataTest:
-                        return ( False, str(e) )
-                    else:
-                        if 'testunit' in self.dataTest:
-                            return ( False, "Line %s: %s" % ( (lineno-startTestLine) + 1,str(e)) )
-                        elif 'testabstract' in self.dataTest:
-                            return ( False, "Line %s: %s" % ( (lineno-startTestLine) + 1,str(e)) )
-                        else:              
-                            # begin issue 464  
-                            beginTeExec, leftTeExec = te.split('# !! test exec injection')
-                            startExecTestLine = len( beginTeExec.splitlines() ) + 1
-                            if lineno >= startExecTestLine:
-                                return ( False, "Line %s: %s" % ( (lineno -startExecTestLine)+1, str(e) ) )
-                            # end issue 464  
-                            else:
-                                return ( False, "Line %s: %s" % ( (lineno-startTestLine) + 1,str(e)) )
+                    return (False, {'msg': str(e), 'line': e.lineno })
+
                 except SystemError as e:
                     self.error( "server limitation raised: %s" % str(e) )
-                    return ( False, "Limitation: this test is too big!" )
+                    return (False, {'msg': "Limitation: this test is too big!"})
                 except Exception as e:
                     self.error( 'unable to parse test %s' % Common.getBackTrace() )
                     e.lineno = None
                     self.wrongParseToFile( te=te )
-                    return ( False, str(e) )
-            return ( True, "" )
+                    return (False, {'msg': str(e) })
+
+            return ( True, {} )
 
     def getTestLocation(self):
         """

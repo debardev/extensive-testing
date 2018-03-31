@@ -6450,7 +6450,7 @@ class TestsCheckSyntax(Handler):
         status, error_msg = task.parseTest()        
         del task
 
-        return { "cmd": self.request.path, "status": status, "error-msg": error_msg }
+        return { "cmd": self.request.path, "status": status, "error": error_msg }
         
 class TestsCheckSyntaxTpg(Handler):
     """
@@ -6540,28 +6540,38 @@ class TestsCheckSyntaxTpg(Handler):
             raise HTTP_400("Bad test extension provided (%s)" % testExtension)
             
         if testExtension == "tgx":
-            success, error_msg, testExecution = RepoTests.instance().addtf2tg( data_= testExecution )
+            success, error_msg, all_tests = RepoTests.instance().addtf2tg( data_= testExecution )
             if success != Context.instance().CODE_OK:
-                return { "cmd": self.request.path, "status": False, "error-msg": error_msg }
-                
+                return { "cmd": self.request.path, "status": False, "error": error_msg }
+            testData = { 'test-definition': '', 
+                         'test-execution': all_tests, 
+                         'test-properties': testProperties,
+                         'test-extension': testExtension }
+                         
         if testExtension == "tpx":       
-            success, error_msg = RepoTests.instance().addtf2tp( 
-                                data_=self.request.data["test-execution"]
-                             )
+            success, error_msg = RepoTests.instance().addtf2tp( data_=testExecution  )
             if success != Context.instance().CODE_OK:
-                return { "cmd": self.request.path, "status": False, "error-msg": error_msg }
- 
+                return { "cmd": self.request.path, "status": False, "error": error_msg }
+                
+            testData = { 'test-definition': '',
+                         'test-execution': testExecution, 
+                         'test-properties': testProperties,
+                         'test-extension': testExtension  }
+
         task = TaskManager.getObjectTask(   
-                                            testData=self.request.data, testName=testName, 
-                                            testPath=testPath,  testUser=user_profile["login"], 
-                                            testId=0, testBackground=False ,
+                                            testData=testData, 
+                                            testName=testName, 
+                                            testPath=testPath,  
+                                            testUser=user_profile["login"], 
+                                            testId=0, 
+                                            testBackground=False ,
                                             statsmgr=StatsManager.instance(),
                                             context=Context
                                         )
         status, error_msg = task.parseTest()        
         del task
 
-        return { "cmd": self.request.path, "status": status, "error-msg": error_msg }
+        return { "cmd": self.request.path, "status": status, "error": error_msg }
     
 class TestsCreateDesign(Handler):
     """

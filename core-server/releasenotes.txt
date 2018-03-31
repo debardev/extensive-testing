@@ -10,7 +10,10 @@
 		6. (minor) python traceback added on documentation generation for adapters and libraries
 		7. (minor) repository manager updated to ignore __pycache__ folders present in python3
 		8. (medium) test model: access data from any level for custom parameter (pull request #7)
+		9. (medium) check syntax: parent testname added in error message
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only
 		3. (minor) test interop vsphere: error during clone virtual machine issue #11
+		4. (medium) check syntax in testplan/testglobal: fix regression test name missing in error messages
+		5. (medium) fix regression: unable to check syntax of a test global

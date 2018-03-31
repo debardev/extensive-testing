@@ -3092,18 +3092,9 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         #
         about = [ "<b>%s %s</b>" % (name,__VERSION__) ]
         about.append( "Copyright (c) %s-%s %s" % (__BEGIN__,__END__, __AUTHOR__) )
-        about.append( "Extensive Testing<br />" )
-
-        about.append( "%s" % self.tr("This application tries to save your time and make your life easier at work.") )
-        about.append( "%s" % self.tr("Use at your own risk, no warranty, no promises...") )
-        about.append( "%s" % self.tr("Enjoy!") )
-        about.append( "" )           
+        about.append( "%s<br />" %  Settings.instance().readValue( key = 'Common/product-name' ))       
         about.append( "%s: <a href='mailto:%s'>%s</a>" %(self.tr("Contact"), __EMAIL__,__EMAIL__) )
         about.append( "%s: <a href='%s'>%s</a>" % (self.tr("Home page"), url, url) )
-        about.append( "" )
-        
-        contrib = self.readFileRessources(filename=":/CONTRIBUTORS")
-        about.append( "%s:<br /><i>%s</i>" % (self.tr("Contributors"), contrib))
 
         about.append( "<hr />" )
         about.append( "%s <b>%s</b>" % (self.tr("Developed and maintained by"), __AUTHOR__) ) 
@@ -3119,6 +3110,10 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
             about.append( "%s" % self.tr("Portable edition") )
         about.append( "<hr />" )
 
+        contrib = self.readFileRessources(filename=":/CONTRIBUTORS")
+        about.append( "%s:<br /><i>%s</i>" % (self.tr("Contributors"), contrib))
+        
+        about.append( "<hr />" )
         lic = self.readFileRessources(filename=":/TERMS")
         about.append( "<i>%s</i>" % lic ) 
         

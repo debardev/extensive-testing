@@ -601,13 +601,17 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                         # end of fix
                         
                         if fileExt == RepoManager.TEST_SUITE_EXT:
-                            ts.update( { 'test-definition': doc.testdef, 'test-execution': doc.testexec, 'path': filenameTs } )
+                            ts.update( { 'test-definition': doc.testdef, 
+                                         'test-execution': doc.testexec,
+                                         'path': filenameTs } )
                             alltests.append( ts )
                         elif fileExt == RepoManager.TEST_UNIT_EXT:
-                            ts.update( { 'test-definition': doc.testdef, 'path': filenameTs } )
+                            ts.update( { 'test-definition': doc.testdef, 
+                                         'path': filenameTs } )
                             alltests.append( ts )
                         elif fileExt == RepoManager.TEST_ABSTRACT_EXT:
-                            ts.update( { 'test-definition': doc.testdef, 'path': filenameTs } )
+                            ts.update( { 'test-definition': doc.testdef, 
+                                         'path': filenameTs } )
                             alltests.append( ts )
                         elif fileExt == RepoManager.TEST_PLAN_EXT:
                             self.trace('Reading sub test plan')
@@ -632,10 +636,17 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                                 # end of fix
                         
                                 # add testplan separator
-                                alltests.extend( [{'extension': 'tpx', 'separator': 'started', 'enable': "0" , 'depth': 1, 
-                                                    'id': ts['id'], 'testname': filenameTs, 'parent': ts['parent'], 
-                                                    'alias': alias_ts, 'properties': ts['properties'],
-                                                    "testpath": ts['testpath'], "testproject": ts['testproject'] }] ) 
+                                alltests.extend( [{'extension': 'tpx', 
+                                                   'separator': 'started', 
+                                                   'enable': "0" , 
+                                                   'depth': 1, 
+                                                   'id': ts['id'], 
+                                                   'testname': filenameTs,
+                                                   'parent': ts['parent'], 
+                                                   'alias': alias_ts,
+                                                   'properties': ts['properties'],
+                                                   "testpath": ts['testpath'], 
+                                                   "testproject": ts['testproject'] }] ) 
                                                     
                                 # update all subtest with parameters from testplan
                                 for i in xrange(len(sortedTests)):
@@ -650,10 +661,15 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                                 self.trace('Read sub test plan finished')
                                 
                                 alltests.extend( sortedTests )
-                                alltests.extend( [{ 'extension': 'tpx', 'separator': 'terminated',  
-                                                    'enable': "0" , 'depth': 1, 
-                                                    'id': ts['id'], 'testname': filenameTs, 
-                                                    'parent': ts['parent'], 'alias': alias_ts }] )
+                                alltests.extend( [{ 
+                                                    'extension': 'tpx', 
+                                                    'separator': 'terminated',  
+                                                    'enable': "0" , 
+                                                    'depth': 1, 
+                                                    'id': ts['id'], 
+                                                    'testname': filenameTs, 
+                                                    'parent': ts['parent'], 
+                                                    'alias': alias_ts }] )
         return ret + (alltests, )
 
     def addtf2tp(self, data_, tpid=0):

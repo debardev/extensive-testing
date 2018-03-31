@@ -93,8 +93,16 @@ class DataModel(GenericModel.GenericModel):
         # init file properties
         self.properties = { 'properties': {
                                     'parameters': {
-                                        'parameter': [ {'type': 'bool', 'name': 'DEBUG', 'description': '', 'value' : 'False', 'color': '' },
-                                                         {'type': 'float', 'name': 'TIMEOUT', 'description': '', 'value' : timeout, 'color': '' } ]
+                                        'parameter': [ {'type': 'bool', 
+                                                        'name': 'DEBUG', 
+                                                        'description': '', 
+                                                        'value' : 'False', 
+                                                        'color': '' },
+                                                         {'type': 'float', 
+                                                         'name': 'TIMEOUT', 
+                                                         'description': '', 
+                                                         'value' : timeout, 
+                                                         'color': '' } ]
                                             }
                                 }
                             }

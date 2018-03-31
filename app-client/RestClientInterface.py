@@ -3660,14 +3660,24 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         Called on response
         """
         self.trace("on check test syntax")
-        
+
         if details["status"]:
             self.InformationMsg.emit( self.tr("Check syntax") , 
                                       "%s\n%s" % ( self.tr("Well done!"), 
                                                    self.tr("No syntax error detected in your test.") ) )
         else:
             msg = self.tr("An error exists on this test.")
-            msg += "\n%s" % details["error-msg"]
+            msg += "\n\n"
+            
+            if 'parent-testname' in details["error"]:
+                if len(details["error"]["parent-testname"]):
+                    msg += "Plan: %s\n" % details["error"]["parent-testname"]
+            if 'testname' in details["error"]:
+                msg += "Test: %s\n" % details["error"]["testname"]
+            if 'line' in details["error"]:
+                msg += 'Line %s: ' % details['error']["line"]
+            msg += '%s' % details['error']["msg"]
+                
             self.WarningMsg.emit( self.tr("Check syntax") , msg )
             
     def onTestsCreateDesign(self, details):
