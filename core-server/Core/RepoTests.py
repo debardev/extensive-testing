@@ -35,6 +35,7 @@ import tarfile
 import scandir
 import copy
 import json
+import re
 
 # unicode = str with python3
 if sys.version_info > (3,):
@@ -1044,13 +1045,17 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         
     # dbr13 >>
     def updateLinkedScriptPath(self, project, mainPath, oldFilename, 
-                               newFilename, extFilename, user_login):
+                               newFilename, extFilename, user_login, 
+                               new_project='', newPath=''):
         """
         """
         # get current project name and accessible projects list for currnet user
         project_name = ProjectsManager.instance().getProjectName(prjId=project)
         projects = ProjectsManager.instance().getProjects(user=user_login)
-
+        
+        if len(new_project):
+            new_project_name = ProjectsManager.instance().getProjectName(prjId=new_project)
+            
         updated_files_list = []
 
         # create old and new file name
@@ -1059,7 +1064,7 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                                                   mainPath, 
                                                   newFilename, 
                                                   extFilename)
-
+                
             # for update location func
             if oldFilename.rsplit(".")[-1] in [RepoManager.TEST_PLAN_EXT,
                                                RepoManager.TEST_ABSTRACT_EXT,
@@ -1068,10 +1073,10 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                 old_test_file_name = oldFilename
             else:
                 # for rename func
-                old_test_file_name = '%s:%s/%s.%s' % (project_name, 
-                                                      mainPath, 
-                                                      oldFilename, 
-                                                      extFilename)
+                old_test_file_name = '%s:/*%s/%s.%s' % (project_name, 
+                                                        mainPath[1:], 
+                                                        oldFilename, 
+                                                        extFilename)
         else:
             new_test_file_name = '%s:%s.%s' % (project_name, 
                                                newFilename, 
@@ -1119,7 +1124,8 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                 is_changed = False
 
                 for test_file in test_files_list:
-                    if old_test_file_name == test_file['file']:
+                    old_test_file_name_regex = re.compile(old_test_file_name)
+                    if re.findall(old_test_file_name_regex, test_file['file']):
                         test_file['file'] = new_test_file_name
                         test_file['extension'] = extFilename
                         is_changed = True

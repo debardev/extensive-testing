@@ -55,10 +55,8 @@ class ProjectsManager(Logger.ClassLogger):
         self.context = context
         
         # Initialize the repository
-        self.info( 'Deploying default common project...' )
+        self.info( 'Deploying default common project and reserved folders...' )
         self.createDefaultCommon()
-
-        # new in v17
         self.addReservedFolders()
 
     def addReservedFolders(self):

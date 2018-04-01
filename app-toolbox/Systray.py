@@ -2467,8 +2467,12 @@ class Window(QDialog):
         
         about = [ "<b>%s %s</b>" % (name,Settings.getVersion()) ]
         about.append( "Part of the extensive testing project  (c) %s-%s" % (__BEGIN__,__END__) )
-        about.append( "" ) 
-        about.append( "Developed and maintained by <b>%s</b>" % __AUTHOR__ ) 
+        about.append( "Developed and maintained by <b>%s</b>" % __AUTHOR__ )
+        about.append( "" )
+        about.append( "Contact: <a href='mailto:%s'>%s</a>" %( __EMAIL__,__EMAIL__) )
+        about.append( "Website: <a href='%s'>%s</a>" % (url,url) )
+        
+        about.append( "<hr />")
         about.append( "<i>%s python %s (%s) - Qt %s - PyQt %s on %s</i>" % ( 
                                     self.tr("Built with"), 
                                     platform.python_version(), platform.architecture()[0],
@@ -2481,11 +2485,8 @@ class Window(QDialog):
                      ) )
         if QtHelper.str2bool(Settings.get( 'Common','portable' )): 
             about.append( "%s" % self.tr("Portable edition") )
-        about.append( "" )
-        about.append( "Contact: <a href='mailto:%s'>%s</a>" %( __EMAIL__,__EMAIL__) )
-        about.append( "Website: <a href='%s'>%s</a>" % (url,url) )
-        about.append( "" )
-        
+        about.append( "<hr />")
+
         contrib = self.readFileRessources(filename=":/CONTRIBUTORS")
         about.append( "%s:<br /><i>%s</i>" % (self.tr("Contributors"), contrib))
         

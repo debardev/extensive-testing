@@ -1271,12 +1271,10 @@ class WTestPlan(Document.WDocument):
         ret = self.addTestFile(updatePath=True)
         if ret is None:
             return
+
+        (testName, fromRepo, currentItem, projectId, update_location) = ret
         
         # dbr13 >>>
-        if len(ret) == 4:
-            (testName, fromRepo, currentItem, projectId ) = ret
-        else:
-            (testName, fromRepo, currentItem, projectId, update_location) = ret
         # prepare old file name
         old_test_file_name = None
         if update_location:
@@ -2853,119 +2851,86 @@ class WTestPlan(Document.WDocument):
         """
         Add a test file
         """
-        self.localConfigured = Settings.instance().readValue( key = 'Repositories/local-repo' )
-
         # import test from local
-        if self.localConfigured != "Undefined":
-            buttons = QMessageBox.Yes | QMessageBox.No
-            answer = QMessageBox.question(self, Settings.instance().readValue( key = 'Common/name' ), 
-                            self.tr("Import test from local repository") , buttons)
-            if answer == QMessageBox.Yes:
-                if self.testGlobal:
-                    dialog = self.lRepo.SaveOpenToRepoDialog( self , "", 
-                                                              type = self.lRepo.MODE_OPEN,
-                                                              typeFile=[ TYPE, 
-                                                                         TestSuite.TYPE, 
-                                                                         TestUnit.TYPE, 
-                                                                         TestAbstract.TYPE ], 
-                                                              multipleSelection=True )
-                    dialog.hideFiles(hideTsx=False, hideTpx=False, 
-                                     hideTcx=True, hideTdx=True, 
-                                     hideTux=False, hidePng=True, 
-                                     hideTgx=True, hideTax=False)
-                else:
-                    dialog = self.lRepo.SaveOpenToRepoDialog( self , "", 
-                                                              type = self.lRepo.MODE_OPEN,
-                                                              typeFile=[ TestSuite.TYPE, 
-                                                                         TestUnit.TYPE, 
-                                                                         TestAbstract.TYPE ], 
-                                                              multipleSelection=True )
-                    dialog.hideFiles(hideTsx=False, hideTpx=True, 
-                                     hideTcx=True, hideTdx=True, 
-                                     hideTux=False, hidePng=True, 
-                                     hideTgx=True, hideTax=False)
-                if dialog.exec_() == QDialog.Accepted:
-                    if updatePath:
-                        return (dialog.getSelection(), FROM_LOCAL_REPO, self.itemCurrent, None)
-                    else:
-                        self.addSubItems( files = dialog.getSelection(), 
-                                          fromType = FROM_LOCAL_REPO, 
-                                          parentTs=self.itemCurrent, 
-                                          insertTest=insertTest )
-            
-            else:
-                if RCI.instance().isAuthenticated: # no then perhaps in remo repo if connected?
-                    prjName = self.iRepo.remote().getCurrentProject()
-                    prjId = self.iRepo.remote().getProjectId(project=prjName)
-                    if self.testGlobal:
-                        self.iRepo.remote().saveAs.getFilename(multipleSelection=True, 
-                                                               project=prjName, 
-                                                               type= [TYPE, 
-                                                                      TestSuite.TYPE, 
-                                                                      TestUnit.TYPE, 
-                                                                      TestAbstract.TYPE],
-                                                               # dbr13 >>>
-                                                               update_path=updatePath
-                                                               # dbr13 <<<
-                                                               )
-                    else:
-                        self.iRepo.remote().saveAs.getFilename(multipleSelection=True, 
-                                                               project=prjName, 
-                                                               type= [TestSuite.TYPE, 
-                                                                      TestUnit.TYPE, 
-                                                                      TestAbstract.TYPE],
-                                                               # dbr13 >>>
-                                                               update_path=updatePath
-                                                               # dbr13 <<<
-                                                               )
-                    dialog = self.iRepo.remote().saveAs
-                    if dialog.exec_() == QDialog.Accepted:
-                        prjName = dialog.getProjectSelection()
-                        prjId = self.iRepo.remote().getProjectId(project=prjName)
-                        if updatePath:
-                            return (dialog.getSelection(), FROM_REMOTE_REPO, self.itemCurrent, prjId)
-                        else:
-                            self.addSubItems( files = dialog.getSelection() , 
-                                              fromType = FROM_REMOTE_REPO, 
-                                              parentTs=self.itemCurrent, 
-                                              project=prjId,
-                                              insertTest=insertTest)
-                else:
-                    QMessageBox.warning(self, self.tr("Import") , self.tr("Connect to the test center first!") )
+        if Settings.instance().readValue( key = 'Repositories/local-repo' ) != "Undefined":
+            return self.addTestFromLocal(insertTest=insertTest, 
+                                         updatePath=updatePath)
         
         # import test from remote
-        elif RCI.instance().isAuthenticated: # no then perhaps in remo repo if connected?
+        else:
+            return self.addTestFromRemote(insertTest=insertTest, 
+                                          updatePath=updatePath)
+
+    def addTestFromLocal(self, insertTest=False, updatePath=False):
+        """
+        """
+        answer = QMessageBox.question(self, 
+                                      Settings.instance().readValue( key = 'Common/name' ), 
+                                      self.tr("Import test from local repository") , 
+                                      QMessageBox.Yes | QMessageBox.No)
+        if answer == QMessageBox.Yes:
+            if self.testGlobal:
+                typeFile = [ TYPE,  TestSuite.TYPE, TestUnit.TYPE,  TestAbstract.TYPE ]
+                hideTpx = False
+            else:
+                typeFile=[ TestSuite.TYPE, TestUnit.TYPE, TestAbstract.TYPE ]
+                hideTpx = True
+
+            dialog = self.lRepo.SaveOpenToRepoDialog( self , "", 
+                                                      type = self.lRepo.MODE_OPEN,
+                                                      typeFile=typeFile, 
+                                                      multipleSelection=True )
+            dialog.hideFiles(hideTsx=False, hideTpx=hideTpx, 
+                             hideTcx=True, hideTdx=True, 
+                             hideTux=False, hidePng=True, 
+                             hideTgx=True, hideTax=False)
+            if dialog.exec_() == QDialog.Accepted:
+                if updatePath:
+                    return (dialog.getSelection(), 
+                            FROM_LOCAL_REPO, 
+                            self.itemCurrent, 
+                            None,
+                            False)
+                else:
+                    self.addSubItems( files = dialog.getSelection(), 
+                                      fromType = FROM_LOCAL_REPO, 
+                                      parentTs=self.itemCurrent, 
+                                      insertTest=insertTest )
+                    return None
+        else:
+            return self.addTestFromRemote(insertTest=insertTest, 
+                                          updatePath=updatePath)
+        
+    def addTestFromRemote(self, insertTest=False, updatePath=False):
+        """
+        """
+        # import test from remote
+        if RCI.instance().isAuthenticated: # no then perhaps in remo repo if connected?
             prjName = self.iRepo.remote().getCurrentProject()
             prjId = self.iRepo.remote().getProjectId(project=prjName)
+            
             if self.testGlobal:
-                self.iRepo.remote().saveAs.getFilename(multipleSelection=True, 
-                                                       project=prjName, 
-                                                       type=[TYPE, 
-                                                             TestSuite.TYPE, 
-                                                             TestUnit.TYPE, 
-                                                             TestAbstract.TYPE] )
+                typeFile = [ TYPE,  TestSuite.TYPE, 
+                             TestUnit.TYPE,  TestAbstract.TYPE ]
             else:
-                self.iRepo.remote().saveAs.getFilename(multipleSelection=True, 
-                                                       project=prjName, 
-                                                       type=[TestSuite.TYPE, 
-                                                             TestUnit.TYPE, 
-                                                             TestAbstract.TYPE] )
+                typeFile=[ TestSuite.TYPE, TestUnit.TYPE, TestAbstract.TYPE ]
+
+            self.iRepo.remote().saveAs.getFilename(multipleSelection=True, 
+                                                   project=prjName, 
+                                                   type=typeFile,
+                                                   update_path=updatePath )
             dialog = self.iRepo.remote().saveAs
             if dialog.exec_() == QDialog.Accepted:
                 prjName = dialog.getProjectSelection()
                 prjId = self.iRepo.remote().getProjectId(project=prjName)
-                
-                # dbr13 >>>
-                update_location_in_tests = dialog.update_location_in_tests.isChecked()
-                # dbr13 <<<
-                
+
                 if updatePath:
                     # dbr13 >>> added - update_location
                     return (dialog.getSelection(), 
                             FROM_REMOTE_REPO, 
                             self.itemCurrent, 
                             prjId, 
-                            update_location_in_tests)
+                            dialog.getUpdateLocationStatus())
                     # dbr13 <<<
                 else:
                     self.addSubItems( files = dialog.getSelection(), 
@@ -2976,10 +2941,13 @@ class WTestPlan(Document.WDocument):
                     #  dbr13 >>>
                     self.updateProjectsAction.setEnabled(True)
                     # dbr13 <<<
+                    return None
         else:
-            QMessageBox.warning(self, self.tr("Import") , 
-                                self.tr("Connect to the test center first!")     )   
-
+            QMessageBox.warning(self,
+                                self.tr("Import") , 
+                                self.tr("Connect to the test center first!"))   
+            return None
+            
     def addSubItems (self, files, fromType, parentTs=None, project=0, insertTest=False):
         """
         Add severals items

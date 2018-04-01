@@ -10,7 +10,9 @@
 		6. (minor) python traceback added on documentation generation for adapters and libraries
 		7. (minor) repository manager updated to ignore __pycache__ folders present in python3
 		8. (medium) test model: access data from any level for custom parameter (pull request #7)
-		9. (medium) check syntax: parent testname added in error message
+		9. (medium) check syntax: parent testname added in error message, useful for test global
+		10. (major) test files model updated to support xml format as default, no more zlib compression (backward compatibility)
+		11. (minor) rest tester api: code cleanup to be more respectful of python language
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only

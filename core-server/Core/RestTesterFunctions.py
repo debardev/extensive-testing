@@ -786,15 +786,19 @@ class AdaptersFileMove(Handler):
         try:
             source = self.request.data.get("source")
             if source is None: raise EmptyValue("Please specify a source")
+            
             filePath = self.request.data.get("source")["file-path"]
             if filePath is None: raise EmptyValue("Please specify a source filename")
+            
             fileName = self.request.data.get("source")["file-name"]
             if fileName is None: raise EmptyValue("Please specify a source file path")
+            
             fileExt = self.request.data.get("source")["file-extension"]
             if fileExt is None: raise EmptyValue("Please specify a source file extension")
             
             destination = self.request.data.get("destination")
             if destination is None: raise EmptyValue("Please specify a destination")
+            
             newFilePath = self.request.data.get("destination")["file-path"]
             if newFilePath is None: raise EmptyValue("Please specify a destination file path")
         except EmptyValue as e:
@@ -1746,25 +1750,25 @@ class AdaptersFileUpload(Handler):
             fileContent = self.request.data.get("file-content")
             if fileContent is None: raise EmptyValue("Please specify a file content")
             
-            _overwrite = self.request.data.get("overwrite")
-            _closeafter = self.request.data.get("close-after")
-            _addfolders = self.request.data.get("add-folders")
+            _overwrite = self.request.data.get("overwrite", False)
+            _closeafter = self.request.data.get("close-after", False)
+            _addfolders = self.request.data.get("add-folders", False)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        overwrite = False
-        if _overwrite is not None:
-            overwrite = _overwrite
+        # overwrite = False
+        # if _overwrite is not None:
+            # overwrite = _overwrite
             
-        closeAfter = False
-        if _closeafter is not None:
-            closeAfter = _closeafter
+        # closeAfter = False
+        # if _closeafter is not None:
+            # closeAfter = _closeafter
             
-        addFolders = False
-        if _addfolders is not None:
-            addFolders = _addfolders
+        # addFolders = False
+        # if _addfolders is not None:
+            # addFolders = _addfolders
             
         putFileReturn = RepoAdapters.instance().uploadFile( pathFile=filePath, 
                                                             nameFile=fileName, 
@@ -1772,11 +1776,11 @@ class AdaptersFileUpload(Handler):
                                                             contentFile=fileContent, 
                                                             login=user_profile['login'], 
                                                             project='', 
-                                                            overwriteFile=overwrite,
-                                                            createFolders=addFolders,
+                                                            overwriteFile=_overwrite,
+                                                            createFolders=_addfolders,
                                                             lockMode=True, 
                                                             binaryMode=True,
-                                                            closeAfter=closeAfter )
+                                                            closeAfter=_closeafter )
         success, pathFile, nameFile, extFile, _, overwriteFile, closeAfter, isLocked, lockedBy = putFileReturn
 
         return { "cmd": self.request.path, 
@@ -1933,28 +1937,28 @@ class AdaptersFileOpen(Handler):
             filePath = self.request.data.get("file-path")
             if filePath is None: raise EmptyValue("Please specify a file path")
             
-            _ignoreLock = self.request.data.get("ignore-lock")
-            _readOnly = self.request.data.get("read-only")
+            _ignoreLock = self.request.data.get("ignore-lock", False)
+            _readOnly = self.request.data.get("read-only", False)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
-        ignoreLock = False
-        if _ignoreLock is not None:
-            ignoreLock = _ignoreLock
+        # ignoreLock = False
+        # if _ignoreLock is not None:
+            # ignoreLock = _ignoreLock
         
-        readOnly = False
-        if _readOnly is not None:
-            _readOnly = readOnly
+        # readOnly = False
+        # if _readOnly is not None:
+            # _readOnly = readOnly
            
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
 
         resultGetFile = RepoAdapters.instance().getFile(pathFile=filePath, 
                                                         login=user_profile['login'],
-                                                        forceOpen=ignoreLock, 
-                                                        readOnly=readOnly)  
+                                                        forceOpen=_ignoreLock, 
+                                                        readOnly=_readOnly)  
         success, path_file, name_file, ext_file, project, data_base64, locked, locked_by = resultGetFile 
         if success != Context.instance().CODE_OK:
             raise HTTP_500("Unable to open adapter file")
@@ -3446,25 +3450,25 @@ class LibrariesFileUpload(Handler):
             fileContent = self.request.data.get("file-content")
             if fileContent is None: raise EmptyValue("Please specify a file content")
             
-            _overwrite = self.request.data.get("overwrite")
-            _closeafter = self.request.data.get("close-after")
-            _addfolders = self.request.data.get("add-folders")
+            _overwrite = self.request.data.get("overwrite", False)
+            _closeafter = self.request.data.get("close-after", False)
+            _addfolders = self.request.data.get("add-folders", False)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        overwrite = False
-        if _overwrite is not None:
-            overwrite = _overwrite
+        # overwrite = False
+        # if _overwrite is not None:
+            # overwrite = _overwrite
             
-        closeAfter = False
-        if _closeafter is not None:
-            closeAfter = _closeafter
+        # closeAfter = False
+        # if _closeafter is not None:
+            # closeAfter = _closeafter
             
-        addFolders = False
-        if _addfolders is not None:
-            addFolders = _addfolders
+        # addFolders = False
+        # if _addfolders is not None:
+            # addFolders = _addfolders
             
         putFileReturn = RepoLibraries.instance().uploadFile( pathFile=filePath, 
                                                              nameFile=fileName, 
@@ -3472,11 +3476,11 @@ class LibrariesFileUpload(Handler):
                                                              contentFile=fileContent, 
                                                              login=user_profile['login'], 
                                                              project='', 
-                                                             overwriteFile=overwrite,
-                                                             createFolders=addFolders,
+                                                             overwriteFile=_overwrite,
+                                                             createFolders=_addfolders,
                                                              lockMode=True, 
                                                              binaryMode=True,
-                                                             closeAfter=closeAfter )
+                                                             closeAfter=_closeafter )
         success, pathFile, nameFile, extFile, _, overwriteFile, closeAfter, isLocked, lockedBy = putFileReturn
 
         return { "cmd": self.request.path, 
@@ -3633,28 +3637,28 @@ class LibrariesFileOpen(Handler):
             filePath = self.request.data.get("file-path")
             if filePath is None: raise EmptyValue("Please specify a file path")
             
-            _ignoreLock = self.request.data.get("ignore-lock")
-            _readOnly = self.request.data.get("read-only")
+            _ignoreLock = self.request.data.get("ignore-lock", False)
+            _readOnly = self.request.data.get("read-only", False)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
-        ignoreLock = False
-        if _ignoreLock is not None:
-            ignoreLock = _ignoreLock
+        # ignoreLock = False
+        # if _ignoreLock is not None:
+            # ignoreLock = _ignoreLock
         
-        readOnly = False
-        if _readOnly is not None:
-            _readOnly = readOnly
+        # readOnly = False
+        # if _readOnly is not None:
+            # _readOnly = readOnly
             
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
 
         resultGetFile = RepoLibraries.instance().getFile(pathFile=filePath,  
                                                         login=user_profile['login'],
-                                                        forceOpen=ignoreLock,
-                                                        readOnly=readOnly)
+                                                        forceOpen=_ignoreLock,
+                                                        readOnly=_readOnly)
         success, path_file, name_file, ext_file, project, data_base64, locked, locked_by = resultGetFile
         if success != Context.instance().CODE_OK:
             raise HTTP_500("Unable to open library file")
@@ -4736,21 +4740,22 @@ class PublicDirectoryRemove(Handler):
         try:
             folderPath = self.request.data.get("source")["directory-path"]
             if folderPath is None: raise EmptyValue("Please specify a source folder path")
-            _recursive = self.request.data.get("recursive")
+            
+            _recursive = self.request.data.get("recursive", False)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
-        if _recursive is None:
-            recursive = False
-        else:
-            recursive = _recursive
+        # if _recursive is None:
+            # recursive = False
+        # else:
+            # recursive = _recursive
 
         # avoid directory traversal
         folderPath = os.path.normpath("/" + folderPath )
         
-        if recursive:
+        if _recursive:
             success = RepoTests.instance().delDirAll(folderPath)  
             if success == Context.instance().CODE_ERROR:
                 raise HTTP_500("Unable to remove directory")
@@ -6320,20 +6325,20 @@ class TestsListing(Handler):
             projectId = self.request.data.get("project-id")
             if projectId is None: raise EmptyValue("Please specify a project id")
             
-            forsaveas = self.request.data.get("for-saveas")
-            forruns = self.request.data.get("for-runs")
+            _forsaveas = self.request.data.get("for-saveas", False)
+            _forruns = self.request.data.get("for-runs", False)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        _forsaveas = False
-        if forsaveas is not None:
-            _forsaveas = forsaveas
+        # _forsaveas = False
+        # if forsaveas is not None:
+            # _forsaveas = forsaveas
             
-        _forruns = False
-        if forruns is not None:
-            _forruns = forruns
+        # _forruns = False
+        # if forruns is not None:
+            # _forruns = forruns
              
         # checking input    
         if not isinstance(projectId, int):
@@ -6961,8 +6966,8 @@ class TestsFileOpen(Handler):
             filePath = self.request.data.get("file-path")
             if filePath is None: raise EmptyValue("Please specify a file path")
             
-            _ignoreLock = self.request.data.get("ignore-lock")
-            _readOnly = self.request.data.get("read-only")
+            _ignoreLock = self.request.data.get("ignore-lock", False)
+            _readOnly = self.request.data.get("read-only", False)
             
             _customParam = self.request.data.get("custom-param")
             _actId = self.request.data.get("action-id")
@@ -6970,6 +6975,7 @@ class TestsFileOpen(Handler):
 
             # dbr13 >>>
             update_location = self.request.data.get('extra', {}).get('update_location', False)
+            extra_filename = self.request.data.get('extra', {}).get('file_name', '')
             # dbr13 <<<
 
         except EmptyValue as e:
@@ -6987,13 +6993,13 @@ class TestsFileOpen(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
         
-        ignoreLock = False
-        if _ignoreLock is not None:
-            ignoreLock = _ignoreLock
+        # ignoreLock = False
+        # if _ignoreLock is not None:
+            # ignoreLock = _ignoreLock
         
-        readOnly = False
-        if _readOnly is not None:
-            readOnly = _readOnly
+        # readOnly = False
+        # if _readOnly is not None:
+            # readOnly = _readOnly
            
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
@@ -7001,14 +7007,14 @@ class TestsFileOpen(Handler):
         addLock = True
         if _destId is not None and _actId is not None:
             addLock = False
-            ignoreLock = False
-            readOnly = False
+            _ignoreLock = False
+            _readOnly = False
             
         resultGetFile = RepoTests.instance().getFile(pathFile=filePath, 
                                                     project=projectId, 
                                                     login=user_profile['login'],
-                                                    forceOpen=ignoreLock, 
-                                                    readOnly=readOnly,
+                                                    forceOpen=_ignoreLock, 
+                                                    readOnly=_readOnly,
                                                     addLock=addLock)  
         success, path_file, name_file, ext_file, project, data_base64, locked, locked_by = resultGetFile
         if success != Context.instance().CODE_OK:
@@ -7018,14 +7024,11 @@ class TestsFileOpen(Handler):
         # When we set checkbox in the Update->Location
         if update_location:
             file_path = path_file or '/'
-            old_file_name = self.request.data.get('extra')['file_name']
-            new_file_name = name_file
-            ext_file_name = ext_file
             update_files_list = RepoTests.instance().updateLinkedScriptPath(project=projectId,
                                                                             mainPath=file_path,
-                                                                            oldFilename=old_file_name,
-                                                                            newFilename=new_file_name,
-                                                                            extFilename=ext_file_name,
+                                                                            oldFilename=extra_filename,
+                                                                            newFilename=name_file,
+                                                                            extFilename=ext_file,
                                                                             user_login=user_profile['login'])
         # dbr13 <<<
         
@@ -7704,6 +7707,10 @@ class TestsFileMove(Handler):
                       type: integer
                     file-path:
                       type: string
+                upload_location:
+                  required: [upload_location]
+                  properties:
+                    upload_location: boolean
         responses:
           '200':
             description: move response
@@ -7748,6 +7755,8 @@ class TestsFileMove(Handler):
             if newProjectId is None: raise EmptyValue("Please specify a new project id")
             newFilePath = self.request.data.get("destination")["file-path"]
             if newFilePath is None: raise EmptyValue("Please specify a destination file path")
+            
+            update_location = self.request.data.get("update_location", False)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -7776,14 +7785,14 @@ class TestsFileMove(Handler):
         newFilePath = os.path.normpath("/" + newFilePath )
         
         success = RepoTests.instance().moveFile( 
-                                                        mainPath=filePath, 
-                                                        fileName=fileName, 
-                                                        extFilename=fileExt, 
-                                                        newPath=newFilePath, 
-                                                        project=projectId, 
-                                                        newProject=newProjectId,
-                                                        supportSnapshot=True
-                                                    )
+                                                mainPath=filePath, 
+                                                fileName=fileName, 
+                                                extFilename=fileExt, 
+                                                newPath=newFilePath, 
+                                                project=projectId, 
+                                                newProject=newProjectId,
+                                                supportSnapshot=True
+                                                )
         if success == Context.instance().CODE_ERROR:
             raise HTTP_500("Unable to move file")
         if success == Context.instance().CODE_ALLREADY_EXISTS:
@@ -7791,6 +7800,14 @@ class TestsFileMove(Handler):
         if success == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404("File does not exists")
             
+        # if update_location:
+            # update_files_list = RepoTests.instance().updateLinkedScriptPath(project=projectId,
+                                                                            # mainPath=filePath,
+                                                                            # oldFilename=fileName,
+                                                                            # newFilename=newFileName,
+                                                                            # extFilename=fileExt,
+                                                                            # user_login=user_profile['login'])
+                                                                            
         return { "cmd": self.request.path, "message": "file successfully moved", 
                  "project-id": projectId  }
       
@@ -9681,7 +9698,7 @@ class ResultsListingFiles(Handler):
             projectId = self.request.data.get("project-id")
             if projectId is None: raise EmptyValue("Please specify a project id")
 
-            _partial = self.request.data.get("partial-list")
+            _partial = self.request.data.get("partial-list", True)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -9697,12 +9714,12 @@ class ResultsListingFiles(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
             
-        if _partial is None:
-            partialListing = True
-        else:
-            partialListing = _partial
+        # if _partial is None:
+            # partialListing = True
+        # else:
+            # partialListing = _partial
         
-        nb_archs, nb_archs_f, archs, stats_archs = RepoArchives.instance().getTree(fullTree=not partialListing, 
+        nb_archs, nb_archs_f, archs, stats_archs = RepoArchives.instance().getTree(fullTree=not _partial, 
                                                                                    project=projectId)       
         return { "cmd": self.request.path, 
                  "listing": archs, 
@@ -9779,8 +9796,8 @@ class ResultsListingIdByDateTime(Handler):
             projectId = self.request.data.get("project-id")
             if projectId is None: raise EmptyValue("Please specify a project id")
 
-            dateFilter = self.request.data.get("date")
-            timeFilter = self.request.data.get("time")
+            dateFilter = self.request.data.get("date", None)
+            timeFilter = self.request.data.get("time", None)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -9894,8 +9911,8 @@ class ResultsDownloadResult(Handler):
             testId = self.request.data.get("test-id")
             if testId is None: raise EmptyValue("Please specify a project id and test id")
             
-            _saveAs = self.request.data.get("save-as")
-            _saveAsDest = self.request.data.get("save-as-name")
+            _saveAs = self.request.data.get("save-as", False)
+            _saveAsDest = self.request.data.get("save-as-name", '')
             
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
@@ -9918,10 +9935,10 @@ class ResultsDownloadResult(Handler):
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result by id not found')
 
-        saveAs = False
-        if _saveAs is not None: saveAs = _saveAs
-        saveAsDest = ''
-        if _saveAsDest is not None: saveAsDest = _saveAsDest
+        # saveAs = False
+        # if _saveAs is not None: saveAs = _saveAs
+        # saveAsDest = ''
+        # if _saveAsDest is not None: saveAsDest = _saveAsDest
             
         trxPath = "%s/%s" % (testPath, fileName)
         success, _, nameFile, extFile, _, b64result, _, _ = RepoArchives.instance().getFile( pathFile=trxPath, 
@@ -9934,7 +9951,7 @@ class ResultsDownloadResult(Handler):
             
         return { "cmd": self.request.path, 'test-id': testId, 'project-id': projectId, 
                  'result': b64result, 'result-name': nameFile, "result-extension": extFile,
-                 'save-as': saveAs, 'save-as-name': saveAsDest }
+                 'save-as': _saveAs, 'save-as-name': _saveAsDest }
                  
 class ResultsDownloadResultUncomplete(Handler):
     """
@@ -10704,7 +10721,7 @@ class ResultsReportReviews(Handler):
             projectId = self.request.data.get("project-id")
             if projectId is None: raise EmptyValue("Please specify a project id")
                 
-            _replayId = self.request.data.get("replay-id")    
+            _replayId = self.request.data.get("replay-id", 0)    
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -10720,10 +10737,10 @@ class ResultsReportReviews(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
         
-        if _replayId is None:
-            replayId = 0
-        else:
-            replayId = _replayId
+        # if _replayId is None:
+            # replayId = 0
+        # else:
+            # replayId = _replayId
             
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
@@ -10732,17 +10749,20 @@ class ResultsReportReviews(Handler):
         ret = { "cmd": self.request.path, 'test-id': testId }
         
         # reviews
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId,
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId,
                                                                          trExt="tbrp")
         if success == Context.instance().CODE_OK:
             ret["basic-review"] = report
  
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId,
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId,
                                                                          trExt="trp")
         if success == Context.instance().CODE_OK:
             ret["review"] = report
  
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId, 
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId, 
                                                                          trExt="trpx")
         if success == Context.instance().CODE_OK:
             ret["xml-review"] = report
@@ -10821,7 +10841,7 @@ class ResultsReportVerdicts(Handler):
             projectId = self.request.data.get("project-id")
             if projectId is None: raise EmptyValue("Please specify a project id")
                 
-            _replayId = self.request.data.get("replay-id")    
+            _replayId = self.request.data.get("replay-id", 0)    
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -10837,10 +10857,10 @@ class ResultsReportVerdicts(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
         
-        if _replayId is None:
-            replayId = 0
-        else:
-            replayId = _replayId
+        # if _replayId is None:
+            # replayId = 0
+        # else:
+            # replayId = _replayId
             
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
@@ -10848,14 +10868,16 @@ class ResultsReportVerdicts(Handler):
         
         ret = { "cmd": self.request.path, 'test-id': testId }
         
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId,
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId,
                                                                          trExt="trv")
         if success == Context.instance().CODE_OK:
             ret["verdict"] = report
         else:
             self.error("Error to get csv verdict report from test result")
             
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId,
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId,
                                                                          trExt="tvrx")
         if success == Context.instance().CODE_OK:
             ret["xml-verdict"] = report
@@ -10936,7 +10958,7 @@ class ResultsReportDesigns(Handler):
             projectId = self.request.data.get("project-id")
             if projectId is None: raise EmptyValue("Please specify a project id")
                 
-            _replayId = self.request.data.get("replay-id")    
+            _replayId = self.request.data.get("replay-id", 0)    
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -10952,10 +10974,10 @@ class ResultsReportDesigns(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
         
-        if _replayId is None:
-            replayId = 0
-        else:
-            replayId = _replayId
+        # if _replayId is None:
+            # replayId = 0
+        # else:
+            # replayId = _replayId
             
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
@@ -10964,14 +10986,16 @@ class ResultsReportDesigns(Handler):
         ret = { "cmd": self.request.path, 'test-id': testId }
 
         # designs
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId, 
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId, 
                                                                          trExt="trd")
         if success == Context.instance().CODE_OK:
             ret["design"] = report
         else:
             self.error("Error to get xml report from test result")
             
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId, 
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId, 
                                                                          trExt="tdsx")
         if success == Context.instance().CODE_OK:
             ret["xml-design"] = report
@@ -11051,7 +11075,7 @@ class ResultsReportComments(Handler):
             projectId = self.request.data.get("project-id")
             if projectId is None: raise EmptyValue("Please specify a project id")
                 
-            _replayId = self.request.data.get("replay-id")    
+            _replayId = self.request.data.get("replay-id", 0)    
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -11067,10 +11091,10 @@ class ResultsReportComments(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
         
-        if _replayId is None:
-            replayId = 0
-        else:
-            replayId = _replayId
+        # if _replayId is None:
+            # replayId = 0
+        # else:
+            # replayId = _replayId
             
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
@@ -11079,7 +11103,7 @@ class ResultsReportComments(Handler):
         ret = { "cmd": self.request.path, 'test-id': testId }
         
         # comments
-        success, report = RepoArchives.instance().getTrComments(trPath=testPath, replayId=replayId)
+        success, report = RepoArchives.instance().getTrComments(trPath=testPath, replayId=_replayId)
         if success == Context.instance().CODE_OK:
             ret["comments"] = report
         else:
@@ -11158,7 +11182,7 @@ class ResultsReportEvents(Handler):
             projectId = self.request.data.get("project-id")
             if projectId is None: raise EmptyValue("Please specify a project id")
                 
-            _replayId = self.request.data.get("replay-id")    
+            _replayId = self.request.data.get("replay-id", 0)    
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -11174,10 +11198,10 @@ class ResultsReportEvents(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
         
-        if _replayId is None:
-            replayId = 0
-        else:
-            replayId = _replayId
+        # if _replayId is None:
+            # replayId = 0
+        # else:
+            # replayId = _replayId
             
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
@@ -11186,7 +11210,7 @@ class ResultsReportEvents(Handler):
         ret = { "cmd": self.request.path, 'test-id': testId }
 
         # events
-        success, report = RepoArchives.instance().getTrResume(trPath=testPath, replayId=replayId)
+        success, report = RepoArchives.instance().getTrResume(trPath=testPath, replayId=_replayId)
         if success == Context.instance().CODE_OK:
             ret["events"] = report
         else:
@@ -11272,7 +11296,7 @@ class ResultsReports(Handler):
             projectId = self.request.data.get("project-id")
             if projectId is None: raise EmptyValue("Please specify a project id")
                 
-            _replayId = self.request.data.get("replay-id")    
+            _replayId = self.request.data.get("replay-id", 0)    
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -11288,10 +11312,10 @@ class ResultsReports(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
         
-        if _replayId is None:
-            replayId = 0
-        else:
-            replayId = _replayId
+        # if _replayId is None:
+            # replayId = 0
+        # else:
+            # replayId = _replayId
             
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
@@ -11300,50 +11324,57 @@ class ResultsReports(Handler):
         ret = { "cmd": self.request.path, 'test-id': testId }
         
         # reviews
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId,
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId,
                                                                          trExt="tbrp")
         if success == Context.instance().CODE_OK:
             ret["basic-review"] = report
 
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId,
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId,
                                                                          trExt="trp")
         if success == Context.instance().CODE_OK:
             ret["review"] = report
 
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId, 
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId, 
                                                                          trExt="trpx")
         if success == Context.instance().CODE_OK:
             ret["xml-review"] = report
 
         # verdicts
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId,
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId,
                                                                          trExt="trv")
         if success == Context.instance().CODE_OK:
             ret["verdict"] = report
 
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId,
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId,
                                                                          trExt="tvrx")
         if success == Context.instance().CODE_OK:
             ret["xml-verdict"] = report
 
         # designs
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId, 
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId, 
                                                                          trExt="trd")
         if success == Context.instance().CODE_OK:
             ret["design"] = report
   
-        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, replayId=replayId, 
+        success, report = RepoArchives.instance().getTrReportByExtension(trPath=testPath, 
+                                                                         replayId=_replayId, 
                                                                          trExt="tdsx")
         if success == Context.instance().CODE_OK:
             ret["xml-design"] = report
 
         # comments
-        success, report = RepoArchives.instance().getTrComments(trPath=testPath, replayId=replayId)
+        success, report = RepoArchives.instance().getTrComments(trPath=testPath, replayId=_replayId)
         if success == Context.instance().CODE_OK:
             ret["comments"] = report
 
         # events
-        success, report = RepoArchives.instance().getTrResume(trPath=testPath, replayId=replayId)
+        success, report = RepoArchives.instance().getTrResume(trPath=testPath, replayId=_replayId)
         if success == Context.instance().CODE_OK:
             ret["events"] = report
  
@@ -11433,8 +11464,8 @@ class ResultsCommentAdd(Handler):
             testId = self.request.data.get("test-id")
             if testId is None: raise EmptyValue("Please specify a project id and test id")
 
-            _replayId = self.request.data.get("replay-id")  
-            _returnAll = self.request.data.get("return-all")  
+            _replayId = self.request.data.get("replay-id", 0)  
+            _returnAll = self.request.data.get("return-all", True)  
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -11450,22 +11481,22 @@ class ResultsCommentAdd(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
         
-        if _replayId is None:
-            replayId = 0
-        else:
-            replayId = _replayId
+        # if _replayId is None:
+            # replayId = 0
+        # else:
+            # replayId = _replayId
         
-        if _returnAll is None:
-            returnAll = True
-        else:
-            returnAll = _returnAll
+        # if _returnAll is None:
+            # returnAll = True
+        # else:
+            # returnAll = _returnAll
             
         # extract the real test path according the test id
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result by id not found')
 
-        founded, trName = RepoArchives.instance().getTrName(trPath=testPath, replayId=replayId)
+        founded, trName = RepoArchives.instance().getTrName(trPath=testPath, replayId=_replayId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('trx not found')
 
@@ -11477,7 +11508,7 @@ class ResultsCommentAdd(Handler):
             raise HTTP_500("Unable to add comment")
         
         rsp = { "cmd": self.request.path, 'test-id': testId, 'project-id': projectId }
-        if returnAll:
+        if _returnAll:
             rsp["comments"] = comments
         else:
             rsp["comments"] = []
@@ -11559,7 +11590,7 @@ class ResultsCommentsRemove(Handler):
             testId = self.request.data.get("test-id")
             if testId is None: raise EmptyValue("Please specify a project id and test id")
 
-            _replayId = self.request.data.get("replay-id")  
+            _replayId = self.request.data.get("replay-id", 0)  
 
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
@@ -11576,17 +11607,17 @@ class ResultsCommentsRemove(Handler):
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
         
-        if _replayId is None:
-            replayId = 0
-        else:
-            replayId = _replayId
+        # if _replayId is None:
+            # replayId = 0
+        # else:
+            # replayId = _replayId
 
         # extract the real test path according the test id
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result by id not found')
 
-        founded, trName = RepoArchives.instance().getTrName(trPath=testPath, replayId=replayId)
+        founded, trName = RepoArchives.instance().getTrName(trPath=testPath, replayId=_replayId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('trx not found')
 
@@ -11594,7 +11625,9 @@ class ResultsCommentsRemove(Handler):
         if success != Context.instance().CODE_OK:
             raise HTTP_500("Unable to delete all comments")
             
-        return  { "cmd": self.request.path, 'test-id': testId, 'project-id': projectId, 
+        return  { "cmd": self.request.path, 
+                  'test-id': testId, 
+                  'project-id': projectId, 
                   "message": "all comments deleted" }
 
 """

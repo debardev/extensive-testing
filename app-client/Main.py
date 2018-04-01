@@ -32,7 +32,7 @@ Main module
 from __future__ import print_function 
 
 # define the current version
-__VERSION__ = '19.0.0'
+__VERSION__ = '19.0.0alpha1'
 # name of the main developer
 __AUTHOR__ = 'Denis Machard'
 # email of the main developer
@@ -42,7 +42,7 @@ __BEGIN__="2010"
 # year of the latest build
 __END__="2018"
 # date and time of the buid
-__BUILDTIME__="11/03/2018 09:28:05"
+__BUILDTIME__="31/03/2018 13:11:30"
 # Redirect stdout and stderr to log file only on production
 REDIRECT_STD=False
 # disable warning from qt framework on production 
@@ -3445,6 +3445,11 @@ if __name__ == '__main__':
     # performance measurement only for debug mode
     starttime = time.time()
 
+    # executable = sys.argv[0]
+    # print( executable )
+    # print( QLibraryInfo.location(QLibraryInfo.PluginsPath) )
+    # print( QLibraryInfo.location(QLibraryInfo.TranslationsPath) )
+    
     # Construct the main app
     if sys.platform == "win32":
         app = QApplication(sys.argv)

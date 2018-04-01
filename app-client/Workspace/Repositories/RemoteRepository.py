@@ -186,13 +186,16 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         layout = QVBoxLayout()
         
         layoutProject = QHBoxLayout()
-        
+
         layoutProject.addWidget( self.projectLabel )
         layoutProject.addWidget( self.projectCombobox )
+
+        layoutProject.addWidget( self.warningLabel )
         
         layoutProject.setContentsMargins(0, 0, 0, 0)
         layoutProject.setSpacing(10)
         layoutProject.setAlignment(Qt.AlignLeft)
+
         layout.addLayout(layoutProject)
 
         self.wrepository = QTreeWidget()
@@ -207,9 +210,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         if self.multipleSelection:
             self.wrepository.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
-        
         layout.addWidget( self.wrepository )
-        layout.addWidget( self.warningLabel )
 
         fileLayout = QHBoxLayout()
         self.filenameLabel = QLabel(self.tr('File name:'))
@@ -219,7 +220,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         layout.addLayout(fileLayout)
         
         # dbr13 >> Checkbox for Update --> Location
-        self.update_location_in_tests = QCheckBox(self.tr('Search and update location in all testplan or testglobal?'))
+        self.update_location_in_tests = QCheckBox(self.tr('Search and update this new test location in other\ntestplan or testglobal?'))
         # dbr13 <<
         
         # Buttons
@@ -592,6 +593,11 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         self.filenameLineEdit.show()
         self.filenameLineEdit.setText(filename)
 
+    def getUpdateLocationStatus(self):
+        """
+        """
+        return self.update_location_in_tests.isChecked()
+        
     def setImportFilename(self, filename, project=''):
         """
         Set import filename
@@ -639,7 +645,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
             
         self.multipleSelection = multipleSelection
         if multipleSelection:
-            self.warningLabel.setText(self.tr('Multiple selection files available.'))
+            self.warningLabel.setText(self.tr('(Multiple selection in tree can be done.)'))
             self.wrepository.setSelectionMode(QAbstractItemView.ExtendedSelection)
         else:
             self.warningLabel.setText('')
@@ -1066,7 +1072,7 @@ class RenameDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         self.nameUppercase = QCheckBox(self.tr("Change the new name in uppercase"))
         
         # dbr13 >>
-        self.update_location = QCheckBox(self.tr('Search and update location in all testplan or testglobal?'))
+        self.update_location = QCheckBox(self.tr('Search and update test location in all testplan or testglobal?'))
         # dbr13 <<
         
         self.buttonBox = QDialogButtonBox(self)
