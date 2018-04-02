@@ -6976,6 +6976,9 @@ class TestsFileOpen(Handler):
             # dbr13 >>>
             update_location = self.request.data.get('extra', {}).get('update_location', False)
             extra_filename = self.request.data.get('extra', {}).get('file_name', '')
+            extra_ext = self.request.data.get('extra', {}).get('file_ext', '')
+            extra_projectid = self.request.data.get('extra', {}).get('project_id', 0)
+            extra_path = self.request.data.get('extra', {}).get('file_path', '')
             # dbr13 <<<
 
         except EmptyValue as e:
@@ -6992,15 +6995,7 @@ class TestsFileOpen(Handler):
                                                                                   projectId=projectId)
         if not projectAuthorized:
             raise HTTP_403('Access denied to this project')
-        
-        # ignoreLock = False
-        # if _ignoreLock is not None:
-            # ignoreLock = _ignoreLock
-        
-        # readOnly = False
-        # if _readOnly is not None:
-            # readOnly = _readOnly
-           
+
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
         
@@ -7020,16 +7015,21 @@ class TestsFileOpen(Handler):
         if success != Context.instance().CODE_OK:
             raise HTTP_500("Unable to open test file")
             
-        # dbr13 >>>
-        # When we set checkbox in the Update->Location
+        # dbr13 >>> when we set checkbox in the Update->Location
         if update_location:
             file_path = path_file or '/'
-            update_files_list = RepoTests.instance().updateLinkedScriptPath(project=projectId,
-                                                                            mainPath=file_path,
+            update_files_list = RepoTests.instance().updateLinkedScriptPath(project=extra_projectid,
+                                                                            mainPath=extra_path,
                                                                             oldFilename=extra_filename,
+                                                                            extFilename=extra_ext,
+                                                                            
+                                                                            newProject=projectId,
+                                                                            newPath=file_path,
                                                                             newFilename=name_file,
-                                                                            extFilename=ext_file,
-                                                                            user_login=user_profile['login'])
+                                                                            newExt=ext_file,
+                                                                            
+                                                                            user_login=user_profile['login'],
+                                                                            )
         # dbr13 <<<
         
         # I think we need add some info into return but I haven't thought about it yet =)
@@ -7500,11 +7500,17 @@ class TestsFileRename(Handler):
         # dbr13 >>>
         # When we set checkbox in the rename
         if update_location:
-            update_files_list = RepoTests.instance().updateLinkedScriptPath(project=projectId,
+            update_files_list = RepoTests.instance().updateLinkedScriptPath(
+                                                                            project=projectId,
                                                                             mainPath=filePath,
                                                                             oldFilename=fileName,
-                                                                            newFilename=newFileName,
                                                                             extFilename=fileExt,
+                                                                            
+                                                                            newProject=projectId,
+                                                                            newPath=filePath,
+                                                                            newFilename=newFileName,
+                                                                            newExt=fileExt,
+                                                                            
                                                                             user_login=user_profile['login'])
 
         # dbr13 >>>
@@ -7800,13 +7806,19 @@ class TestsFileMove(Handler):
         if success == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404("File does not exists")
             
-        # if update_location:
-            # update_files_list = RepoTests.instance().updateLinkedScriptPath(project=projectId,
-                                                                            # mainPath=filePath,
-                                                                            # oldFilename=fileName,
-                                                                            # newFilename=newFileName,
-                                                                            # extFilename=fileExt,
-                                                                            # user_login=user_profile['login'])
+        if update_location:
+            update_files_list = RepoTests.instance().updateLinkedScriptPath(project=projectId,
+                                                                            mainPath=filePath,
+                                                                            oldFilename=fileName,
+                                                                            extFilename=fileExt,
+                                                                            
+                                                                            newProject=newProjectId,
+                                                                            newPath=newFilePath,
+                                                                            newFilename=fileName,
+                                                                            newExt=fileExt,
+                                                                            
+                                                                            user_login=user_profile['login'],
+                                                                            )
                                                                             
         return { "cmd": self.request.path, "message": "file successfully moved", 
                  "project-id": projectId  }

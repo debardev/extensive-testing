@@ -691,7 +691,7 @@ class RepoManager(Logger.ClassLogger):
                     return (self.context.CODE_ALLREADY_EXISTS,) + ret + (is_locked, lockedBy,)
             
             # write the file
-            self.trace("TYPE: %s" % type(contentFile) )
+            # self.trace("TYPE: %s" % type(contentFile) )
             content_decoded = base64.b64decode(contentFile)
             if binaryMode:
                 f = open( complete_path, 'wb')

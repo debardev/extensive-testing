@@ -1044,57 +1044,35 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         return ret
         
     # dbr13 >>
-    def updateLinkedScriptPath(self, project, mainPath, oldFilename, 
-                               newFilename, extFilename, user_login, 
-                               new_project='', newPath=''):
+    def updateLinkedScriptPath(self, project, mainPath, oldFilename, extFilename,
+                               newProject, newPath, newFilename, newExt,
+                               user_login):
         """
         """
         # get current project name and accessible projects list for currnet user
-        project_name = ProjectsManager.instance().getProjectName(prjId=project)
+        project_name = ProjectsManager.instance().getProjectName(prjId=project)        
+        new_project_name = new_project_name = ProjectsManager.instance().getProjectName(prjId=newProject)
+          
         projects = ProjectsManager.instance().getProjects(user=user_login)
-        
-        if len(new_project):
-            new_project_name = ProjectsManager.instance().getProjectName(prjId=new_project)
-            
+  
         updated_files_list = []
 
-        # create old and new file name
-        if mainPath != '/':
-            new_test_file_name = '%s:%s/%s.%s' % (project_name, 
-                                                  mainPath, 
-                                                  newFilename, 
-                                                  extFilename)
-                
-            # for update location func
-            if oldFilename.rsplit(".")[-1] in [RepoManager.TEST_PLAN_EXT,
-                                               RepoManager.TEST_ABSTRACT_EXT,
-                                               RepoManager.TEST_UNIT_EXT,
-                                               RepoManager.TEST_SUITE_EXT]:
-                old_test_file_name = oldFilename
-            else:
-                # for rename func
-                old_test_file_name = '%s:/*%s/%s.%s' % (project_name, 
-                                                        mainPath[1:], 
-                                                        oldFilename, 
-                                                        extFilename)
-        else:
-            new_test_file_name = '%s:%s.%s' % (project_name, 
-                                               newFilename, 
+        new_test_file_name = '%s:/%s/%s.%s' % (new_project_name,
+                                                newPath,
+                                                newFilename, 
+                                                newExt)
+        old_test_file_name = '%s:/%s/%s.%s' % (project_name,
+                                               mainPath,
+                                               oldFilename, 
                                                extFilename)
-
-            # for update location func
-            if oldFilename.rsplit(".")[-1] in [RepoManager.TEST_PLAN_EXT,
-                                               RepoManager.TEST_ABSTRACT_EXT,
-                                               RepoManager.TEST_UNIT_EXT,
-                                               RepoManager.TEST_SUITE_EXT]:
-
-                old_test_file_name = oldFilename
-            else:
-                # for rename func
-                old_test_file_name = '%s:%s.%s' % (project_name, 
-                                                   oldFilename, 
-                                                   extFilename)
-
+                                                   
+        # cleanup the path  of the old and new one                                              
+        new_test_file_name = os.path.normpath(new_test_file_name)
+        old_test_file_name = os.path.normpath(old_test_file_name)
+        
+        self.trace("Update link - test path to search: %s" % old_test_file_name)
+        self.trace("Update link - replace the old one by the new path: %s" % new_test_file_name)
+   
         for proj_id in projects:
             project_id = proj_id['project_id']
             _, _, listing, _ = self.getTree(project=project_id)
@@ -1122,13 +1100,13 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                 test_files_list = doc.testplan['testplan']['testfile']
 
                 is_changed = False
-
                 for test_file in test_files_list:
                     old_test_file_name_regex = re.compile(old_test_file_name)
                     if re.findall(old_test_file_name_regex, test_file['file']):
                         test_file['file'] = new_test_file_name
                         test_file['extension'] = extFilename
                         is_changed = True
+                        
                 if is_changed:
                     file_content = doc.getRaw()
                     f_path_list = file_path.split('/')

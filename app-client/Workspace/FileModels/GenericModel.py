@@ -39,7 +39,7 @@ from Libs import Logger
 
 import zlib
 import base64
-  
+
 class GenericModel(Logger.ClassLogger):
     """
     Data model for generic test

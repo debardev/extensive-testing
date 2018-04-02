@@ -1086,6 +1086,7 @@ class WTestPlan(Document.WDocument):
                                          customParam=parentId, 
                                          actionId=insertAction, 
                                          destinationId=RCI.FOR_DEST_TP) 
+    
     def updateAllDefaultAliases(self):
         """
         """
@@ -1274,14 +1275,28 @@ class WTestPlan(Document.WDocument):
 
         (testName, fromRepo, currentItem, projectId, update_location) = ret
         
-        # dbr13 >>>
-        # prepare old file name
+        # dbr13 >>> prepare old file name
         old_test_file_name = None
+        extra = {'update_location': update_location}
         if update_location:
             for test_file in self.dataModel.testplan['testplan']['testfile']:
                 if item_id == test_file['id']:
                     old_test_file_name = test_file['file']
                     break
+            if old_test_file_name is not None:
+                extra_project_name, extra_path_tmp = old_test_file_name.split(':', 1)
+                extra_projectid = 0
+                for pr in self.iRepo.remote().projects:
+                    if pr['name'] == extra_project_name:
+                        extra_projectid = pr['project_id']
+                        
+                extra_path, extra_filename_tmp = extra_path_tmp.rsplit("/", 1)
+                extra_filename, extra_ext = extra_filename_tmp.rsplit(".", 1)
+                
+                extra['file_path'] = extra_path
+                extra['file_name'] = extra_filename
+                extra['file_ext'] = extra_ext
+                extra['project_id'] = extra_projectid
         # dbr13 <<<
         
         # local file
@@ -1306,15 +1321,14 @@ class WTestPlan(Document.WDocument):
                 destinationId=RCI.FOR_DEST_TG
             else:
                 destinationId=RCI.FOR_DEST_TP
-                                             
+
             RCI.instance().openFileTests(projectId=int(projectId), filePath=absPath, 
                                          ignoreLock=False, readOnly=False, 
                                          customParam=int(currentItem.text(COL_ID)), 
                                          actionId=RCI.ACTION_UPDATE_PATH, 
                                          destinationId=destinationId,
                                          # dbr13 >>>
-                                         extra={'update_location': update_location,
-                                                'file_name': old_test_file_name}
+                                         extra=extra
                                          # dbr13 <<<
                                          )
                                              
@@ -1365,7 +1379,11 @@ class WTestPlan(Document.WDocument):
         prjsList = []
         for prj in self.iRepo.remote().projects:
             prjsList.append(prj["name"])
-        newPrj, ok = QInputDialog.getItem (self, "Project",  "Select the new project:", prjsList, 0, False)
+        newPrj, ok = QInputDialog.getItem (self, 
+                                           "Project",  
+                                           "Select the new project:", 
+                                           prjsList, 
+                                           0, False)
         if ok:
             testfiles = self.dataModel.testplan['testplan']['testfile']
             for  tf in testfiles:
@@ -1413,7 +1431,12 @@ class WTestPlan(Document.WDocument):
         prjsList = []
         for prj in self.iRepo.remote().projects:
             prjsList.append(prj["name"])
-        newPrj, ok = QInputDialog.getItem (self, "Project",  "Select the new project:", prjsList, 0, False)
+        newPrj, ok = QInputDialog.getItem (self, 
+                                           "Project",
+                                           "Select the new project:", 
+                                           prjsList, 
+                                           0, 
+                                           False)
         if ok:
         
             newFile = "%s:%s" % (newPrj, fileModel.split(":", 1)[1] )
