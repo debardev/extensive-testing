@@ -915,7 +915,7 @@ class WTestPlan(Document.WDocument):
                                         icon = QIcon(":/act-refresh.png"), tip = self.tr('Refresh the tree') )
         
         self.menuUpdate = QMenu(self.tr("Update"))
-        self.updatePathAction = QtHelper.createAction(self, self.tr("&Location"), self.updateTest, 
+        self.updatePathAction = QtHelper.createAction(self, self.tr("&Test\nLocation"), self.updateTest, 
                                         icon = QIcon(":/location.png") )
         self.updateTcNameAction = QtHelper.createAction(self, self.tr("&TestCase\nName"), self.updateTcName, 
                                         icon = QIcon(":/tc-name.png") )
@@ -1289,16 +1289,19 @@ class WTestPlan(Document.WDocument):
                 for pr in self.iRepo.remote().projects:
                     if pr['name'] == extra_project_name:
                         extra_projectid = pr['project_id']
-                        
+
                 extra_path, extra_filename_tmp = extra_path_tmp.rsplit("/", 1)
                 extra_filename, extra_ext = extra_filename_tmp.rsplit(".", 1)
                 
+                # description of the file before to update it
                 extra['file_path'] = extra_path
                 extra['file_name'] = extra_filename
                 extra['file_ext'] = extra_ext
                 extra['project_id'] = extra_projectid
-        # dbr13 <<<
         
+                extra['file_referer_path'] = self.getPath()
+                extra['file_referer_projectid'] = self.project
+                
         # local file
         if projectId is None:
             QMessageBox.warning(self, self.tr("Information") , 
@@ -2541,8 +2544,6 @@ class WTestPlan(Document.WDocument):
         """
         Copy the test file
         """
-        # self.copyTestsFile()
-        
         selectedItem  = self.tp.selectedItems()[0]
         if selectedItem.type() != 0:
             return
@@ -2625,7 +2626,7 @@ class WTestPlan(Document.WDocument):
             parentId = self.itemCurrent.text(COL_ID)
 
         parentCondition = "0"
-        parentItem = self.findParentId(testId=parentId)
+        parentItem = self.findItemById(testId=parentId)
         if parentItem.text(COL_RESULT) == self.CONDITION_KO:
             parentCondition = "1"
 
@@ -2657,7 +2658,7 @@ class WTestPlan(Document.WDocument):
             parentId = self.itemCurrent.text(COL_ID)
 
         parentCondition = "0"
-        parentItem = self.findParentId(testId=parentId)
+        parentItem = self.findItemById(testId=parentId)
         if parentItem.text(COL_RESULT) == self.CONDITION_KO:
             parentCondition = "1"
         
@@ -2695,7 +2696,7 @@ class WTestPlan(Document.WDocument):
             parentId = self.itemCurrent.text(COL_ID)
 
         parentCondition = "0"
-        parentItem = self.findParentId(testId=parentId)
+        parentItem = self.findItemById(testId=parentId)
         if parentItem.parent().text(COL_RESULT) == self.CONDITION_KO:
             parentCondition = "1"
 
@@ -2735,7 +2736,7 @@ class WTestPlan(Document.WDocument):
             parentId = self.itemCurrent.text(COL_ID)
             
         parentCondition = "0"
-        parentItem = self.findParentId(testId=parentId)
+        parentItem = self.findItemById(testId=parentId)
         if parentItem.parent().text(COL_RESULT) == self.CONDITION_KO:
             parentCondition = "1"
         
@@ -3241,11 +3242,51 @@ class WTestPlan(Document.WDocument):
         
         return True
         
-    def onUpdateRemoteTestSubItem(self, pathFile, nameFile, extFile, contentFile, testId, project):
+    def findIdenticalItems(self, compareItem):
+        """
+        """
+        items_list = []
+        for i in xrange(self.tp.topLevelItemCount()):
+            curItem = self.tp.topLevelItem(i)
+            if compareItem.text(COL_NAME) == curItem.text(COL_NAME):
+                items_list.append( curItem )
+            if curItem.childCount():
+                items_list.extend( self.__findIdenticalItems( currentItem=curItem, 
+                                                              compareItem=compareItem ) )
+  
+        return items_list
+        
+    def __findIdenticalItems(self, currentItem, compareItem):
+        """
+        """
+        items_list = []
+        for i in xrange(currentItem.childCount()):
+            curItem = currentItem.child(i)
+            if compareItem.text(COL_NAME) == curItem.text(COL_NAME):
+                items_list.append( curItem )
+            if curItem.childCount():
+                items_list.extend( self.__findIdenticalItems( currentItem=curItem, 
+                                                              compareItem=compareItem) )
+ 
+        return items_list
+        
+    def onUpdateRemoteTestSubItem(self, pathFile, nameFile, extFile, contentFile,  
+                                  testId, project, refreshOtherItems=False):
         """
         On update remote test
         """
-        if self.itemCurrent is not None:
+        items_list = []
+        
+        # find the item according to the test id received
+        currentItem = self.findItemById(testId=testId)
+        if currentItem is not None:
+            # get all items identical to the current
+            if refreshOtherItems:
+                items_list = self.findIdenticalItems( compareItem=currentItem )
+            else:
+                items_list = [ currentItem ]
+
+        for item in items_list:
             # get project name
             prjName = self.iRepo.remote().getProjectName(project=project)
             if len(pathFile):
@@ -3257,18 +3298,18 @@ class WTestPlan(Document.WDocument):
             tsname = absPath.rsplit(".", 1) 
 
             # update name
-            self.itemCurrent.setText(COL_NAME, tsname[0] )
-            self.itemCurrent.setToolTip(COL_NAME, tsname[0])
-            self.itemCurrent.setIcon(COL_CONTROL, QIcon())
+            item.setText(COL_NAME, tsname[0] )
+            item.setToolTip(COL_NAME, tsname[0])
+            item.setIcon(COL_CONTROL, QIcon())
             
             if extFile == TestSuite.TYPE:
-                self.itemCurrent.setIcon(COL_NAME, QIcon(":/%s.png" % TestSuite.TYPE) )
+                item.setIcon(COL_NAME, QIcon(":/%s.png" % TestSuite.TYPE) )
             elif extFile == TestAbstract.TYPE:
-                self.itemCurrent.setIcon(COL_NAME, QIcon(":/%s.png" % TestAbstract.TYPE) )
+                item.setIcon(COL_NAME, QIcon(":/%s.png" % TestAbstract.TYPE) )
             elif extFile == TYPE:
-                self.itemCurrent.setIcon(COL_NAME, QIcon(":/%s.png" % TYPE) )
+                item.setIcon(COL_NAME, QIcon(":/%s.png" % TYPE) )
             else:
-                self.itemCurrent.setIcon(COL_NAME, QIcon(":/%s.png" % TestUnit.TYPE) )
+                item.setIcon(COL_NAME, QIcon(":/%s.png" % TestUnit.TYPE) )
 
             if extFile == TestSuite.TYPE:
                 doc = FileModelTestSuite.DataModel()
@@ -3282,9 +3323,11 @@ class WTestPlan(Document.WDocument):
             del doc
 
             # update datamodel
-            self.dataModel.updateTestFile( itemId = str(testId), testName=absPath, 
-                                            testExtension=extFile, 
-                                            testDescriptions=properties['properties']['descriptions']['description'] )
+            self.dataModel.updateTestFile( #itemId = str(testId), 
+                                           itemId = item.text(COL_ID),
+                                           testName=absPath, 
+                                           testExtension=extFile, 
+                                           testDescriptions=properties['properties']['descriptions']['description'] )
             self.setModify()
             self.resizeColumns()
 
@@ -3333,7 +3376,7 @@ class WTestPlan(Document.WDocument):
         """
 
         # find the parent test according to the id
-        currentItem = self.findParentId(testId=testParentId)
+        currentItem = self.findItemById(testId=testParentId)
         if currentItem is None:
             QMessageBox.warning(self, self.tr("Insert test") , 
                                 self.tr("The test parent with ID=%s not found!" % testParentId)     )   
@@ -3571,37 +3614,39 @@ class WTestPlan(Document.WDocument):
                                    project=self.insertDetails[2] , 
                                    insertTest=self.insertDetails[3])
             
-    def findParentId(self, testId):
+    def findItemById(self, testId):
         """
+        Find widget item by column id
         """
-        parentItem = None
+        item = None
         for i in xrange(self.tp.topLevelItemCount()):
             curItem = self.tp.topLevelItem(i)
             if int(testId) == int(curItem.text(COL_ID)):
-                parentItem = curItem
+                item = curItem
                 break
             if curItem.childCount():
-                subParentItem = self.__findParentId(parentItem=curItem, testId=testId)
-                if subParentItem is not None:
-                    parentItem = subParentItem
+                subItem = self.__findItemById(item=curItem, testId=testId)
+                if subItem is not None:
+                    item = subItem
                     break
-        return parentItem
+        return item
         
-    def __findParentId(self, parentItem, testId):
+    def __findItemById(self, item, testId):
         """
+        Recursive function for find item by id
         """
-        subParentItem = None
-        for i in xrange(parentItem.childCount()):
-            curItem = parentItem.child(i)
+        subItem = None
+        for i in xrange(item.childCount()):
+            curItem = item.child(i)
             if int(testId) == int(curItem.text(COL_ID)):
-                subParentItem = curItem
+                subItem = curItem
                 break
             if curItem.childCount():
-                nextParentItem = self.__findParentId(parentItem=curItem, testId=testId)
-                if nextParentItem is not None:
-                    subParentItem = nextParentItem
+                nextItem = self.__findItemById(item=curItem, testId=testId)
+                if nextItem is not None:
+                    subItem = nextItem
                     break
-        return subParentItem
+        return subItem
         
     def createTreeWidgetItem(self, properties, pathFile, fromType, extFile=TestSuite.TYPE, 
                              descriptionTest="", colorTest="", aliasTest="", 
@@ -3610,7 +3655,7 @@ class WTestPlan(Document.WDocument):
         Create a item for the treewidget
         """
         # find the parent test according to the id
-        parentItem = self.findParentId(testId=testParentId)
+        parentItem = self.findItemById(testId=testParentId)
         if parentItem is None:
             QMessageBox.warning(self, self.tr("Add test") , 
                                 self.tr("The test parent with ID=%s not found!" % testParentId)     ) 

@@ -1840,7 +1840,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             answer = QMessageBox.question(self, Settings.instance().readValue( key = 'Common/name' ), 
                             self.tr("This file has been renamed.\nDo you want to update the name ?") , buttons)
             if answer == QMessageBox.Yes:
-                doc.updateFilename( filename=new_name_file )
+                doc.updateFilename( filename=newName )
                 doc.setUnmodify()
             elif answer == QMessageBox.No:
                 doc.unSaved()
@@ -1868,7 +1868,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             answer = QMessageBox.question(self, Settings.instance().readValue( key = 'Common/name' ), 
                             self.tr("This file has been renamed.\nDo you want to update the name ?") , buttons)
             if answer == QMessageBox.Yes:
-                doc.updateFilename( filename=new_name_file )
+                doc.updateFilename( filename=newName )
                 doc.setUnmodify()
             elif answer == QMessageBox.No:
                 doc.unSaved()
@@ -1896,7 +1896,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             answer = QMessageBox.question(self, Settings.instance().readValue( key = 'Common/name' ), 
                             self.tr("This file has been renamed.\nDo you want to update the name ?") , buttons)
             if answer == QMessageBox.Yes:
-                doc.updateFilename( filename=new_name_file )
+                doc.updateFilename( filename=newName )
                 doc.setUnmodify()
             elif answer == QMessageBox.No:
                 doc.unSaved()
@@ -2128,7 +2128,8 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             doc = self.tab.widget(tabId)
             doc.unSaved()
 
-    def updateRemoteTestOnTestglobal(self, data, parametersOnly=True, mergeParameters=False):
+    def updateRemoteTestOnTestglobal(self, data, parametersOnly=True, 
+                                     mergeParameters=False, refreshOtherItems=False):
         """
         Update remote testsuite on testplan
 
@@ -2146,10 +2147,21 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         if currentDoc.extension == TestPlan.TYPE_GLOBAL :
             content = base64.b64decode(encoded_data)
             if parametersOnly:
-                currentDoc.onUpdateRemotePropertiesSubItem(path_file, name_file, ext_file, content, 
-                                                            testId, project, mergeParameters=mergeParameters)
+                currentDoc.onUpdateRemotePropertiesSubItem(path_file, 
+                                                           name_file, 
+                                                           ext_file, 
+                                                           content, 
+                                                           testId, 
+                                                           project, 
+                                                           mergeParameters=mergeParameters)
             else:
-                currentDoc.onUpdateRemoteTestSubItem(path_file, name_file, ext_file, content, testId, project)
+                currentDoc.onUpdateRemoteTestSubItem(path_file, 
+                                                     name_file, 
+                                                     ext_file, 
+                                                     content, 
+                                                     testId, 
+                                                     project, 
+                                                     refreshOtherItems=refreshOtherItems)
 
     def addRemoteTestToTestglobal(self, data, testParentId=0):
         """
@@ -2166,7 +2178,12 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
 
         if currentDoc.extension == TestPlan.TYPE_GLOBAL :
             content = base64.b64decode(encoded_data)
-            currentDoc.addRemoteSubItem(path_file, name_file, ext_file, content, project, testParentId=testParentId)
+            currentDoc.addRemoteSubItem(path_file, 
+                                        name_file, 
+                                        ext_file, 
+                                        content, 
+                                        project, 
+                                        testParentId=testParentId)
 
     def insertRemoteTestToTestglobal(self, data, below=False, testParentId=0):
         """
@@ -2186,10 +2203,16 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
  
         if currentDoc.extension == TestPlan.TYPE_GLOBAL :
             content = base64.b64decode(encoded_data)
-            currentDoc.insertRemoteSubItem(path_file, name_file, ext_file, content, 
-                                            project, below, testParentId=testParentId)
+            currentDoc.insertRemoteSubItem(path_file, 
+                                           name_file, 
+                                           ext_file, 
+                                           content, 
+                                           project, 
+                                           below, 
+                                           testParentId=testParentId)
 
-    def updateRemoteTestOnTestplan(self, data, parametersOnly=True, mergeParameters=False):
+    def updateRemoteTestOnTestplan(self, data, parametersOnly=True, 
+                                   mergeParameters=False, refreshOtherItems=False):
         """
         Update remote testsuite on testplan
 
@@ -2208,11 +2231,21 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         if currentDoc.extension == TestPlan.TYPE :
             content = base64.b64decode(encoded_data)
             if parametersOnly:
-                currentDoc.onUpdateRemotePropertiesSubItem(path_file, name_file, ext_file, content, 
-                                                            testId, project, mergeParameters=mergeParameters)
+                currentDoc.onUpdateRemotePropertiesSubItem(path_file, 
+                                                           name_file, 
+                                                           ext_file, 
+                                                           content, 
+                                                           testId, 
+                                                           project, 
+                                                           mergeParameters=mergeParameters)
             else:
-                currentDoc.onUpdateRemoteTestSubItem(path_file, name_file, ext_file, 
-                                                    content, testId, project)
+                currentDoc.onUpdateRemoteTestSubItem(path_file, 
+                                                     name_file, 
+                                                     ext_file, 
+                                                     content, 
+                                                     testId, 
+                                                     project,
+                                                     refreshOtherItems=refreshOtherItems)
 
     def addRemoteTestToTestplan(self, data, testParentId=0):
         """
@@ -2229,8 +2262,12 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         # 
         if currentDoc.extension == TestPlan.TYPE :
             content = base64.b64decode(encoded_data)
-            currentDoc.addRemoteSubItem(path_file, name_file, ext_file, content, 
-                                        project, testParentId=testParentId)
+            currentDoc.addRemoteSubItem(path_file, 
+                                        name_file, 
+                                        ext_file, 
+                                        content, 
+                                        project, 
+                                        testParentId=testParentId)
 
     def insertRemoteTestToTestplan(self, data, below=False, testParentId=0):
         """
@@ -2247,8 +2284,13 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
 
         if currentDoc.extension == TestPlan.TYPE :
             content = base64.b64decode(encoded_data)
-            currentDoc.insertRemoteSubItem(path_file, name_file, ext_file, content, 
-                                            project, below, testParentId=testParentId)
+            currentDoc.insertRemoteSubItem(path_file, 
+                                           name_file, 
+                                           ext_file, 
+                                           content, 
+                                           project, 
+                                           below, 
+                                           testParentId=testParentId)
 
     def setDefaultActionsValues (self):
         """
@@ -4107,7 +4149,9 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                 res = os.path.exists( completeFileName )
                 if res:
                     document.path = None
-                    QMessageBox.warning(self, self.tr("Save As") , self.tr("This filename already exists!") )
+                    QMessageBox.warning(self, 
+                                        self.tr("Save As") , 
+                                        self.tr("This filename already exists!") )
                     isSaved = False
                     return isSaved
         if not document.isRemote:
@@ -4115,27 +4159,41 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             if isSaved:
                 self.tab.setTabText(tabId, filename )
             if isSaved is None:     
-                QMessageBox.critical(self, self.tr("Save As") , self.tr("Unable to save the file...") )
+                QMessageBox.critical(self, 
+                                     self.tr("Save As") , 
+                                     self.tr("Unable to save the file...") )
                 isSaved = False
             self.iRepo.local().refreshAll()
             
-            QMessageBox.information(self, self.tr("Export") , self.tr("File exported with success!") )
+            QMessageBox.information(self, 
+                                    self.tr("Export"), 
+                                    self.tr("File exported with success!") )
             
         else:
             document.project = project
             
             if repoDest == UCI.REPO_ADAPTERS:
-                RCI.instance().uploadAdapterFile( filePath=document.path, fileName=document.filename, 
-                                                  fileExtension=document.extension, fileContent=document.getraw_encoded(), 
-                                                  updateMode=False, closeTabAfter=False )
+                RCI.instance().uploadAdapterFile( filePath=document.path, 
+                                                  fileName=document.filename, 
+                                                  fileExtension=document.extension, 
+                                                  fileContent=document.getraw_encoded(), 
+                                                  updateMode=False, 
+                                                  closeTabAfter=False )
             elif repoDest == UCI.REPO_LIBRARIES:
-                RCI.instance().uploadLibraryFile( filePath=document.path, fileName=document.filename, 
-                                                  fileExtension=document.extension, fileContent=document.getraw_encoded(), 
-                                                  updateMode=False, closeTabAfter=False )
+                RCI.instance().uploadLibraryFile( filePath=document.path, 
+                                                  fileName=document.filename, 
+                                                  fileExtension=document.extension, 
+                                                  fileContent=document.getraw_encoded(), 
+                                                  updateMode=False, 
+                                                  closeTabAfter=False )
             elif repoDest == UCI.REPO_TESTS:
-                RCI.instance().uploadTestFile( filePath=document.path, fileName=document.filename, projectId=int(project),
-                                               fileExtension=document.extension, fileContent=document.getraw_encoded(), 
-                                               updateMode=False, closeTabAfter=False )
+                RCI.instance().uploadTestFile( filePath=document.path, 
+                                               fileName=document.filename, 
+                                               projectId=int(project),
+                                               fileExtension=document.extension, 
+                                               fileContent=document.getraw_encoded(), 
+                                               updateMode=False, 
+                                               closeTabAfter=False )
             else:
                 pass
 
@@ -4749,11 +4807,21 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         currentDocument = self.tab.widget(tabId)
         testId = TestResults.instance().getTestId()
 
-        _json = self.prepareTest (  wdocument=currentDocument, tabId=testId, background = background, 
-                                    runAt = runAt, runType=schedType, runNb=runNb, withoutProbes=withoutProbes, 
-                                    debugActivated=debugActivated, withoutNotif=withoutNotif, keepTr=keepTr, 
-                                    prjId=currentDocument.project, fromTime=fromTime, toTime=toTime, 
-                                    stepByStep=stepByStep, breakpoint=breakpoint  )
+        _json = self.prepareTest (  wdocument=currentDocument, 
+                                    tabId=testId, 
+                                    background = background, 
+                                    runAt = runAt, 
+                                    runType=schedType, 
+                                    runNb=runNb, 
+                                    withoutProbes=withoutProbes, 
+                                    debugActivated=debugActivated, 
+                                    withoutNotif=withoutNotif, 
+                                    keepTr=keepTr, 
+                                    prjId=currentDocument.project, 
+                                    fromTime=fromTime, 
+                                    toTime=toTime, 
+                                    stepByStep=stepByStep, 
+                                    breakpoint=breakpoint  )
 
         if currentDocument.extension in [ RCI.EXT_TESTSUITE, RCI.EXT_TESTABSTRACT, RCI.EXT_TESTUNIT]:
             RCI.instance().scheduleTest(req=_json, wdocument=currentDocument)
@@ -4772,6 +4840,9 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         @return: TabId
         @rtype: None or Integer
         """
+        # convert to int
+        project = int(project)
+        
         for tabId in xrange( self.tab.count() ):
             doc = self.tab.widget(tabId)
             # bypass the welcome page
@@ -4781,13 +4852,16 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             
             if project:
                 if not remoteFile:
-                    if doc.isRemote == remoteFile and doc.getPath() == path and doc.repoDest==repoType:
+                    if doc.isRemote == remoteFile and doc.getPath() == path \
+                        and doc.repoDest==repoType:
                         return tabId
                 else:
-                    if doc.isRemote == remoteFile and doc.getPath() == path and doc.repoDest==repoType and doc.project==project:
+                    if doc.isRemote == remoteFile and doc.getPath() == path \
+                        and doc.repoDest==repoType and doc.project==project:
                         return tabId
             else:
-                if doc.isRemote == remoteFile and doc.getPath() == path and doc.repoDest==repoType :
+                if doc.isRemote == remoteFile and doc.getPath() == path \
+                    and doc.repoDest==repoType :
                     return tabId
         return None
 

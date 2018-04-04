@@ -257,8 +257,11 @@ class ProbeServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
                                                     'mb-free': RepoArchives.instance().freeSpace(p=RepoArchives.instance().testsPath) }
                     data = ( 'archive', ( None, notif) )    
 
-                    ESI.instance().notifyByUserAndProject(body = data, admin=True, leader=False, 
-                                                          tester=True, developer=False, projectId="%s" % projectId)
+                    ESI.instance().notifyByUserAndProject(body = data, 
+                                                          admin=True, 
+                                                          monitor=False, 
+                                                          tester=True, 
+                                                          projectId="%s" % projectId)
         
             except Exception as e:
                 self.error( "unable to notify users for this new file: %s" % e )
@@ -322,8 +325,10 @@ class ProbeServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
         if doNotify:
             # Notify all connected users
             notif = ( 'probes', ( 'add', self.getProbes() ) )
-            ESI.instance().notifyByUserTypes(body = notif, admin=True, 
-                                            leader=False, tester=True, developer=False)
+            ESI.instance().notifyByUserTypes(body = notif, 
+                                             admin=True, 
+                                             monitor=False, 
+                                             tester=True)
         self.__mutex.release()
 
     def onDisconnection (self, client):
@@ -343,8 +348,10 @@ class ProbeServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
                 del publicip
                 self.info( 'Probe unregistered: Name="%s"' % k )
                 notif = ( 'probes', ( 'del', self.getProbes() ) )
-                ESI.instance().notifyByUserTypes(body = notif, admin=True, 
-                                                leader=False, tester=True, developer=False)
+                ESI.instance().notifyByUserTypes(body = notif, 
+                                                 admin=True, 
+                                                 monitor=False, 
+                                                 tester=True)
                 del ret
                 break
 

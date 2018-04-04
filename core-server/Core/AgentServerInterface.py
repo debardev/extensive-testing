@@ -246,8 +246,10 @@ class AgentServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
         if doNotify:
             # Notify all connected users
             notif = ( 'agents', ( 'add', self.getAgents() ) )
-            ESI.instance().notifyByUserTypes(body = notif, admin=True, 
-                                            leader=False, tester=True, developer=False)
+            ESI.instance().notifyByUserTypes(body = notif, 
+                                             admin=True, 
+                                             monitor=False, 
+                                             tester=True)
         self.__mutex.release()
 
     def onDisconnection (self, client):
@@ -267,8 +269,10 @@ class AgentServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
                 del publicip
                 self.info( 'Agent unregistered: Name="%s"' % k )
                 notif = ( 'agents', ( 'del', self.getAgents() ) )
-                ESI.instance().notifyByUserTypes(body = notif, admin=True, 
-                                                leader=False, tester=True, developer=False)
+                ESI.instance().notifyByUserTypes(body = notif, 
+                                                 admin=True, 
+                                                 monitor=False, 
+                                                 tester=True)
                 del ret
                 break
 

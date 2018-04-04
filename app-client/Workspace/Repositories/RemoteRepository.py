@@ -220,7 +220,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         layout.addLayout(fileLayout)
         
         # dbr13 >> Checkbox for Update --> Location
-        self.update_location_in_tests = QCheckBox(self.tr('Search and update this new test location in other\ntestplan or testglobal?'))
+        self.update_location_in_tests = QCheckBox(self.tr('Search and update this new test location in the\ncurrent and other testplan or testglobal?'))
         # dbr13 <<
         
         # Buttons
@@ -497,7 +497,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         """
         self.selectedFilename = dirValue
 
-    def setMoveFile(self, project=''):
+    def setMoveFile(self, project='', update_path=False):
         """
         Set as move file
 
@@ -525,7 +525,13 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         self.acceptButton.setText(self.tr("Select"))
         self.filenameLabel.hide()
         self.filenameLineEdit.hide()
-
+        
+        self.update_location_in_tests.setChecked(False)
+        if update_path:
+            self.update_location_in_tests.show()
+        else:
+            self.update_location_in_tests.hide()
+            
     def setMoveFolder(self, project=''):
         """
         Set as move folder
@@ -629,7 +635,8 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         self.filenameLineEdit.show()
         self.filenameLineEdit.setText(filename)
 
-    def getFilename(self, type= EXTENSION_TSX, multipleSelection=False, project='', update_path=False):
+    def getFilename(self, type= EXTENSION_TSX, multipleSelection=False, 
+                    project='', update_path=False):
         """
         Returns filename
 
@@ -1151,6 +1158,11 @@ class RenameDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         """
         return self.newnameEdit.text()
 
+    def getUpdateLocationStatus(self):
+        """
+        """
+        return self.update_location.isChecked()
+        
 class TreeWidgetRepository(QTreeWidget):
     """
     Tree widget repository
@@ -1477,10 +1489,11 @@ class Repository(QWidget, Logger.ClassLogger):
         self.wrepository = None
         
         style = self.parent.style()
-        self.folderIcon = QIcon()
+        self.folderIcon = QIcon( QIcon(":/folder_base.png")  )
         self.rootIcon = QIcon()
-        self.folderIcon.addPixmap( style.standardPixmap(QStyle.SP_DirClosedIcon), QIcon.Normal, QIcon.Off)
-        self.folderIcon.addPixmap( style.standardPixmap(QStyle.SP_DirOpenIcon), QIcon.Normal, QIcon.On)
+        # self.folderIcon.addPixmap( QIcon(":/folder_add.png") )
+        # self.folderIcon.addPixmap( style.standardPixmap(QStyle.SP_DirClosedIcon), QIcon.Normal, QIcon.Off)
+        # self.folderIcon.addPixmap( style.standardPixmap(QStyle.SP_DirOpenIcon), QIcon.Normal, QIcon.On)
         self.rootIcon.addPixmap( style.standardPixmap(QStyle.SP_DriveNetIcon) )
         self.testAbstractIcon = QIcon(":/%s.png" % EXTENSION_TAX)
         self.testUnitIcon = QIcon(":/%s.png" % EXTENSION_TUX)
@@ -1497,8 +1510,8 @@ class Repository(QWidget, Logger.ClassLogger):
         self.projectInitialized = False
 
         # new in v17
-        self.trashIcon = QIcon()
-        self.trashIcon.addPixmap( style.standardPixmap(QStyle.SP_TrashIcon) )
+        self.trashIcon = QIcon(":/trash.png")
+        # self.trashIcon.addPixmap( style.standardPixmap(QStyle.SP_TrashIcon) )
         self.sandboxIcon = QIcon(":/folder_add.png")
         self.reservedItems = []
         # end of new
@@ -2254,7 +2267,7 @@ class Repository(QWidget, Logger.ClassLogger):
             currentName = self.itemCurrent.fileName
             pathFolder = self.itemCurrent.getPath(withFileName = False, withFolderName=False)
             if self.repoType == UCI.REPO_TESTS:
-                self.parent.remote().saveAs.setMoveFile(project=project)
+                self.parent.remote().saveAs.setMoveFile(project=project, update_path=True)
                 dialog = self.parent.remote().saveAs
             elif self.repoType == UCI.REPO_ADAPTERS:
                 self.parent.remoteAdapter().saveAs.setMoveFile()
@@ -2268,6 +2281,9 @@ class Repository(QWidget, Logger.ClassLogger):
             if dialog.exec_() == QDialog.Accepted:
                 newPath = dialog.getSelection()
                 newProject = dialog.getProjectSelection()
+                
+                update_location = dialog.getUpdateLocationStatus()
+                
                 if self.projectSupport:
                     project = self.getCurrentProject()
                     projectid = self.getProjectId(project=str(project))
@@ -2275,9 +2291,13 @@ class Repository(QWidget, Logger.ClassLogger):
                         newprojectid = self.getProjectId(project=str(newProject))
                     else:
                         newprojectid = projectid
-                    self.moveRemoteFile(    currentName=currentName, currentPath=pathFolder, 
+                    self.moveRemoteFile(    currentName=currentName, 
+                                            currentPath=pathFolder, 
                                             currentExtension=self.itemCurrent.fileExtension,
-                                            newPath=newPath, project=projectid, newProject=newprojectid
+                                            newPath=newPath, 
+                                            project=projectid, 
+                                            newProject=newprojectid,
+                                            update_location = update_location
                                         )
                 else:
                     self.moveRemoteFile(currentName=currentName, currentPath=pathFolder, 
@@ -2313,7 +2333,8 @@ class Repository(QWidget, Logger.ClassLogger):
                 else:
                     self.moveRemoteFolder(currentName=currentName, currentPath=pathFolder, newPath=newPath)
 
-    def moveRemoteFile(self, currentName, currentPath, currentExtension, newPath, project=0, newProject=0):
+    def moveRemoteFile(self, currentName, currentPath, currentExtension, newPath, 
+                       project=0, newProject=0, update_location=False):
         """
         Move remote file
 
@@ -2534,7 +2555,7 @@ class Repository(QWidget, Logger.ClassLogger):
         renameDialog = RenameDialog( currentName = str(currentName), folder=folder )
         if renameDialog.exec_() == QDialog.Accepted:
             # dbr13 >>> for rename
-            update_location = renameDialog.update_location.isChecked()
+            update_location = renameDialog.getUpdateLocationStatus()
             # dbr13 <<<
             
             txt = renameDialog.getNewName()
@@ -2560,12 +2581,17 @@ class Repository(QWidget, Logger.ClassLogger):
                         if self.projectSupport:
                             project = self.getCurrentProject()
                             projectid = self.getProjectId(project=str(project))
-                            self.renameFile(mainPath=pathFolder, oldFileName=self.itemCurrent.fileName, 
-                                            newFileName=txt, extFile=self.itemCurrent.fileExtension, 
-                                            project=projectid, update_location=update_location)
+                            self.renameFile(mainPath=pathFolder, 
+                                            oldFileName=self.itemCurrent.fileName, 
+                                            newFileName=txt, 
+                                            extFile=self.itemCurrent.fileExtension, 
+                                            project=projectid, 
+                                            update_location=update_location)
                         else:
-                            self.renameFile(mainPath=pathFolder, oldFileName=self.itemCurrent.fileName, 
-                                            newFileName=txt, extFile=self.itemCurrent.fileExtension)
+                            self.renameFile(mainPath=pathFolder, 
+                                            oldFileName=self.itemCurrent.fileName, 
+                                            newFileName=txt, 
+                                            extFile=self.itemCurrent.fileExtension)
                                             
                     elif self.itemCurrent.type() == QTreeWidgetItem.UserType+1: # rename folder
                         pathFolder = self.itemCurrent.getPath(withFileName = False, withFolderName=False)

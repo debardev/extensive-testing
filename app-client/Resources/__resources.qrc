@@ -2,6 +2,7 @@
 <qresource>
    <file>../../TERMS</file>
    <file>../../CONTRIBUTORS</file>
+   <file>folder_base.png</file>
    <file>sandbox.png</file>
    <file>input-unused.png</file>
    <file>build.png</file>

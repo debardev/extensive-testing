@@ -398,7 +398,10 @@ class RepoArchives(RepoManager.RepoManager, Logger.ClassLogger):
                                                     'mb-free': self.freeSpace(p=self.testsPath) }
 
                     data = ( 'archive', ( None, notif) )    
-                    ESI.instance().notifyByUserTypes(body = data, admin=True, leader=False, tester=True, developer=False)
+                    ESI.instance().notifyByUserTypes(body = data, 
+                                                     admin=True, 
+                                                     monitor=False, 
+                                                     tester=True)
             else:
                 self.error( "zip %s failed" % trPath )
         except Exception as e:
@@ -564,8 +567,11 @@ class RepoArchives(RepoManager.RepoManager, Logger.ClassLogger):
                                                 'mb-used': self.getSizeRepoV2(folder=self.testsPath),
                                                 'mb-free': self.freeSpace(p=self.testsPath) }
                 data = ( 'archive', ( None, notif) )    
-                ESI.instance().notifyByUserAndProject(body = data, admin=True, leader=False, tester=True, 
-                                        developer=False, projectId="%s" % projectId)
+                ESI.instance().notifyByUserAndProject(body = data,
+                                                      admin=True, 
+                                                      monitor=False, 
+                                                      tester=True, 
+                                                      projectId="%s" % projectId)
         
         except Exception as e:
             self.error("unable to create result log: %s" % e )

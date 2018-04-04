@@ -67,8 +67,7 @@ import Libs.FileModels.TestSuite as TestSuite
 import Libs.FileModels.TestUnit as TestUnit
 import Libs.FileModels.TestPlan as TestPlan
 import Libs.FileModels.TestAbstract as TestAbstract
-# import Libs.FileModels.TestConfig as TestConfig
-    
+   
 class EmptyValue(Exception): pass
 
 @wrapt.decorator
@@ -101,6 +100,20 @@ def _get_user(request):
             return Context.instance().getSessions()[sess_id]
         else:
             raise HTTP_401("Invalid session")
+
+def _check_project_permissions(user_login, project_id):
+    """
+    Look up project
+    """
+    # checking input    
+    if not isinstance(project_id, int):
+        raise HTTP_400("Bad project id provided in request, int expected")
+            
+    # get the project id according to the name and checking permissions
+    project_authorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_login, 
+                                                                               projectId=project_id)
+    if not project_authorized:
+        raise HTTP_403('Permission denied to this project')
 
 """
 Adapters handler
@@ -1857,17 +1870,8 @@ class AdaptersFileDownload(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if projectId is not None:
-            if not isinstance(projectId, int):
-                raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
         
@@ -3556,18 +3560,9 @@ class LibrariesFileDownload(Handler):
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
-            
-        # checking input    
-        if projectId is not None:
-            if not isinstance(projectId, int):
-                raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
         
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
         
@@ -5169,18 +5164,9 @@ class TestsBasicListing(Handler):
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
-            
-        # checking input    
-        if projectId is not None:
-            if not isinstance(projectId, int):
-                raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
         
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         listing = RepoTests.instance().getBasicListing(projectId=projectId)  
         
         return { "cmd": self.request.path, "listing": listing, "project-id": projectId }
@@ -5569,7 +5555,7 @@ class TestsSchedule(Handler):
             if scheduleId is None : scheduleId = 0
             
             _scheduleAt = self.request.data.get("schedule-at")  
-            _scheduleRepeat = self.request.data.get("schedule-repeat")
+            _scheduleRepeat = self.request.data.get("schedule-repeat", 0)
             _tabId = self.request.data.get("tab-id")
             _backgroundMode = self.request.data.get("background-mode")
             _stepMode = self.request.data.get("step-mode")
@@ -5640,12 +5626,8 @@ class TestsSchedule(Handler):
         #run a test not save; change the project id to the default
         if projectId == 0: 
             projectId = ProjectsManager.instance().getDefaultProjectForUser(user=user_profile['login'])
-              
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
+        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
 
         # no test content provided
         if not len(testDefinition) and not len(testExecution) and not len(testProperties): 
@@ -5730,10 +5712,10 @@ class TestsSchedule(Handler):
         fromTime = (0,0,0,0,0,0)
         toTime = (0,0,0,0,0,0)
         message = "success"
-        scheduleRepeat = 0
+        # scheduleRepeat = 0
         scheduleAt = (0,0,0,0,0,0)
         
-        if _scheduleRepeat is not None: scheduleRepeat = _scheduleRepeat
+        # if _scheduleRepeat is not None: scheduleRepeat = _scheduleRepeat
         if _tabId is not None: tabId = _tabId
         if _backgroundMode is not None: backgroundMode=_backgroundMode
         if _stepMode is not None: stepMode=_stepMode
@@ -5797,7 +5779,7 @@ class TestsSchedule(Handler):
                                                 testBackground=backgroundMode,
                                                 runAt=scheduleAt, 
                                                 runType=scheduleId, 
-                                                runNb=scheduleRepeat, 
+                                                runNb=_scheduleRepeat, 
                                                 withoutProbes=probesEnabled,
                                                 debugActivated=debugEnabled, 
                                                 withoutNotif=notificationsEnabled, 
@@ -6004,7 +5986,7 @@ class TestsScheduleTpg(Handler):
             if scheduleId is None : scheduleId = 0
             
             _scheduleAt = self.request.data.get("schedule-at")
-            _scheduleRepeat = self.request.data.get("schedule-repeat")
+            _scheduleRepeat = self.request.data.get("schedule-repeat", 0)
             _tabId = self.request.data.get("tab-id")
             _backgroundMode = self.request.data.get("background-mode")
             _stepMode = self.request.data.get("step-mode")
@@ -6075,12 +6057,8 @@ class TestsScheduleTpg(Handler):
         #run a test not save; change the project id to the default
         if projectId == 0: 
             projectId = ProjectsManager.instance().getDefaultProjectForUser(user=user_profile['login'])
-              
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
+            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
 
         # no test content provided
         if not len(testExecution) and not len(testProperties): 
@@ -6160,9 +6138,9 @@ class TestsScheduleTpg(Handler):
         toTime = (0,0,0,0,0,0)
         scheduleAt = (0,0,0,0,0,0)
         message = "success" 
-        scheduleRepeat = 0
+        # scheduleRepeat = 0
 
-        if _scheduleRepeat is not None: scheduleRepeat = _scheduleRepeat
+        # if _scheduleRepeat is not None: scheduleRepeat = _scheduleRepeat
         if _tabId is not None: tabId = _tabId
         if _backgroundMode is not None: backgroundMode=_backgroundMode
         if _stepMode is not None: stepMode=_stepMode
@@ -6226,7 +6204,7 @@ class TestsScheduleTpg(Handler):
                                                 testBackground=backgroundMode,
                                                 runAt=scheduleAt, 
                                                 runType=scheduleId, 
-                                                runNb=scheduleRepeat, 
+                                                runNb=_scheduleRepeat, 
                                                 withoutProbes=probesEnabled,
                                                 debugActivated=debugEnabled, 
                                                 withoutNotif=notificationsEnabled, 
@@ -6332,24 +6310,8 @@ class TestsListing(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # _forsaveas = False
-        # if forsaveas is not None:
-            # _forsaveas = forsaveas
-            
-        # _forruns = False
-        # if forruns is not None:
-            # _forruns = forruns
-             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         _, _, listing, _ = RepoTests.instance().getTree(project=projectId)
 
         return { "cmd": self.request.path, "listing": listing, "project-id": projectId, 
@@ -6870,16 +6832,8 @@ class TestsFileDownload(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
         
@@ -6973,28 +6927,27 @@ class TestsFileOpen(Handler):
             _actId = self.request.data.get("action-id")
             _destId = self.request.data.get("destination-id")
 
-            # dbr13 >>>
-            update_location = self.request.data.get('extra', {}).get('update_location', False)
+            # some new params in v19
+            
+            # update location is true when the test location in testplan/testglobal is updated
+            extra_update_location = self.request.data.get('extra', {}).get('update_location', False)
+            
+            # the old test location from testplan/testglobal 
             extra_filename = self.request.data.get('extra', {}).get('file_name', '')
             extra_ext = self.request.data.get('extra', {}).get('file_ext', '')
             extra_projectid = self.request.data.get('extra', {}).get('project_id', 0)
             extra_path = self.request.data.get('extra', {}).get('file_path', '')
-            # dbr13 <<<
-
+            
+            # referer to the origin file (testplan or testglobal) which ask to open the file
+            extra_file_referer_path = self.request.data.get('extra', {}).get('file_referer_path', '')
+            extra_file_referer_projectid = self.request.data.get('extra', {}).get('file_referer_projectid', 0)
+            
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
 
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
@@ -7015,8 +6968,21 @@ class TestsFileOpen(Handler):
         if success != Context.instance().CODE_OK:
             raise HTTP_500("Unable to open test file")
             
+        rsp_rest = { "cmd": self.request.path, 
+                     "file-content": data_base64,
+                     "file-path": path_file,
+                     "file-name": name_file,
+                     "file-extension": ext_file,
+                     "locked": locked,
+                     "locked-by": locked_by,
+                     "project-id": project,
+                     "custom-param": _customParam,
+                     "action-id": _actId,
+                     "destination-id": _destId,
+                     "refresh": False}
+                     
         # dbr13 >>> when we set checkbox in the Update->Location
-        if update_location:
+        if extra_update_location:
             file_path = path_file or '/'
             update_files_list = RepoTests.instance().updateLinkedScriptPath(project=extra_projectid,
                                                                             mainPath=extra_path,
@@ -7029,21 +6995,13 @@ class TestsFileOpen(Handler):
                                                                             newExt=ext_file,
                                                                             
                                                                             user_login=user_profile['login'],
-                                                                            )
+                                                                            file_referer_path=extra_file_referer_path,
+                                                                            file_referer_projectid=extra_file_referer_projectid
+                                                                           )
+            rsp_rest["refresh"] = True
         # dbr13 <<<
-        
-        # I think we need add some info into return but I haven't thought about it yet =)
-        return { "cmd": self.request.path, 
-                 "file-content": data_base64,
-                 "file-path": path_file,
-                 "file-name": name_file,
-                 "file-extension": ext_file,
-                 "locked": locked,
-                 "locked-by": locked_by,
-                 "project-id": project,
-                 "custom-param": _customParam,
-                 "action-id": _actId,
-                 "destination-id": _destId}
+
+        return rsp_rest
 
 class TestsFileUpload(Handler):
     """
@@ -7126,47 +7084,27 @@ class TestsFileUpload(Handler):
             fileContent = self.request.data.get("file-content")
             if fileContent is None: raise EmptyValue("Please specify a file content")
             
-            _overwrite = self.request.data.get("overwrite")
-            _closeafter = self.request.data.get("close-after")
-            _addfolders = self.request.data.get("add-folders")
+            _overwrite = self.request.data.get("overwrite", False)
+            _closeafter = self.request.data.get("close-after", False)
+            _addfolders = self.request.data.get("add-folders", False)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
-            
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
-        overwrite = False
-        if _overwrite is not None:
-            overwrite = _overwrite
-            
-        closeAfter = False
-        if _closeafter is not None:
-            closeAfter = _closeafter
-            
-        addFolders = False
-        if _addfolders is not None:
-            addFolders = _addfolders
-            
+        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         putFileReturn = RepoTests.instance().uploadFile( pathFile=filePath, 
                                                          nameFile=fileName, 
                                                          extFile=fileExt, 
                                                          contentFile=fileContent, 
                                                          login=user_profile['login'], 
                                                          project=projectId, 
-                                                         overwriteFile=overwrite,
-                                                         createFolders=addFolders,
+                                                         overwriteFile=_overwrite,
+                                                         createFolders=_addfolders,
                                                          lockMode=True, 
                                                          binaryMode=True,
-                                                         closeAfter=closeAfter )
+                                                         closeAfter=_closeafter )
         success, pathFile, nameFile, extFile, project, overwriteFile, closeAfter, isLocked, lockedBy = putFileReturn
 
         return { "cmd": self.request.path, 
@@ -7248,16 +7186,8 @@ class TestsFileRemove(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
         
@@ -7344,16 +7274,8 @@ class TestsFileUnlock(Handler):
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
-            
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
+        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
 
         success  = RepoTests.instance().unlockFile(pathFile=filePath, 
                                                    nameFile=fileName, 
@@ -7467,17 +7389,8 @@ class TestsFileRename(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-            
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
         
@@ -7624,24 +7537,9 @@ class TestsFileDuplicate(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-        if not isinstance(newProjectId, int):
-            raise HTTP_400("Bad new project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=newProjectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+        _check_project_permissions(user_login=user_profile['login'], project_id=newProjectId)
+
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
         newFilePath = os.path.normpath("/" + newFilePath )
@@ -7768,24 +7666,9 @@ class TestsFileMove(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-        if not isinstance(newProjectId, int):
-            raise HTTP_400("Bad new project id provided in request, int expected")
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+        _check_project_permissions(user_login=user_profile['login'], project_id=newProjectId)
 
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=newProjectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
         # avoid directory traversal
         filePath = os.path.normpath("/" + filePath )
         newFilePath = os.path.normpath("/" + newFilePath )
@@ -7896,16 +7779,8 @@ class TestsDirectoryAdd(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # avoid directory traversal
         folderPath = os.path.normpath("/" + folderPath )
         
@@ -8010,16 +7885,8 @@ class TestsDirectoryRename(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # avoid directory traversal
         folderPath = os.path.normpath("/" + folderPath )
         
@@ -8137,24 +8004,9 @@ class TestsDirectoryDuplicate(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-        if not isinstance(newProjectId, int):
-            raise HTTP_400("Bad new project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=newProjectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+        _check_project_permissions(user_login=user_profile['login'], project_id=newProjectId)
+
         # some security check to avoid directory traversal
         folderPath = os.path.normpath("/" + folderPath )
         newFolderPath = os.path.normpath("/" + newFolderPath )
@@ -8270,26 +8122,9 @@ class TestsDirectoryMove(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-        if not isinstance(newProjectId, int):
-            raise HTTP_400("Bad new project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        prjId = projectId
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=prjId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
-        # get the project id according to the name and checking authorization
-        newPrjId = newProjectId
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=newPrjId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+        _check_project_permissions(user_login=user_profile['login'], project_id=newProjectId)
+
         # some security check to avoid directory traversal
         folderPath = os.path.normpath("/" + folderPath )
         newFolderPath = os.path.normpath("/" + newFolderPath )
@@ -8302,8 +8137,8 @@ class TestsDirectoryMove(Handler):
                                                     mainPath=folderPath, 
                                                     folderName=folderName, 
                                                     newPath=newFolderPath, 
-                                                    project=prjId, 
-                                                    newProject=newPrjId
+                                                    project=projectId, 
+                                                    newProject=newProjectId
                                                 )  
         if success == Context.instance().CODE_ERROR:
             raise HTTP_500("Unable to move directory")
@@ -8313,7 +8148,7 @@ class TestsDirectoryMove(Handler):
             raise HTTP_403("Directory already exists")
             
         return { "cmd": self.request.path, "message": "directory successfully moved", 
-                 "project-id": prjId }
+                 "project-id": projectId }
         
 class TestsDirectoryRemove(Handler):
     """
@@ -8383,15 +8218,7 @@ class TestsDirectoryRemove(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
 
         # avoid directory traversal
         folderPath = os.path.normpath("/" + folderPath )
@@ -8483,16 +8310,8 @@ class TestsSnapshotAdd(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         success = RepoTests.instance().addSnapshot( snapshotName=snapshotName, 
                                                     snapshotTimestamp=snapshotTimestamp,
                                                     testPath=testPath, 
@@ -8577,16 +8396,8 @@ class TestsSnapshotRemove(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         success = RepoTests.instance().deleteSnapshot( 
                                                         snapshotPath=snapshotPath,
                                                         snapshotName=snapshotName,
@@ -8670,17 +8481,9 @@ class TestsSnapshotRestore(Handler):
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
-            
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         success =  RepoTests.instance().restoreSnapshot( 
                                                             snapshotPath=snapshotPath,
                                                             snapshotName=snapshotName,
@@ -8775,22 +8578,14 @@ class VariablesAdd(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+   
         # dumps the json
         try:
             variableValue = json.dumps(variableJson)
         except Exception :
             raise HTTP_400("Bad json provided in value")
-         
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+
         success, details = RepoTests.instance().addVariableInDB(projectId=projectId, 
                                                                 variableName=variableName,
                                                                 variableValue=variableValue)
@@ -8875,16 +8670,8 @@ class VariablesDuplicate(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
         
-        # checking input
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         success, details = RepoTests.instance().duplicateVariableInDB(variableId=variableId, 
                                                                       projectId=projectId)
         if success == Context.instance().CODE_NOT_FOUND:
@@ -8973,22 +8760,14 @@ class VariablesUpdate(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
-        # checking input
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+  
         # dumps the json
         try:
             variableValue = json.dumps(variableJson)
         except Exception :
             raise HTTP_400("Bad json provided in value")
-        
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+
         success, details = RepoTests.instance().updateVariableInDB(variableId=variableId, 
                                                                    variableName=variableName, 
                                                                    variableValue=variableValue, 
@@ -9071,16 +8850,8 @@ class VariablesRemove(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
-        # checking input
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'],
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         success, details = RepoTests.instance().delVariableInDB(variableId=variableId, projectId=projectId)
         if success == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404(details)
@@ -9173,16 +8944,7 @@ class VariablesListing(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
-        # checking input
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
 
         success, details = RepoTests.instance().getVariablesFromDB(projectId=projectId)
         if success == Context.instance().CODE_ERROR:
@@ -9298,16 +9060,8 @@ class VariablesSearchByName(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
-        # checking input
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         success, details = RepoTests.instance().getVariableFromDB(projectId=projectId, 
                                                                   variableName=variableName)
         if success == Context.instance().CODE_ERROR:
@@ -9432,16 +9186,8 @@ class VariablesSearchById(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
-        # checking input
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         success, details = RepoTests.instance().getVariableFromDB(projectId=projectId,
                                                                   variableId=variableId)
         if success == Context.instance().CODE_ERROR:
@@ -9620,16 +9366,8 @@ class ResultsCompressZip(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # extract the real test path according the test id
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId, 
                                                                   returnProject=False)
@@ -9716,21 +9454,8 @@ class ResultsListingFiles(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
-        # if _partial is None:
-            # partialListing = True
-        # else:
-            # partialListing = _partial
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         nb_archs, nb_archs_f, archs, stats_archs = RepoArchives.instance().getTree(fullTree=not _partial, 
                                                                                    project=projectId)       
         return { "cmd": self.request.path, 
@@ -9815,16 +9540,8 @@ class ResultsListingIdByDateTime(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         listing = RepoArchives.instance().getBasicListing(projectId=projectId, 
                                                         dateFilter=dateFilter, 
                                                         timeFilter=timeFilter)  
@@ -9931,27 +9648,14 @@ class ResultsDownloadResult(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # extract the real test path according the test id
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, 
                                                                   testId=testId, returnProject=False)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result by id not found')
 
-        # saveAs = False
-        # if _saveAs is not None: saveAs = _saveAs
-        # saveAsDest = ''
-        # if _saveAsDest is not None: saveAsDest = _saveAsDest
-            
         trxPath = "%s/%s" % (testPath, fileName)
         success, _, nameFile, extFile, _, b64result, _, _ = RepoArchives.instance().getFile( pathFile=trxPath, 
                                                                                           project=projectId, 
@@ -10048,16 +9752,8 @@ class ResultsDownloadResultUncomplete(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # extract the real test path according the test id
         success, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if success == Context.instance().CODE_NOT_FOUND:
@@ -10158,16 +9854,8 @@ class ResultsDownloadImage(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # extract the real test path according the test id
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, 
                                                                   testId=testId, returnProject=False)
@@ -10257,18 +9945,9 @@ class ResultsRemoveById(Handler):
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
-                    
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
         
-        
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('test not found')
@@ -10357,15 +10036,7 @@ class ResultsRemoveByDate(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
                     
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
 
         success = RepoArchives.instance().delDirAll(pathFolder="%s/%s/" % (projectId, byDate), project='')  
         if success == Context.instance().CODE_ERROR:
@@ -10446,17 +10117,9 @@ class ResultsFollow(Handler):
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
-            
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+          
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         results = []
         for testId in testIds:
             result = { "id": testId }
@@ -10552,16 +10215,8 @@ class ResultsStatus(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result not found')
@@ -10644,16 +10299,8 @@ class ResultsVerdict(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result not found')
@@ -10739,21 +10386,8 @@ class ResultsReportReviews(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
-        # if _replayId is None:
-            # replayId = 0
-        # else:
-            # replayId = _replayId
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result not found')
@@ -10859,21 +10493,8 @@ class ResultsReportVerdicts(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
-        # if _replayId is None:
-            # replayId = 0
-        # else:
-            # replayId = _replayId
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result not found')
@@ -10976,21 +10597,8 @@ class ResultsReportDesigns(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
-        # if _replayId is None:
-            # replayId = 0
-        # else:
-            # replayId = _replayId
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result not found')
@@ -11093,21 +10701,8 @@ class ResultsReportComments(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
-        # if _replayId is None:
-            # replayId = 0
-        # else:
-            # replayId = _replayId
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result not found')
@@ -11200,21 +10795,8 @@ class ResultsReportEvents(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
-        # if _replayId is None:
-            # replayId = 0
-        # else:
-            # replayId = _replayId
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result not found')
@@ -11314,21 +10896,8 @@ class ResultsReports(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
-        # if _replayId is None:
-            # replayId = 0
-        # else:
-            # replayId = _replayId
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404('Test result not found')
@@ -11483,26 +11052,8 @@ class ResultsCommentAdd(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
-        
-        # if _replayId is None:
-            # replayId = 0
-        # else:
-            # replayId = _replayId
-        
-        # if _returnAll is None:
-            # returnAll = True
-        # else:
-            # returnAll = _returnAll
-            
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
         # extract the real test path according the test id
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
         if founded == Context.instance().CODE_NOT_FOUND:
@@ -11608,21 +11159,8 @@ class ResultsCommentsRemove(Handler):
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
-            
-        # checking input    
-        if not isinstance(projectId, int):
-            raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
         
-        # if _replayId is None:
-            # replayId = 0
-        # else:
-            # replayId = _replayId
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
 
         # extract the real test path according the test id
         founded, testPath = RepoArchives.instance().findTrInCache(projectId=projectId, testId=testId)
@@ -11734,16 +11272,7 @@ class MetricsTestsWritingDuration(Handler):
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
-        # checking input    
-        if projectId is not None:
-            if not isinstance(projectId, int):
-                raise HTTP_400("Bad project id provided in request, int expected")
-                
-        # get the project id according to the name and checking authorization
-        projectAuthorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_profile['login'], 
-                                                                                  projectId=projectId)
-        if not projectAuthorized:
-            raise HTTP_403('Access denied to this project')
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
 
         success = StatsManager.instance().addWritingDuration(   
                                                                 fromUser=user_profile['id'], 

@@ -1712,8 +1712,10 @@ class Task(Logger.ClassLogger):
                     notif = {}
                     notif['archive'] = m 
                     data = ( 'archive', ( None, notif) ) 
-                    ESI.instance().notifyByUserAndProject(  body = data, admin=True, leader=False, 
-                                                            tester=True, developer=False, 
+                    ESI.instance().notifyByUserAndProject(  body = data, 
+                                                            admin=True, 
+                                                            monitor=False, 
+                                                            tester=True,  
                                                             projectId="%s" % self.projectId )
         
         # Compilation
@@ -2002,8 +2004,11 @@ class Task(Logger.ClassLogger):
                 notif['archive'] = m 
                 data = ( 'archive', ( None, notif) ) 
 
-                ESI.instance().notifyByUserAndProject(body = data, admin=True, leader=False, tester=True, 
-                                                      developer=False, projectId="%s" % self.projectId)
+                ESI.instance().notifyByUserAndProject(body = data, 
+                                                      admin=True, 
+                                                      monitor=False, 
+                                                      tester=True, 
+                                                      projectId="%s" % self.projectId)
 
             if self.noKeepTr and self.verdict == 'PASS':
                 self.trace('no keep test result option activated: do not notify the user because the result is pass')
@@ -2030,8 +2035,11 @@ class Task(Logger.ClassLogger):
                                                  'mb-free': RepoArchives.instance().freeSpace(p=RepoArchives.instance().testsPath) }
                 data = ( 'archive', ( None, notif) )    
 
-                ESI.instance().notifyByUserAndProject(body = data, admin=True, leader=False, tester=True, 
-                                                      developer=False, projectId="%s" % self.projectId)
+                ESI.instance().notifyByUserAndProject(body = data, 
+                                                      admin=True, 
+                                                      monitor=False, 
+                                                      tester=True,
+                                                      projectId="%s" % self.projectId)
                 
         # not necessary to keep test results logs, delete it
         if self.noKeepTr:

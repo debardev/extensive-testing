@@ -117,7 +117,10 @@ class ProbesManager(Logger.ClassLogger):
 
                 # notify all admin and tester
                 notif = ( 'probes-default', ( 'add', self.getDefaultProbes() ) )
-                ESI.instance().notifyByUserTypes(body = notif, admin=True, leader=False, tester=True, developer=False)
+                ESI.instance().notifyByUserTypes(body = notif, 
+                                                 admin=True, 
+                                                 monitor=False, 
+                                                 tester=True)
                 
                 # return OK
                 ret = self.context.CODE_OK
@@ -152,13 +155,19 @@ class ProbesManager(Logger.ClassLogger):
 
                 # notify all admin and tester
                 notif = ( 'probes-default', ( 'del', self.getDefaultProbes() ) )
-                ESI.instance().notifyByUserTypes(body = notif, admin=True, leader=False, tester=True, developer=False)
+                ESI.instance().notifyByUserTypes(body = notif, 
+                                                 admin=True, 
+                                                 monitor=False, 
+                                                 tester=True)
 
                 runningProbe = PSI.instance().getProbe(pname=pName)
                 if runningProbe is not None:
                     runningProbe['auto-startup'] = False
                 notif2 = ( 'probes', ( 'del', PSI.instance().getProbes() ) )
-                ESI.instance().notifyByUserTypes(body = notif2, admin=True, leader=False, tester=True, developer=False)
+                ESI.instance().notifyByUserTypes(body = notif2, 
+                                                 admin=True, 
+                                                 monitor=False, 
+                                                 tester=True)
 
 
                 # return OK

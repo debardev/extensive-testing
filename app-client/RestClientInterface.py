@@ -362,7 +362,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     FileTestsUploadError = pyqtSignal(str, str, str, int, bool, bool)
     FileAdaptersUploadError = pyqtSignal(str, str, str, bool, bool)
     FileLibrariesUploadError = pyqtSignal(str, str, str, bool, bool)
-    GetFileRepo = pyqtSignal(str, str, str, str, int, int, int, int)
+    GetFileRepo = pyqtSignal(str, str, str, str, int, int, int, int, bool)
     AddTestTab = pyqtSignal(object)
     def __init__(self, parent, clientVersion):
         """
@@ -1673,7 +1673,8 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         self.makeRequest( uri=CMD_ADAPTERS_FILE_MOVE, request=HTTP_POST, _json=_json )
 
     @calling_rest
-    def moveFileTests(self, filePath, fileName, fileExt, fileProject, newPath, newProject):
+    def moveFileTests(self, filePath, fileName, fileExt, fileProject, newPath, 
+                      newProject, update_location=False):
         """
         move test file
         """
@@ -1683,7 +1684,8 @@ class RestClientInterface(QObject, Logger.ClassLogger):
                                 "file-name": fileName,
                                 "file-extension": fileExt },
                     "destination": { "project-id": int(newProject),
-                                     "file-path": newPath }
+                                     "file-path": newPath },
+                    "update_location": update_location
                 }
         self.makeRequest( uri=CMD_TESTS_FILE_MOVE, request=HTTP_POST, _json=_json )
         
@@ -1714,7 +1716,8 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         self.makeRequest( uri=CMD_ADAPTERS_FILE_RENAME, request=HTTP_POST, _json=_json )
 
     @calling_rest
-    def renameFileTests(self, filePath, fileName, fileExt, fileProject, newName, update_location=False):
+    def renameFileTests(self, filePath, fileName, fileExt, fileProject, 
+                        newName, update_location=False):
         """
         rename test file
         """
@@ -1756,7 +1759,8 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         self.makeRequest( uri=CMD_ADAPTERS_FILE_DUPLICATE, request=HTTP_POST, _json=_json )
 
     @calling_rest
-    def duplicateFileTests(self, filePath, fileName, fileExt, fileProject, newPath, newName, newProject):
+    def duplicateFileTests(self, filePath, fileName, fileExt, fileProject, 
+                           newPath, newName, newProject):
         """
         Duplicate test file
         """
@@ -3401,6 +3405,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         """
         self.trace("on tests file opened") 
         if details["destination-id"] is not None and details["action-id"] is not None:
+            # import file
             self.GetFileRepo.emit( details["file-path"], 
                                    details["file-name"], 
                                    details["file-extension"], 
@@ -3408,8 +3413,10 @@ class RestClientInterface(QObject, Logger.ClassLogger):
                                    details["project-id"], 
                                    details["destination-id"], 
                                    details["action-id"],
-                                   details["custom-param"] )
+                                   details["custom-param"],
+                                   details["refresh"] )
         else:
+            # open the file in the workspace
             self.OpenTestFile.emit( details["file-path"],
                                     details["file-name"],
                                     details["file-extension"],

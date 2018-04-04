@@ -99,7 +99,8 @@ class RepoManager(Logger.ClassLogger):
         @return: date time
         @rtype: string
         """
-        ret = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(time.time()))  + ".%3.3d" % int((time.time() * 1000)% 1000  )
+        ret = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(time.time()))  \
+                            + ".%3.3d" % int((time.time() * 1000)% 1000  )
         return ret
 
     def bytes2human(self, n):
@@ -660,7 +661,11 @@ class RepoManager(Logger.ClassLogger):
             else:
                 complete_path = "%s/%s/%s.%s" % (self.testsPath, project, nameFile, extFile)
                 lockPath = "%s/%s/.%s.%s.lock" % (self.testsPath, project,  nameFile, extFile)
-
+                
+            # normalize the path
+            complete_path = os.path.normpath(complete_path)
+            lockPath = os.path.normpath(lockPath)
+            
             # refuse to save if a lock already exist with a diffent login name
             if lockMode:
                 if os.path.exists( lockPath ): 
@@ -738,6 +743,9 @@ class RepoManager(Logger.ClassLogger):
                                                       unicode(pathFile), 
                                                       nameFile, 
                                                       extFile )
+                                                      
+            # normalize the path
+            completepath = os.path.normpath(completepath)
             
             self.trace( "trying to unlock file=%s" % completepath )
             res = os.path.exists( completepath )
@@ -781,6 +789,10 @@ class RepoManager(Logger.ClassLogger):
                                                  unicode(folderName ) )
             else:
                 completepath = "%s/%s/%s" % ( self.testsPath, project, unicode(folderName) )
+                
+            # normalize the path
+            completepath = os.path.normpath(completepath)
+            
             self.trace( "adding folder %s" %completepath )
             res = os.path.exists( completepath )
             if res:
@@ -806,7 +818,10 @@ class RepoManager(Logger.ClassLogger):
         ret = self.context.CODE_ERROR
         try:
             completepath = "%s/%s/%s/" % ( self.testsPath, project, unicode(pathFolder) )
+            
+            # normalize the path
             completepath = os.path.normpath(completepath)
+            
             self.trace( "deleting folder %s" % completepath )
             res = os.path.exists( completepath )
             if not res:
@@ -835,7 +850,10 @@ class RepoManager(Logger.ClassLogger):
         ret = self.context.CODE_ERROR
         try:
             completepath = "%s/%s/%s/" % ( self.testsPath, project, unicode(pathFolder) )
+            
+            # normalize the path
             completepath = os.path.normpath(completepath)
+            
             self.trace( "deleting all folders %s" % completepath )
             res = os.path.exists( completepath )
             if not res:
@@ -900,6 +918,9 @@ class RepoManager(Logger.ClassLogger):
             oldpath = "%s/%s/%s/%s/" % ( self.testsPath, project, mainPath, unicode(oldPath) )
             newpath = "%s/%s/%s/%s/" % ( self.testsPath, project, mainPath, unicode(newPath) )
 
+            oldpath = os.path.normpath(oldpath)
+            newpath = os.path.normpath(newpath)
+            
             self.trace( "renaming folder %s to  %s" % ( oldpath,newpath ) )
             res = os.path.exists( oldpath )
             if not res:
@@ -939,6 +960,9 @@ class RepoManager(Logger.ClassLogger):
             oldpath = "%s/%s/%s/%s/" % ( self.testsPath, project, mainPath, unicode(oldPath) )
             newpath = "%s/%s/%s/%s/" % ( self.testsPath, newProject, newMainPath, unicode(newPath) )
 
+            oldpath = os.path.normpath(oldpath)
+            newpath = os.path.normpath(newpath)
+            
             self.trace( "duplicating folder %s to  %s" % ( oldpath,newpath ) )
             res = os.path.exists( oldpath )
             if not res:
@@ -967,6 +991,10 @@ class RepoManager(Logger.ClassLogger):
         ret = self.context.CODE_ERROR
         try:
             completepath = "%s/%s/%s" % ( self.testsPath, project, unicode(pathFile) )
+            
+            # normalize the path
+            completepath = os.path.normpath(completepath)
+            
             self.trace( "deleting %s" % completepath )
             res = os.path.exists( completepath )
             if not res:
@@ -1023,6 +1051,9 @@ class RepoManager(Logger.ClassLogger):
             newpath = "%s/%s/%s/%s.%s" % ( self.testsPath, project, mainPath, 
                                            unicode(newFilename), extFilename )
 
+            oldpath = os.path.normpath(oldpath)
+            newpath = os.path.normpath(newpath)
+            
             self.trace( "renaming %s to  %s" % ( oldpath,newpath ) )
             res = os.path.exists( oldpath )
             if not res:
@@ -1093,6 +1124,9 @@ class RepoManager(Logger.ClassLogger):
             newpath = "%s/%s/%s/%s.%s" % ( self.testsPath, newProject, newMainPath, 
                                            unicode(newFilename), extFilename )
 
+            oldpath = os.path.normpath(oldpath)
+            newpath = os.path.normpath(newpath)
+            
             self.trace( "duplicating %s to  %s" % ( oldpath,newpath ) )
             res = os.path.exists( oldpath )
             if not res:
@@ -1140,6 +1174,9 @@ class RepoManager(Logger.ClassLogger):
             oldpath = "%s/%s/%s/%s/" % ( self.testsPath, project, mainPath, unicode(folderName) )
             newpath = "%s/%s/%s/%s/" % ( self.testsPath, newProject, newPath, unicode(folderName) )
     
+            oldpath = os.path.normpath(oldpath)
+            newpath = os.path.normpath(newpath)
+            
             # begin issue 248
             if "%s/%s" % (mainPath,unicode(folderName)) == newPath:
                 return ( self.context.CODE_ALLREADY_EXISTS, mainPath, folderName, newPath, project )
@@ -1190,7 +1227,10 @@ class RepoManager(Logger.ClassLogger):
                                            unicode(fileName), extFilename )
             newpath = "%s/%s/%s/%s.%s" % ( self.testsPath, newProject, newPath, 
                                            unicode(fileName), extFilename )
-
+            
+            oldpath = os.path.normpath(oldpath)
+            newpath = os.path.normpath(newpath)
+            
             self.trace( "moving file from %s to %s" % ( oldpath,newpath ) )
             res = os.path.exists( oldpath )
             if not res:
@@ -1207,7 +1247,7 @@ class RepoManager(Logger.ClassLogger):
                     
                     # remove all snapshot, new in v11
                     if supportSnapshot:
-                        self.trace( "moving snapshots too")
+                        self.trace( "moving snapshots associated to the test")
                         # detect snapshots
                         snapshotsDetected = []
                         for file in os.listdir( "%s/%s/%s/" % ( self.testsPath, project, mainPath) ):
@@ -1219,7 +1259,7 @@ class RepoManager(Logger.ClassLogger):
                             oldpathSnap = "%s/%s/%s/%s" % ( self.testsPath, project, mainPath, snap)
                             newpathSnap = "%s/%s/%s/%s" % ( self.testsPath, project, newPath, snap)
                             shutil.move( oldpathSnap, newpathSnap )
-                        self.trace( "snapshots moved too")    
+                        self.trace( "snapshots moved")    
                     # end of new in v11
                     
                     return ( self.context.CODE_OK, mainPath, fileName, 

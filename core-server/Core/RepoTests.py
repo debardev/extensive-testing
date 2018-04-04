@@ -109,9 +109,6 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         self.embeddedPath = "%s/%s/%s" % (  Settings.getDirExec(),   
                                             Settings.get( 'Paths', 'packages' ),  
                                             Settings.get( 'Paths', 'samples' ) )
-
-        # contains oldpath: newpath
-        self.renameHistory = {}
         
         # Initialize the repository
         self.info( 'Deploying test samples...' )
@@ -1045,9 +1042,11 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         
     # dbr13 >>
     def updateLinkedScriptPath(self, project, mainPath, oldFilename, extFilename,
-                               newProject, newPath, newFilename, newExt,
-                               user_login):
+                               newProject, newPath, newFilename, newExt, user_login, 
+                               file_referer_path='', file_referer_projectid=0):
         """
+        Fix linked test in testplan or testglobal
+        Pull request by dbr13 and updated by dmachard
         """
         # get current project name and accessible projects list for currnet user
         project_name = ProjectsManager.instance().getProjectName(prjId=project)        
@@ -1080,8 +1079,12 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
             tests_tree_update_locations = self.getTestsForUpdate(listing=listing,
                                                                  extFileName=extFilename)
 
-            files_paths = self.get_files_paths(tests_tree=tests_tree_update_locations)
-
+            if len(file_referer_path) and int(proj_id['project_id']) == int(file_referer_projectid):
+                files_paths = self.get_files_paths(tests_tree=tests_tree_update_locations, 
+                                                   exceptions=[file_referer_path])
+            else:
+                files_paths = self.get_files_paths(tests_tree=tests_tree_update_locations)
+                
             for file_path in files_paths:
                 # init appropriate data model for current file path
                 if file_path.endswith(RepoManager.TEST_PLAN_EXT):
@@ -1120,20 +1123,24 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                                                     project=project_id,
                                                     overwriteFile=True, 
                                                     createFolders=False, 
-                                                    lockMode=True,
+                                                    lockMode=False,
                                                     binaryMode=True, 
                                                     closeAfter=False)
-                    success, pathFile, nameFile, extFile, project,\
-                    overwriteFile, closeAfter, isLocked, lockedBy = putFileReturn
-                    updated_files_list.append({"code": success,
-                                               "file-path": pathFile,
-                                               "file-name": nameFile,
-                                               "file-extension": extFile,
-                                               "project-id":  project_id,
-                                               "overwrite":  overwriteFile,
-                                               "close-after": closeAfter,
-                                               "locked": isLocked,
-                                               "locked-by": lockedBy})
+                    success, _, _, _, _, _, _, _, _ = putFileReturn
+                    
+                    # notify all connected users of the change
+                    data = ( 'test', ( "changed", {"modified-by": user_login, 
+                                                   "path": file_path,
+                                                   "project-id": project_id} ) )   
+                    ESI.instance().notifyByUserAndProject(body=data, 
+                                                          admin=True, 
+                                                          monitor=True, 
+                                                          tester=True, 
+                                                          projectId=int(project_id))
+
+                    # append the file modified to the list
+                    updated_files_list.append( file_path )
+                    
         return updated_files_list
 
     def getTestsForUpdate(self, listing, extFileName):
@@ -1161,38 +1168,32 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                                                                         extFileName=extFileName))
         return tests_list
 
-    def get_files_paths(self, tests_tree, file_path='/'):
+    def get_files_paths(self, tests_tree, file_path='/', exceptions=[]):
         """
         """
         list_path = []
         for test in tests_tree:
             f_path = file_path
+
             if test['type'] == 'file':
+                # ignore specific files ?
+                exception_detected = False
+                for ex in exceptions:
+                    if ex == '%s%s' % (f_path, test['name']):
+                        exception_detected = True
+                        break
+                
+                if exception_detected:
+                    continue
                 list_path.append('%s%s' % (f_path, test['name']))
             else:
                 f_path += '%s/' % test['name']
                 list_path += self.get_files_paths(test['content'], 
-                                                  file_path=f_path)
+                                                  file_path=f_path,
+                                                  exceptions=exceptions)
         return list_path
 
     # dbr13 <<
-    
-    def saveToHistory(self, oldPrjId, oldPath, newPrjId, newPath):
-        """
-        New in v17
-        Save all changes in files made by users
-        Theses changes enable to fix testplan or testglobal
-        """
-        self.renameHistory[ oldPath ] =  { 
-                                            "old-prj-id": oldPrjId, 
-                                            "old-path": oldPath.split(":", 1)[1],
-                                            "virtual-old-path": oldPath,
-                                            "new-prj-id": newPrjId,
-                                            "new-path": newPath.split(":", 1)[1],
-                                            "virtual-new-path": newPath
-                                         }
-                                         
-        self.trace( "NB entries in history: %s" % len(self.renameHistory) )
 
     def getVariablesFromDB(self, projectId=None):
         """

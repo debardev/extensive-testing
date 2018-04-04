@@ -191,7 +191,7 @@ class Repository(RemoteRepository.Repository):
             RCI.instance().buildSamples()
             
     def moveRemoteFile(self, currentName, currentPath, currentExtension, 
-                       newPath, project=0, newProject=0):
+                       newPath, project=0, newProject=0, update_location=False):
         """
         Reimplemented from RemoteRepository
         Move file
@@ -201,7 +201,8 @@ class Repository(RemoteRepository.Repository):
                                      fileExt=currentExtension, 
                                      fileProject=project, 
                                      newPath=newPath, 
-                                     newProject=newProject)
+                                     newProject=newProject,
+                                     update_location=update_location)
         
     def moveRemoteFolder(self, currentName, currentPath, newPath, project=0, newProject=0):
         """

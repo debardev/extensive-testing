@@ -119,7 +119,8 @@ class EventServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
         self.trace('Sending notify User=%s' % from_user)
         connected = self.context.getUsersConnectedCopy()
         if from_user in connected:
-            NetLayerLib.ServerAgent.notify( self, client = connected[from_user]['address'], 
+            NetLayerLib.ServerAgent.notify( self, 
+                                            client = connected[from_user]['address'], 
                                             data = body)
         del connected
 
@@ -160,17 +161,18 @@ class EventServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
 
         connected = self.context.getUsersConnectedCopy()
         for cur_user in connected:
-            NetLayerLib.ServerAgent.notify( self, client = connected[cur_user]['address'], 
+            NetLayerLib.ServerAgent.notify( self, 
+                                            client = connected[cur_user]['address'], 
                                             data = body)
         del connected
 
-    def notifyByUserAndProject(self, body, admin=False, leader=False, tester=False, developer=False, projectId=1):
+    def notifyByUserAndProject(self, body, admin=False, monitor=False, tester=False, projectId=1):
         """
+        leader = monitor
         """
-        self.trace('Sending notify to admin=%s, leader=%s, tester=%s, developer=%s' % ( admin,
-                                                                                        leader,
-                                                                                        tester,
-                                                                                        developer) )
+        self.trace('Sending notify to admin=%s, monitor=%s, tester=%s' % ( admin,
+                                                                           monitor,
+                                                                           tester) )
         connected = self.context.getUsersConnectedCopy()
         for cur_user in connected:
             # An user can have multiple right so this variable is here to avoid multiple notify
@@ -179,11 +181,9 @@ class EventServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
             # Check the type of user to notify
             if admin and connected[cur_user]['profile']['administrator']:
                 toNotify = True
-            if leader and connected[cur_user]['profile']['leader']:
+            if monitor and connected[cur_user]['profile']['leader']:
                 toNotify = True
             if tester and connected[cur_user]['profile']['tester']:
-                toNotify = True
-            if developer and connected[cur_user]['profile']['developer'] :
                 toNotify = True
 
             # Finaly notify the user of not
@@ -192,11 +192,12 @@ class EventServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
                                                                                             projectId=projectId)
                 self.trace( "project is authorized ? %s" % projectAuthorized)
                 if projectAuthorized:    
-                    NetLayerLib.ServerAgent.notify( self, client = connected[cur_user]['address'], 
+                    NetLayerLib.ServerAgent.notify( self, 
+                                                    client = connected[cur_user]['address'], 
                                                     data = body)
         del connected
         
-    def notifyByUserTypes (self, body, admin=False, leader=False, tester=False, developer=False):
+    def notifyByUserTypes (self, body, admin=False, monitor=False, tester=False):
         """
         Notify users by type
 
@@ -206,19 +207,15 @@ class EventServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
         @param admin:
         @type admin: boolean
 
-        @param manager:
-        @type manager: boolean
+        @param monitor:
+        @type monitor: boolean
 
         @param tester:
         @type tester: boolean
-
-        @param developer:
-        @type developer: boolean
         """
-        self.trace('Sending notify to admin=%s, leader=%s, tester=%s, developer=%s' % ( admin,
-                                                                                        leader,
-                                                                                        tester,
-                                                                                        developer) )
+        self.trace('Sending notify to admin=%s, monitor=%s, tester=%s' % ( admin,
+                                                                           monitor,
+                                                                           tester) )
                                                                                         
         connected = self.context.getUsersConnectedCopy()
         for cur_user in connected:
@@ -228,11 +225,9 @@ class EventServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
             # Check the type of user to notify
             if admin and connected[cur_user]['profile']['administrator']:
                 toNotify = True
-            if leader and connected[cur_user]['profile']['leader']:
+            if monitor and connected[cur_user]['profile']['leader']:
                 toNotify = True
             if tester and connected[cur_user]['profile']['tester']:
-                toNotify = True
-            if developer and connected[cur_user]['profile']['developer'] :
                 toNotify = True
 
             # Finaly notify the user of not
@@ -250,14 +245,14 @@ class EventServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
         """
         self.notifyByUserTypes(body=body, admin=True)
 
-    def notifyAllManagers(self, body):
+    def notifyAllMonitors(self, body):
         """
         Notify all admin managers
 
         @param body:
         @type body:
         """
-        self.notifyByUserTypes(body=body, leader=True)
+        self.notifyByUserTypes(body=body, monitor=True)
 
     def notifyAllTesters(self, body):
         """
@@ -267,15 +262,6 @@ class EventServerInterface(Logger.ClassLogger, NetLayerLib.ServerAgent):
         @type body:
         """
         self.notifyByUserTypes(body=body, tester=True)
-
-    def notifyAllDevelopers(self, body):
-        """
-        Notify all admin developers
-
-        @param body:
-        @type body:
-        """
-        self.notifyByUserTypes(body=body, developer=True)
 
     def trace(self, txt):
         """

@@ -165,7 +165,10 @@ class StorageDataAdapters(RepoManager.RepoManager, Logger.ClassLogger):
                         "content": [ {"type": "file", "name": "%s.zip" % fileName, 'size': str(size_), "project": "%s" % projectId } ]} ] }  ]
                     notif['archive'] = m 
                     data = ( 'archive', ( None, notif) )    
-                    ESI.instance().notifyByUserTypes(body = data, admin=True, leader=False, tester=True, developer=False)
+                    ESI.instance().notifyByUserTypes(body = data, 
+                                                     admin=True, 
+                                                     monitor=False, 
+                                                     tester=True)
                 ret = True
             else:
                 self.error( 'error to zip data adapters' )
@@ -226,8 +229,10 @@ class StorageDataAdapters(RepoManager.RepoManager, Logger.ClassLogger):
                             notif['archive'] = m 
 
                             data = ( 'archive', ( None, notif) )    
-                            ESI.instance().notifyByUserTypes(body = data, admin=True, leader=False, 
-                                                             tester=True, developer=False)
+                            ESI.instance().notifyByUserTypes(body = data, 
+                                                             admin=True, 
+                                                             monitor=False, 
+                                                             tester=True)
                     else:
                         self.error( 'error to zip data adapters' )
                         ret = False

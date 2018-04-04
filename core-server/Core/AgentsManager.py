@@ -116,7 +116,10 @@ class AgentsManager(Logger.ClassLogger):
 
                 # notify all admin and tester
                 notif = ( 'agents-default', ( 'add', self.getDefaultAgents() ) )
-                ESI.instance().notifyByUserTypes(body = notif, admin=True, leader=False, tester=True, developer=False)
+                ESI.instance().notifyByUserTypes(body = notif, 
+                                                 admin=True, 
+                                                 monitor=False, 
+                                                 tester=True)
                 
                 # return OK
                 ret = self.context.CODE_OK
@@ -151,15 +154,19 @@ class AgentsManager(Logger.ClassLogger):
 
                 # notify all admin and tester
                 notif = ( 'agents-default', ( 'del', self.getDefaultAgents() ) )
-                ESI.instance().notifyByUserTypes(body = notif, admin=True, leader=False, 
-                                                 tester=True, developer=False)
+                ESI.instance().notifyByUserTypes(body = notif, 
+                                                 admin=True, 
+                                                 monitor=False, 
+                                                 tester=True)
 
                 runningAgent = ASI.instance().getAgent(aname=aName)
                 if runningAgent is not None:
                     runningAgent['auto-startup'] = False
                 notif2 = ( 'agents', ( 'del', ASI.instance().getAgents() ) )
-                ESI.instance().notifyByUserTypes(body = notif2, admin=True, leader=False, 
-                                                 tester=True, developer=False)
+                ESI.instance().notifyByUserTypes(body = notif2, 
+                                                 admin=True, 
+                                                 monitor=False, 
+                                                 tester=True)
 
 
                 # return OK

@@ -441,7 +441,10 @@ class StatsManager(Logger.ClassLogger):
         else:
             if self.notifyUsers:
                 data = ( 'stats', ( None, self.getStats() ) )   
-                ESI.instance().notifyByUserTypes( body=data, admin=True, leader=True, tester=False, developer=False)
+                ESI.instance().notifyByUserTypes( body=data, 
+                                                  admin=True, 
+                                                  monitor=True, 
+                                                  tester=False)
 
     def addResultTestCase(self, testResult, fromUser, testDuration, testProject):
         """
