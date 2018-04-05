@@ -220,16 +220,19 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         layout.addLayout(fileLayout)
         
         # dbr13 >> Checkbox for Update --> Location
-        self.update_location_in_tests = QCheckBox(self.tr('Search and update this new test location in the\ncurrent and other testplan or testglobal?'))
+        self.update_location_in_tests = QCheckBox(self.tr('Search and update this new test location in all\ntestplan or testglobal?'))
+        self.referer_refresh_in_tests = QCheckBox(self.tr('Update all occurences in this current test with\n this new test location?'))
         # dbr13 <<
+        
+        optLayout = QVBoxLayout()
+        optLayout.addWidget(self.referer_refresh_in_tests)
+        optLayout.addWidget(self.update_location_in_tests)
         
         # Buttons
         self.cancelButton = QPushButton(self.tr("Cancel"))
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch()
-        # dbr13 >> added checkbox to buttons layout
-        buttonLayout.addWidget(self.update_location_in_tests)
-        # dbr13 <<
+        buttonLayout.addLayout(optLayout)
         buttonLayout.addWidget(self.acceptButton)
         buttonLayout.addWidget(self.cancelButton)
         layout.addLayout(buttonLayout)
@@ -527,10 +530,13 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         self.filenameLineEdit.hide()
         
         self.update_location_in_tests.setChecked(False)
+        self.referer_refresh_in_tests.setChecked(False)
         if update_path:
             self.update_location_in_tests.show()
+            self.referer_refresh_in_tests.show()
         else:
             self.update_location_in_tests.hide()
+            self.referer_refresh_in_tests.hide()
             
     def setMoveFolder(self, project=''):
         """
@@ -594,6 +600,8 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         # dbr13 >>
         self.update_location_in_tests.setChecked(False)
         self.update_location_in_tests.hide()
+        self.referer_refresh_in_tests.setChecked(False)
+        self.referer_refresh_in_tests.hide()
         # dbr13 <<
         self.filenameLabel.show()
         self.filenameLineEdit.show()
@@ -603,7 +611,12 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         """
         """
         return self.update_location_in_tests.isChecked()
-        
+
+    def getRefererRefreshStatus(self):
+        """
+        """
+        return self.referer_refresh_in_tests.isChecked()
+
     def setImportFilename(self, filename, project=''):
         """
         Set import filename
@@ -702,10 +715,13 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         
         # dbr13>>>
         self.update_location_in_tests.setChecked(False)
+        self.referer_refresh_in_tests.setChecked(False)
         if update_path:
             self.update_location_in_tests.show()
+            self.referer_refresh_in_tests.show()
         else:
             self.update_location_in_tests.hide()
+            self.referer_refresh_in_tests.hide()
         # dbr13 <<<
         
         self.filenameLabel.hide()

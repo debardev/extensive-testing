@@ -6941,7 +6941,7 @@ class TestsFileOpen(Handler):
             # referer to the origin file (testplan or testglobal) which ask to open the file
             extra_file_referer_path = self.request.data.get('extra', {}).get('file_referer_path', '')
             extra_file_referer_projectid = self.request.data.get('extra', {}).get('file_referer_projectid', 0)
-            
+            extra_file_referer_refresh = self.request.data.get('extra', {}).get('file_referer_refresh', False)
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -6979,7 +6979,7 @@ class TestsFileOpen(Handler):
                      "custom-param": _customParam,
                      "action-id": _actId,
                      "destination-id": _destId,
-                     "refresh": False}
+                     "referer-refresh": extra_file_referer_refresh}
                      
         # dbr13 >>> when we set checkbox in the Update->Location
         if extra_update_location:
@@ -6998,7 +6998,6 @@ class TestsFileOpen(Handler):
                                                                             file_referer_path=extra_file_referer_path,
                                                                             file_referer_projectid=extra_file_referer_projectid
                                                                            )
-            rsp_rest["refresh"] = True
         # dbr13 <<<
 
         return rsp_rest

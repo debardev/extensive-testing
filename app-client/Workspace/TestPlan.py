@@ -1273,11 +1273,16 @@ class WTestPlan(Document.WDocument):
         if ret is None:
             return
 
-        (testName, fromRepo, currentItem, projectId, update_location) = ret
+        (testName, fromRepo, currentItem, projectId, update_location, referer_refresh) = ret
         
         # dbr13 >>> prepare old file name
         old_test_file_name = None
         extra = {'update_location': update_location}
+        
+        extra['file_referer_refresh'] = referer_refresh
+        extra['file_referer_path'] = self.getPath()
+        extra['file_referer_projectid'] = self.project
+        
         if update_location:
             for test_file in self.dataModel.testplan['testplan']['testfile']:
                 if item_id == test_file['id']:
@@ -1299,8 +1304,6 @@ class WTestPlan(Document.WDocument):
                 extra['file_ext'] = extra_ext
                 extra['project_id'] = extra_projectid
         
-                extra['file_referer_path'] = self.getPath()
-                extra['file_referer_projectid'] = self.project
                 
         # local file
         if projectId is None:
@@ -2914,6 +2917,7 @@ class WTestPlan(Document.WDocument):
                             FROM_LOCAL_REPO, 
                             self.itemCurrent, 
                             None,
+                            False,
                             False)
                 else:
                     self.addSubItems( files = dialog.getSelection(), 
@@ -2954,7 +2958,8 @@ class WTestPlan(Document.WDocument):
                             FROM_REMOTE_REPO, 
                             self.itemCurrent, 
                             prjId, 
-                            dialog.getUpdateLocationStatus())
+                            dialog.getUpdateLocationStatus(),
+                            dialog.getRefererRefreshStatus())
                     # dbr13 <<<
                 else:
                     self.addSubItems( files = dialog.getSelection(), 
@@ -3276,7 +3281,7 @@ class WTestPlan(Document.WDocument):
         On update remote test
         """
         items_list = []
-        
+
         # find the item according to the test id received
         currentItem = self.findItemById(testId=testId)
         if currentItem is not None:
