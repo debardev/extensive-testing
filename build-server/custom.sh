@@ -147,7 +147,7 @@ CRYPTOGRAPHY="cryptography-1.8.1"
 PARAMIKO="paramiko-2.1.2"
 JSONPATH="jsonpath-ng-1.4.2"
 WRAPT="wrapt-1.10.10"
-
+ANSIBLE="ansible-2.5.0"
 NODEJS="node-v6.11.0-linux-x64"
 
 # websocket module for apache, only for centos 5/6
@@ -499,7 +499,7 @@ if [ "$DL_MISSING_PKGS" = "Yes" ]; then
     fi
     
 	echo -ne "* Adding python                \r"
-	$YUM_BIN -y install python-lxml MySQL-python policycoreutils-python python-setuptools python-ldap 1>> "$LOG_FILE" 2>&1
+	$YUM_BIN -y install python-lxml MySQL-python policycoreutils-python python-setuptools python-ldap PyYAML 1>> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo_failure; echo
         echo "Unable to download packages python and more with yum" >> "$LOG_FILE"
@@ -1009,7 +1009,14 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
 	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$PYGIT/ 1>> "$LOG_FILE" 2>&1
-
+    
+    echo -ne "* Installing ansible                \r"
+    $TAR_BIN xvf $PKG_PATH/$ANSIBLE.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$ANSIBLE/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$ANSIBLE/ 1>> "$LOG_FILE" 2>&1
+    
     echo -ne "* Installing nodejs                \r"
     $TAR_BIN --strip-components 1 -xzvf $NODEJS* -C /usr/local 1>> "$LOG_FILE" 2>&1
     

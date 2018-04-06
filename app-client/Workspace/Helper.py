@@ -59,7 +59,7 @@ except ImportError:
 import Settings
 from Libs import QtHelper, Logger
 import DefaultTemplates
-import UserClientInterface as UCI
+# import UserClientInterface as UCI
 import RestClientInterface as RCI
 
 class Item(QTreeWidgetItem):
@@ -1118,7 +1118,7 @@ class WHelper(QWidget, Logger.ClassLogger):
         self.masterTab.setEnabled(True)
 
         self.reloadAllAction.setEnabled(True)
-        if UCI.RIGHTS_ADMIN in RCI.instance().userRights :
+        if RCI.RIGHTS_ADMIN in RCI.instance().userRights :
             self.rebuildCacheAction.setEnabled(True)
             self.generateAdaptersAction.setEnabled(True)
             self.generateLibrariesAction.setEnabled(True)
@@ -1270,9 +1270,7 @@ class WHelper(QWidget, Logger.ClassLogger):
                 self.assistantData = helpObj
             except Exception as e:
                 self.error( 'unable to loads helper data: %s' % str(e) )
-
-        # if  UCI.RIGHTS_ADMIN in RCI.instance().userRights or UCI.RIGHTS_TESTER in RCI.instance().userRights or \
-                # UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
+                
         self.setConnected() 
 
         self.helper.setEnabled(True)

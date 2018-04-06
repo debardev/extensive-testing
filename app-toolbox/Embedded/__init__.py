@@ -38,6 +38,9 @@ from Embedded import SshAgent
 from Embedded import DatabaseAgent
 from Embedded import AdbAgent
 from Embedded import SikulixServerAgent
+# dbr13 >>> only for Linux.
+from Embedded import AnsibleAgent
+# dbr13 <<< 
 
 from Embedded import DummyProbe
 from Embedded import TextualProbe

@@ -3403,8 +3403,7 @@ class RestClientInterface(QObject, Logger.ClassLogger):
         """
         Called on response
         """
-        self.trace("on tests file opened") 
-        print( "rest: %s" % details["referer-refresh"] )
+        self.trace("on tests file opened")
         if details["destination-id"] is not None and details["action-id"] is not None:
             # import file
             self.GetFileRepo.emit( details["file-path"], 

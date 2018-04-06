@@ -1574,11 +1574,11 @@ class WArchives(QWidget, Logger.ClassLogger):
         layoutRight.addWidget(self.previewTab)
 
         style = self.style()
-        self.folderIcon = QIcon()
-        self.folderIcon.addPixmap(style.standardPixmap(QStyle.SP_DirClosedIcon), 
-                                  QIcon.Normal, QIcon.Off)
-        self.folderIcon.addPixmap(style.standardPixmap(QStyle.SP_DirOpenIcon), 
-                                  QIcon.Normal, QIcon.On)
+        self.folderIcon = QIcon(":/folder_base.png")
+        # self.folderIcon.addPixmap(style.standardPixmap(QStyle.SP_DirClosedIcon), 
+                                  # QIcon.Normal, QIcon.Off)
+        # self.folderIcon.addPixmap(style.standardPixmap(QStyle.SP_DirOpenIcon), 
+                                  # QIcon.Normal, QIcon.On)
         self.rootIcon = QIcon()       
         self.rootIcon.addPixmap( style.standardPixmap(QStyle.SP_DriveNetIcon) )
 
