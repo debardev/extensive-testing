@@ -1319,7 +1319,7 @@ class WHelper(QWidget, Logger.ClassLogger):
                                                     if f['name'] == functionName: 
                                                         return f
 
-    def helpAdapters(self, name=None):
+    def helpAdapters(self, name=None, generic=False):
         """
         return help all objects
         """
@@ -1328,12 +1328,15 @@ class WHelper(QWidget, Logger.ClassLogger):
         for h in self.assistantData:
             if  h['type'] == 'package-adapters':
                 for sutadp in h['adapters']:
-                    if name is not None:
-                        if sutadp['name'] == name:
-                            return sutadp['modules']
+                    if generic:
+                        return sutadp['modules']
                     else:
-                        if sutadp['is-default']:
-                            return sutadp['modules']
+                        if name is not None:
+                            if sutadp['name'] == name:
+                                return sutadp['modules']
+                        else:
+                            if sutadp['is-default']:
+                                return sutadp['modules']
                 return []
 
     def isGuiGeneric(self, name="GUI"):
@@ -1352,7 +1355,7 @@ class WHelper(QWidget, Logger.ClassLogger):
                                 break
         return isGeneric
         
-    def helpLibraries(self, name=None):
+    def helpLibraries(self, name=None, generic=False):
         """
         return help all objects
         """
@@ -1361,12 +1364,15 @@ class WHelper(QWidget, Logger.ClassLogger):
         for h in self.assistantData:
             if  h['type'] == 'package-libraries':
                 for sutlib in h['libraries']:
-                    if name is not None:
-                        if sutlib['name'] == name:
-                            return sutlib['modules']
+                    if generic:
+                        return sutlib['modules']
                     else:
-                        if sutlib['is-default']:
-                            return sutlib['modules']
+                        if name is not None:
+                            if sutlib['name'] == name:
+                                return sutlib['modules']
+                        else:
+                            if sutlib['is-default']:
+                                return sutlib['modules']
                 return []
 
     def onReset(self):

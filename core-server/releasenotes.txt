@@ -14,6 +14,9 @@
 		10. (major) test files model updated to support xml format as default, no more zlib compression (backward compatibility)
 		11. (minor) rest api: code cleanup to be more respectful of python language and code factory
 		12. (medium) update location and rename/move test path in test plan/global (pull request #8)
+		13. (minor) new python ansible library embedded by default
+		14. (minor) PyYAML library installed by default, to support the new ansible adapter
+		15. (major) embedded python libraries updated and drop support of python 2.6
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only

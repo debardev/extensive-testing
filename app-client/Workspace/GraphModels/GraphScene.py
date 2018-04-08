@@ -1531,8 +1531,12 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         """
         color = QColor(0, 0, 0)
         color.setNamedColor( COLOR_STARTEND )
-        self.addItem(   itemType=DiagramItem.StartEnd, itemId=self.getItemId(), itemText="Start", 
-                        itemColor=QBrush(color),  itemPos=QPointF(GRAPHIC_SCENE_SIZE/2, (GRAPHIC_SCENE_SIZE/2) - 150), itemData=''  )
+        self.addItem(   itemType=DiagramItem.StartEnd, 
+                        itemId=self.getItemId(), 
+                        itemText="Start", 
+                        itemColor=QBrush(color),  
+                        itemPos=QPointF(GRAPHIC_SCENE_SIZE/2, (GRAPHIC_SCENE_SIZE/2) - 150), 
+                        itemData=''  )
                         
     def getVariables(self):
         """
@@ -1543,9 +1547,12 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         var2add = []
         for gItem in self.scene.items():
             if isinstance(gItem, DiagramItem):
-                if gItem.diagramType in [ DiagramItem.Action, DiagramItem.Adapter, DiagramItem.Template, DiagramItem.Library,
-                                           DiagramItem.Manipulator, DiagramItem.Validator, DiagramItem.Do, DiagramItem.Cache,
-                                           DiagramItem.Time, DiagramItem.Private, DiagramItem.Public ]:
+                if gItem.diagramType in [ DiagramItem.Action, DiagramItem.Adapter, 
+                                          DiagramItem.Template, DiagramItem.Library,
+                                          DiagramItem.Manipulator, DiagramItem.Validator, 
+                                          DiagramItem.Do, DiagramItem.Cache,
+                                          DiagramItem.Time, DiagramItem.Private, 
+                                          DiagramItem.Public ]:
                     if 'return-value' in gItem.data['item-data']['data']:
                         if gItem.data['item-data']['data']['return-value'] == 'True':
                             var2add.append( "ACTION%s" % gItem.itemId )
@@ -2459,6 +2466,50 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         """
         return self.testParams.agents.table().model.getData()
         
+    def _load_menu_functions_library(self, index, library_name, libraries, menu):
+        """
+        """
+        for lib in libraries:
+            for cls in lib['classes']:
+                if "%s::%s" %(lib['name'], cls['name']) == library_name:
+                    for fct in cls['functions']:
+                        if fct['name'] == '__init__':
+                            continue
+                        argsFct = self.parseDocString(docstring=fct['desc'])
+                        argsFct['function'] = fct['name']
+                        argsFct['main-name'] = library_name
+                        if 'default-args' in fct:
+                            self.addDefaultValues(defaultValues=fct['default-args'], 
+                                                  currentFunction=argsFct)
+                        menu.addAction( QtHelper.createAction(self, 
+                                                                 fct['name'], 
+                                                                 self.addLibrary,
+                                                                 icon=QIcon(":/methods.png"), 
+                                                                 cb_arg=( (index+1), argsFct ) 
+                                                                 ) )
+                        menu.addSeparator()   
+        
+    def _load_menu_functions_adapter(self, index, adapter_name, adapters, menu, menu_more):
+        """
+        """
+        for adp in adapters:
+            for cls in adp['classes']:
+                if "%s::%s" %(adp['name'], cls['name']) == adapter_name:
+                    for fct in cls['functions']:
+                        if fct['name'] == '__init__':
+                            continue
+                        argsFct = self.parseDocString(docstring=fct['desc'])
+                        argsFct['function'] = fct['name']
+                        argsFct['main-name'] = adapter_name
+                        if 'default-args' in fct:
+                            self.addDefaultValues(defaultValues=fct['default-args'], currentFunction=argsFct)
+
+                        if re.match(r"do[A-Z]", fct['name']) :
+                            menu.addAction( QtHelper.createAction(self, fct['name'], self.addDo,
+                                                icon=QIcon(":/methods.png"), cb_arg=( (index+1), argsFct ) ) )
+                        else:
+                            menu_more.addAction( QtHelper.createAction(self, fct['name'], self.addAdapter,
+                                                icon=QIcon(":/methods.png"), cb_arg=( (index+1), argsFct ) ) )
     def onPopupMenu(self, pos):
         """
         Display menu on right click
@@ -2473,26 +2524,30 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         libsMenu.setIcon( QIcon(":/libraries-add.png") )
         for i in xrange(len(self.__parent.libraries().model.getData())):
             currentName = self.__parent.libraries().model.getData()[i]['data']['function']
-            
-            libMenu = QMenu("%s #%s" % (currentName, (i+1)), self)
+            lib_menu = QMenu("%s #%s" % (currentName, (i+1)), self)
 
+            # search the current name of the lib in all libraries to retrieve 
+            # all associated functions
             libraries = self.__parent.getHelpLibraries()
             if libraries is not None:
-                for lib in libraries:
-                    for cls in lib['classes']:
-                        if "%s::%s" %(lib['name'], cls['name']) == currentName:
-                            for fct in cls['functions']:
-                                if fct['name'] == '__init__':
-                                    continue
-                                argsFct = self.parseDocString(docstring=fct['desc'])
-                                argsFct['function'] = fct['name']
-                                argsFct['main-name'] = currentName
-                                if 'default-args' in fct:
-                                    self.addDefaultValues(defaultValues=fct['default-args'], currentFunction=argsFct)
-                                libMenu.addAction( QtHelper.createAction(self, fct['name'], self.addLibrary,
-                                                    icon=QIcon(":/methods.png"), cb_arg=( (i+1), argsFct ) ) )
-                                libMenu.addSeparator()      
-            libsMenu.addMenu(libMenu)
+                self._load_menu_functions_library(index=i,
+                                                  library_name=currentName, 
+                                                  libraries=libraries, 
+                                                  menu=lib_menu)
+            
+            # search the lib in generic branch in case of not found before
+            # so becareful of this limitation, 
+            # the name of the lib must be different between
+            # the generic branch and extra
+            # if the same name is used then bad functions will be used in the test
+            libraries_generic = self.__parent.getHelpLibraries(generic=True)
+            if libraries_generic is not None:
+                self._load_menu_functions_library(index=i,
+                                                  library_name=currentName, 
+                                                  libraries=libraries_generic, 
+                                                  menu=lib_menu)
+                                                  
+            libsMenu.addMenu(lib_menu)
             libsMenu.addSeparator()
 
         # sub menu for adding adapter
@@ -2502,30 +2557,31 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
             currentName = self.__parent.adapters().model.getData()[i]['data']['function']
             
             adpMenu = QMenu("%s #%s" % (currentName, (i+1)), self)
-
             adpMoreMenu = QMenu("More...", self)
 
+            # search the current name of the adapter in all adapters to retrieve 
+            # all associated functions
             adapters = self.__parent.getHelpAdapters()
             if adapters is not None:
-                for adp in adapters:
-                    for cls in adp['classes']:
-                        if "%s::%s" %(adp['name'], cls['name']) == currentName:
-                            for fct in cls['functions']:
-                                if fct['name'] == '__init__':
-                                    continue
-                                argsFct = self.parseDocString(docstring=fct['desc'])
-                                argsFct['function'] = fct['name']
-                                argsFct['main-name'] = currentName
-                                if 'default-args' in fct:
-                                    self.addDefaultValues(defaultValues=fct['default-args'], currentFunction=argsFct)
-
-                                if re.match(r"do[A-Z]", fct['name']) :
-                                    adpMenu.addAction( QtHelper.createAction(self, fct['name'], self.addDo,
-                                                        icon=QIcon(":/methods.png"), cb_arg=( (i+1), argsFct ) ) )
-                                else:
-                                    adpMoreMenu.addAction( QtHelper.createAction(self, fct['name'], self.addAdapter,
-                                                        icon=QIcon(":/methods.png"), cb_arg=( (i+1), argsFct ) ) )
-
+                self._load_menu_functions_adapter(index=i,
+                                                  adapter_name=currentName, 
+                                                  adapters=adapters, 
+                                                  menu=adpMenu,
+                                                  menu_more=adpMoreMenu)
+                                                  
+            # search the adapter in generic branch in case of not found before
+            # so becareful of this limitation, 
+            # the name of the adapter must be different between
+            # the generic branch and extra
+            # if the same name is used then bad functions will be used in the test
+            adapters_generic = self.__parent.getHelpAdapters(generic=True)
+            if adapters_generic is not None:
+                self._load_menu_functions_adapter(index=i,
+                                                  adapter_name=currentName, 
+                                                  adapters=adapters_generic, 
+                                                  menu=adpMenu,
+                                                  menu_more=adpMoreMenu)
+                                                  
             adpMenu.addSeparator()
             adpMenu.addMenu(adpMoreMenu)
                            

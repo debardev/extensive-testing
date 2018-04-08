@@ -541,7 +541,10 @@ class WDocumentProperties(QWidget, Logger.ClassLogger):
         """
         Load test config from local repository
         """
-        dialog = self.lRepo.SaveOpenToRepoDialog( self , "", type = self.lRepo.MODE_OPEN, typeFile=self.lRepo.EXTENSION_TCX ) 
+        dialog = self.lRepo.SaveOpenToRepoDialog( self , 
+                                                  "", 
+                                                  type = self.lRepo.MODE_OPEN, 
+                                                  typeFile=self.lRepo.EXTENSION_TCX ) 
         dialog.hideFiles(hideTsx=True, hideTpx=True, hideTcx=False, hideTdx=True)
         if dialog.exec_() == QDialog.Accepted:
             self.loadFromAnywhere(pathFilename=dialog.getSelection(), inputs=inputs)
@@ -555,7 +558,10 @@ class WDocumentProperties(QWidget, Logger.ClassLogger):
         @type pathFilename: 
         """
         if pathFilename is None:
-            fileName = QFileDialog.getOpenFileName(self, self.tr("Import File"), "", "Tcx Config Files (*.%s)" % self.rRepo.EXTENSION_TCX )
+            fileName = QFileDialog.getOpenFileName(self, 
+                                                   self.tr("Import File"), 
+                                                   "", 
+                                                   "Tcx Config Files (*.%s)" % self.rRepo.EXTENSION_TCX )
             # new in v18 to support qt5
             if QtHelper.IS_QT5:
                 _fileName, _type = fileName

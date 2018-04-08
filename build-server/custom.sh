@@ -88,67 +88,75 @@ PYCRYPTO="pycryptodome-3.4.5"
 PYCNIC_ZIP="pycnic-0.1.1-extensivetesting"
 PYCNIC="pycnic-0.1.1"
 
-# python extensions
-HTTPLIB2="httplib2-0.10.3"
+# embedded python extensions
+HTTPLIB2="httplib2-0.11.3"
 UUIDLIB="uuid-1.30"
-PYASN="pyasn1-0.2.3"
-PYSMI="pysmi-0.0.7"
-PLY="ply-3.8"
-PYSNMP="pysnmp-4.3.4"
-PYMSSQL="pymssql-2.1.1"
+PYASN="pyasn1-0.4.2"
+PYSMI="pysmi-0.2.2"
+PLY="ply-3.11"
+PYCRYPTODOMEX="pycryptodomex-3.5.1"
+PYSNMP="pysnmp-4.4.4"
+PYMSSQL="pymssql-2.1.3"
 FREETDS="freetds-0.91"
 ECDSA="ecdsa-0.13"
 PIL="Imaging-1.1.7"
 APPDIRS="appdirs-1.4.3"
-SETUPTOOLS="setuptools-34.3.2"
+SETUPTOOLS="setuptools-39.0.1"
 SUDS="suds-jurko-0.6"
 SUDS_ZIP="suds-jurko-0.6-extensivetesting"
-REQUESTS="requests-2.13.0"
+CERTIFI="certifi-2018.1.18"
+CHARTED="chardet-3.0.4"
+REQUESTS="requests-2.18.4"
 NTLM="python-ntlm-1.1.0"
-KERBEROS="kerberos-1.2.5"
-POSTGRESQL="psycopg2-2.7.1"
+KERBEROS="kerberos-1.3.0"
+POSTGRESQL="psycopg2-2.7.4"
 POSTGRESQL8="psycopg2-2.6.1"
-XLRD="xlrd-1.0.0"
-XLWT="xlwt-1.2.0"
-OPENXL="openpyxl-2.4.5"
+XLRD="xlrd-1.1.0"
+XLWT="xlwt-1.3.0"
+OPENXL="openpyxl-2.5.2"
 ETXMLFILE="et_xmlfile-1.0.1"
 JDCAL="jdcal-1.3"
 SETUPTOOLS_GIT="setuptools-git-1.2"
-SCANDIR="scandir-1.5"
-PBR="pbr-2.0.0"
-PYTZ="pytz-2016.10"
-PYJENKINS="jenkinsapi-0.3.3"
-GITDB2="gitdb2-2.0.0"
-PYGIT="GitPython-2.1.3"
-SMMAP2="smmap2-2.0.1"
-XML2DICT="xmltodict-0.10.2"
-ISODATE="isodate-0.5.4"
-PYWINRM="pywinrm-0.2.2"
-PYTEST="pytest-runner-2.11.1"
-SETUPTOOLS_SCM="setuptools_scm-1.15.0"
-PYTE="pyte-0.6.0"
+SCANDIR="scandir-1.7"
+PBR="pbr-4.0.1"
+PYTZ="pytz-2018.3"
+PYJENKINS="jenkinsapi-0.3.6"
+GITDB2="gitdb2-2.0.3"
+PYGIT="GitPython-2.1.9"
+SMMAP2="smmap2-2.0.3"
+XML2DICT="xmltodict-0.11.0"
+ISODATE="isodate-0.6.0"
+PYWINRM="pywinrm-0.3.0"
+PYTEST="pytest-runner-4.2"
+SETUPTOOLS_SCM="setuptools_scm-1.17.0"
+PYTE="pyte-0.8.0"
 WCWIDTH="wcwidth-0.1.7"
 PYSPHERE="pysphere-0.1.9"
-SIX="six-1.10.0"
+SIX="six-1.11.0"
 PYCHEF="PyChef-0.3.0"
-IDNA="idna-2.5"
+IDNA="idna-2.6"
 ENUM34="enum34-1.1.6"
-IPADDRESS="ipaddress-1.0.18"
-PYCPARSER="pycparser-2.17"
-CFFI="cffi-1.9.1"
+IPADDRESS="ipaddress-1.0.19"
+PYCPARSER="pycparser-2.18"
+CFFI="cffi-1.11.5"
 PYPARSING="pyparsing-2.2.0"
 ORDEREDDICT="ordereddict-1.1"
-NTLM_AUTH="ntlm-auth-1.0.2"
-REQUESTS_NTLM="requests_ntlm-1.0.0"
+NTLM_AUTH="ntlm-auth-1.1.0"
+REQUESTS_NTLM="requests_ntlm-1.1.0"
 PY_NTLM3="python-ntlm3-1.0.2"
-ASN1CRYPTO="asn1crypto-0.21.1"
-PACKAGING="packaging-16.8"
+ASN1CRYPTO="asn1crypto-0.24.0"
+PACKAGING="packaging-17.1"
 CRYPTOGRAPHY="cryptography-1.8.1"
-PARAMIKO="paramiko-2.1.2"
-JSONPATH="jsonpath-ng-1.4.2"
-WRAPT="wrapt-1.10.10"
+PYNACL="PyNaCl-1.2.1"
+BCRYPT="bcrypt-3.1.4"
+PARAMIKO="paramiko-2.4.1"
+JSONPATH="jsonpath-ng-1.4.3"
+WRAPT="wrapt-1.10.11"
 ANSIBLE="ansible-2.5.0"
 NODEJS="node-v6.11.0-linux-x64"
+URLLIB3="urllib3-1.22"
+F5_ICONTROL="f5-icontrol-rest-1.3.8"
+F5_SDK="f5-sdk-3.0.14"
 
 # websocket module for apache, only for centos 5/6
 MOD_WSTUNNEL="mod_proxy_wstunnel.so"
@@ -641,6 +649,13 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
     $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$PYSMI/ 1>> "$LOG_FILE" 2>&1
+
+	echo -ne "* Installing pycryptodomex                 \r"
+	$TAR_BIN xvf $PKG_PATH/$PYCRYPTODOMEX.tar.gz  1>> "$LOG_FILE" 2>&1
+    cd $APP_PATH/$PYCRYPTODOMEX/
+    $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$PYCRYPTODOMEX/ 1>> "$LOG_FILE" 2>&1
     
 	echo -ne "* Installing pysnmp                 \r"
 	$TAR_BIN xvf $PKG_PATH/$PYSNMP.tar.gz  1>> "$LOG_FILE" 2>&1
@@ -705,6 +720,20 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$SUDS/ 1>> "$LOG_FILE" 2>&1
 
+    echo -ne "* Installing certifi                 \r"
+    $TAR_BIN xvf $PKG_PATH/$CERTIFI.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$CERTIFI/
+    $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$CERTIFI/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing certifi                 \r"
+    $TAR_BIN xvf $PKG_PATH/$CHARTED.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$CHARTED/
+    $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$CHARTED/ 1>> "$LOG_FILE" 2>&1
+    
     echo -ne "* Installing requests                 \r"
     $TAR_BIN xvf $PKG_PATH/$REQUESTS.tar.gz  1>> "$LOG_FILE" 2>&1
 	cd $APP_PATH/$REQUESTS/
@@ -906,7 +935,7 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
     
     echo -ne "* Installing ntlm_auth                 \r"
     cd $APP_PATH
-    $UNZIP_BIN $PKG_PATH/$NTLM_AUTH.zip  1>> "$LOG_FILE" 2>&1
+    $TAR_BIN $PKG_PATH/$NTLM_AUTH.tar.gz  1>> "$LOG_FILE" 2>&1
 	cd $APP_PATH/$NTLM_AUTH/
 	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
 	cd .. 1>> "$LOG_FILE" 2>&1
@@ -947,6 +976,20 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$CRYPTOGRAPHY/ 1>> "$LOG_FILE" 2>&1
 
+	echo -ne "* Installing pynacl                 \r"
+	$TAR_BIN xvf $PKG_PATH/$PYNACL.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$PYNACL/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$PYNACL/ 1>> "$LOG_FILE" 2>&1
+    
+	echo -ne "* Installing bcrypt                 \r"
+	$TAR_BIN xvf $PKG_PATH/$BCRYPT.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$BCRYPT/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$BCRYPT/ 1>> "$LOG_FILE" 2>&1
+    
 	echo -ne "* Installing paramiko                 \r"
 	$TAR_BIN xvf $PKG_PATH/$PARAMIKO.tar.gz  1>> "$LOG_FILE" 2>&1
 	cd $APP_PATH/$PARAMIKO/
@@ -1016,6 +1059,27 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
 	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$ANSIBLE/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing urllib3                \r"
+    $TAR_BIN xvf $PKG_PATH/$URLLIB3.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$URLLIB3/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$URLLIB3/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing f5 icontrol                \r"
+    $TAR_BIN xvf $PKG_PATH/$F5_ICONTROL.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$F5_ICONTROL/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$F5_ICONTROL/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing f5 sdk                \r"
+    $TAR_BIN xvf $PKG_PATH/$F5_SDK.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$F5_SDK/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$F5_SDK/ 1>> "$LOG_FILE" 2>&1
     
     echo -ne "* Installing nodejs                \r"
     $TAR_BIN --strip-components 1 -xzvf $NODEJS* -C /usr/local 1>> "$LOG_FILE" 2>&1

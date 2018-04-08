@@ -105,10 +105,11 @@ def _check_project_permissions(user_login, project_id):
     """
     Look up project
     """
-    # checking input    
-    if not isinstance(project_id, int):
-        raise HTTP_400("Bad project id provided in request, int expected")
-            
+    try:
+        project_id = int(project_id)
+    except:
+        raise HTTP_400("Bad project id (Id=%s) provided in request, int expected" % str(project_id) )
+
     # get the project id according to the name and checking permissions
     project_authorized = ProjectsManager.instance().checkProjectsAuthorization(user=user_login, 
                                                                                projectId=project_id)

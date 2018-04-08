@@ -10,6 +10,7 @@
 		6. (major) all tests file are save in xml, no more zlib compression (backward compatibility)
 		7. (medium) built with python to 3.6.5 and pyqt to 5.10.1
 		8. (minor) new icon folder for remote repositories
+		9. (medium) test abstract: update to support extra and generic adapters/libraries
 	Issues Fixed
 		1. (medium) fix regression: unable to zoom in/out in test editor
 		2. (medium) automation assistant: unable to generate testsuite with sikulix and selenium in the same test issue #9
