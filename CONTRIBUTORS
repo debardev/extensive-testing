@@ -2,4 +2,5 @@
 - Blaise Cador (security recommendations)<br />
 - Emmanuel Monsoro (extensivetesting logo, graphical abstract engine, documentations, ssh console adapter)<br />
 - Thibault Lecoq (bugs announcement)<br />
-- Denys Bortovets (new scripts to build mac version, ansible adapter and agent, update test links feature)
+- Denys Bortovets (new scripts to build mac version, ansible adapter and agent, update test links feature)<br />
+- Jordane Fillatre (kafka adapter and agent)

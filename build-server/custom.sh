@@ -157,6 +157,8 @@ NODEJS="node-v6.11.0-linux-x64"
 URLLIB3="urllib3-1.22"
 F5_ICONTROL="f5-icontrol-rest-1.3.8"
 F5_SDK="f5-sdk-3.0.14"
+PYKAFKA="kafka-python-1.4.2"
+PYSNAPPY="python-snappy-0.5.2"
 
 # websocket module for apache, only for centos 5/6
 MOD_WSTUNNEL="mod_proxy_wstunnel.so"
@@ -515,7 +517,7 @@ if [ "$DL_MISSING_PKGS" = "Yes" ]; then
     fi
     
 	echo -ne "* Adding gcc                \r"
-	$YUM_BIN -y install gcc python-devel Cython 1>> "$LOG_FILE" 2>&1
+	$YUM_BIN -y install gcc python-devel Cython gcc-c++ 1>> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo_failure; echo
         echo "Unable to download packages gcc and more with yum" >> "$LOG_FILE"
@@ -534,7 +536,7 @@ if [ "$DL_MISSING_PKGS" = "Yes" ]; then
 	$YUM_BIN -y install libpng-devel libjpeg-devel zlib-devel freetype-devel lcms-devel tk-devel tkinter >> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo_failure; echo
-        echo "Unable to download packages freetype and more with yum" >> "$LOG_FILE"
+        echo "Unable to download lib png with yum" >> "$LOG_FILE"
         exit_on_error
     fi
     
@@ -542,7 +544,15 @@ if [ "$DL_MISSING_PKGS" = "Yes" ]; then
 	$YUM_BIN -y install postgresql postgresql-libs postgresql-devel >> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo_failure; echo
-        echo "Unable to download packages freetype and more with yum" >> "$LOG_FILE"
+        echo "Unable to download postgresql with yum" >> "$LOG_FILE"
+        exit_on_error
+    fi
+    
+	echo -ne "* Adding snappy                \r"
+	$YUM_BIN -y install snappy-devel >> "$LOG_FILE" 2>&1
+    if [ $? -ne 0 ]; then
+        echo_failure; echo
+        echo "Unable to download packages libsnappy-devel with yum" >> "$LOG_FILE"
         exit_on_error
     fi
     
@@ -1081,6 +1091,20 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$F5_SDK/ 1>> "$LOG_FILE" 2>&1
     
+    echo -ne "* Installing python-snappy                \r"
+    $TAR_BIN xvf $PKG_PATH/$PYSNAPPY.tar.gz  1>> "$LOG_FILE" 2>&1
+        cd $APP_PATH/$PYSNAPPY/
+        $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+        cd .. 1>> "$LOG_FILE" 2>&1
+        rm -rf $APP_PATH/$PYSNAPPY/ 1>> "$LOG_FILE" 2>&1
+
+    echo -ne "* Installing kafka-python                \r"
+    $TAR_BIN xvf $PKG_PATH/$PYKAFKA.tar.gz  1>> "$LOG_FILE" 2>&1
+        cd $APP_PATH/$PYKAFKA/
+        $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+        cd .. 1>> "$LOG_FILE" 2>&1
+        rm -rf $APP_PATH/$PYKAFKA/ 1>> "$LOG_FILE" 2>&1
+        
     echo -ne "* Installing nodejs                \r"
     $TAR_BIN --strip-components 1 -xzvf $NODEJS* -C /usr/local 1>> "$LOG_FILE" 2>&1
     
@@ -1179,16 +1203,16 @@ echo_success; echo
 
 echo -n "* Adding cron scripts"
 
-$PERL_BIN -p -i -e  "s/^INSTALL_PATH=.*/INSTALL_PATH=$(echo "$INSTALL_PATH" | sed -e 's/[]\/()$*.^|[]/\\&/g')/g;"  "$INSTALL_PATH"/current/Scripts/cron.backup-tables
+$PERL_BIN -p -i -e  "s/^INSTALL_PATH=.*/INSTALL_PATH=$(echo "$INSTALL_PATH" | sed -e 's/[]\/()$*.^|[]/\\&/g')/g;"  "$INSTALL_PATH"/current/Scripts/cron/cron.backup-tables
 rm -f $CRON_DAILY/$PRODUCT_SVC_NAME-tables 1>> "$LOG_FILE" 2>&1
-ln -s "$INSTALL_PATH"/current/Scripts/cron.backup-tables $CRON_DAILY/$PRODUCT_SVC_NAME-tables 1>> "$LOG_FILE" 2>&1
+ln -s "$INSTALL_PATH"/current/Scripts/cron/cron.backup-tables $CRON_DAILY/$PRODUCT_SVC_NAME-tables 1>> "$LOG_FILE" 2>&1
     
 if [ "$CLEANUP_BACKUPS" = "Yes" ]; then
-	$PERL_BIN -p -i -e  "s/^INSTALL_PATH=.*/INSTALL_PATH=$(echo "$INSTALL_PATH" | sed -e 's/[]\/()$*.^|[]/\\&/g')/g;"  "$INSTALL_PATH"/current/Scripts/cron.cleanup-backups
-	$PERL_BIN -p -i -e  "s/^OLDER_THAN=.*/OLDER_THAN=$BACKUPS_OLDER_THAN/g;"  "$INSTALL_PATH"/current/Scripts/cron.cleanup-backups
+	$PERL_BIN -p -i -e  "s/^INSTALL_PATH=.*/INSTALL_PATH=$(echo "$INSTALL_PATH" | sed -e 's/[]\/()$*.^|[]/\\&/g')/g;"  "$INSTALL_PATH"/current/Scripts/cron/cron.cleanup-backups
+	$PERL_BIN -p -i -e  "s/^OLDER_THAN=.*/OLDER_THAN=$BACKUPS_OLDER_THAN/g;"  "$INSTALL_PATH"/current/Scripts/cron/cron.cleanup-backups
     
     rm -f $CRON_WEEKLY/$PRODUCT_SVC_NAME-backups 1>> "$LOG_FILE" 2>&1
-    ln -s "$INSTALL_PATH"/current/Scripts/cron.cleanup-backups $CRON_WEEKLY/$PRODUCT_SVC_NAME-backups 1>> "$LOG_FILE" 2>&1
+    ln -s "$INSTALL_PATH"/current/Scripts/cron/cron.cleanup-backups $CRON_WEEKLY/$PRODUCT_SVC_NAME-backups 1>> "$LOG_FILE" 2>&1
 fi
 echo_success; echo
     

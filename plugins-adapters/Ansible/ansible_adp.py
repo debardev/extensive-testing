@@ -32,18 +32,17 @@ from Libs.PyXmlDict import Xml2Dict
 from Libs.PyXmlDict import Dict2Xml
 
 
-class AnsibleAdapter(TestAdapterLib.Adapter):
+class Ansible(TestAdapterLib.Adapter):
     __NAME__ = """ANSIBLE"""
     AGENT_INITIALIZED = "AGENT_INITIALIZED"
     AGENT_TYPE_EXPECTED = 'ansible'
-
     @doc_public
     def __init__(self, parent, host_group, agent, ssh_user=None, ssh_pass=None,
                  name=None, debug=False, shared=False, constants=None,
                  options=None, host_fqdns="None", host_py='python',
                  agentSupport=True, logEventReceived=True, timeout=10.0):
         """
-          My adapter
+          Ansible adapter with agent mode support
 
           @param parent: parent testcase
           @type parent: testcase
@@ -75,23 +74,14 @@ class AnsibleAdapter(TestAdapterLib.Adapter):
           @param host_group: group for task
           @type host_group: string
 
-          @param options: default ﻿{
-                                     "connection": "local",
-                                     "module_path": "~/",
-                                     "forks": 100,
-                                     "become": "yes",
-                                     "become_method": "sudo",
-                                     "become_user": "root",
-                                     "check": false,
-                                     "diff": false
-                                   }
-          @type options: dict/None
+          @param options: default ﻿{  "connection": "local",  "module_path": "~/",   "forks": 100,  "become": "yes",  "become_method": "sudo", "become_user": "root", "check": false,   "diff": false }
+          @type options: dict/none
 
           @param constants:
           @type constants: dict/None
 
           @param host_fqdns: For hosts machines dict or string as json where keys should be ansible_host. For localhost playbook just "None"
-          @type host_fqdns: dict/String
+          @type host_fqdns: dict/str
 
           @param host_py: path to python interpreter default for Linux python for Freebsd ﻿/usr/local/bin/python2
           @type host_py: string

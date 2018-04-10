@@ -21,6 +21,6 @@
 # MA 02110-1301 USA
 # -------------------------------------------------------------------
 
-from ansible_adapter import *
+from ansible_adp import *
 
 __DESCRIPTION__ = """This adapter enable to use ansible"""

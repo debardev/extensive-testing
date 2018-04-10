@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# -------------------------------------------------------------------
-# Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# ------------------------------------------------------------------
+# Copyright (c) 2018 Jordane Fillatre
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,27 +21,9 @@
 # MA 02110-1301 USA
 # -------------------------------------------------------------------
 
-"""
-All embeded agents and probes
-"""
+from consumer import *
+from producer import *
+from templates import *
 
-from Embedded import DummyAgent
-from Embedded import SocketAgent
-from Embedded import CommandAgent
-from Embedded import FileAgent
-from Embedded import FtpAgent
-from Embedded import Selenium3ServerAgent
-from Embedded import Selenium2ServerAgent
-from Embedded import SoapUIAgent
-from Embedded import SmsAgent
-from Embedded import SshAgent
-from Embedded import DatabaseAgent
-from Embedded import AdbAgent
-from Embedded import SikulixServerAgent
-from Embedded import AnsibleAgent
-from Embedded import KafkaAgent
-
-from Embedded import DummyProbe
-from Embedded import TextualProbe
-from Embedded import FileProbe
-from Embedded import NetworkProbe
+__DESCRIPTION__ = """Allow to consum/produce kafka topics.
+Adapter mainly based on kafka-python library functions mapping (1.4.1 minimal version)."""

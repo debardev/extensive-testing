@@ -23,7 +23,6 @@
 
 import TestExecutorLib.TestTemplatesLib as TestTemplatesLib
 
-
 def ansibleAgent(layerName='ANSIBLE', get=None, event=None, cmd=None):
     """
     Construct a template
