@@ -43,7 +43,7 @@ try:
     import RemoteRepository
 except ImportError: # support python3
     from . import RemoteRepository
-import UserClientInterface as UCI
+# import UserClientInterface as UCI
 import RestClientInterface as RCI
 
 
@@ -55,7 +55,7 @@ class Repository(RemoteRepository.Repository):
         """
         Remote repository generic constructor
         """
-        RemoteRepository.Repository.__init__(self, parent, repoType=UCI.REPO_LIBRARIES)
+        RemoteRepository.Repository.__init__(self, parent, repoType=RCI.REPO_LIBRARIES)
 
     def addLibraries(self):
         """
@@ -176,7 +176,8 @@ class Repository(RemoteRepository.Repository):
         Reimplemented from RemoteRepository
         Move remote file
         """
-        RCI.instance().moveFileLibraries(filePath=currentPath, fileName=currentName, 
+        RCI.instance().moveFileLibraries(filePath=currentPath, 
+                                         fileName=currentName, 
                                          fileExt=currentExtension, 
                                          newPath=newPath)
                                      

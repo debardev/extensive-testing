@@ -92,6 +92,17 @@
 		}
 }
 ?>
+
+<?php
+        $banner = file_get_contents(ROOT.'BANNER');
+        if ( strlen($banner) ) {
+            echo '<div class="signin-banner">';
+            echo $banner;
+            echo "</ul></div>";
+        }
+        
+?>
+
 <?php
     // finalize body
         $tpl_temp = trim(ob_get_contents());

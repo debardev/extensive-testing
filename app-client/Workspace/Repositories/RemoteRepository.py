@@ -112,8 +112,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         super(SaveOpenToRepoDialog, self).__init__(parent)
         
         self.owner = parent
-        
-        #
+
         self.filenameLineEdit = None
         self.selectedFilename = None
         self.selectedFilenames = []
@@ -227,7 +226,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         optLayout = QVBoxLayout()
         optLayout.addWidget(self.referer_refresh_in_tests)
         optLayout.addWidget(self.update_location_in_tests)
-        
+
         # Buttons
         self.cancelButton = QPushButton(self.tr("Cancel"))
         buttonLayout = QHBoxLayout()
@@ -333,16 +332,20 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
                     return
 
                 if '>' in filename or '<' in filename:
-                    QMessageBox.warning(self, self.tr("Save") , self.tr("Invalid filename (\/:?<>*|\").") )
+                    QMessageBox.warning(self, self.tr("Save") , 
+                                        self.tr("Invalid filename (\/:?<>*|\").") )
                     return
                 if '?' in filename or ':' in filename:
-                    QMessageBox.warning(self, self.tr("Save") , self.tr("Invalid filename (\/:?<>*|\").") )
+                    QMessageBox.warning(self, self.tr("Save") , 
+                                        self.tr("Invalid filename (\/:?<>*|\").") )
                     return
                 if '|' in filename or '*' in filename:
-                    QMessageBox.warning(self, self.tr("Save") , self.tr("Invalid filename (\/:?<>*|\").") )
+                    QMessageBox.warning(self, self.tr("Save") , 
+                                        self.tr("Invalid filename (\/:?<>*|\").") )
                     return
                 if '"' in filename or '\\' in filename or '/' in filename:
-                    QMessageBox.warning(self, self.tr("Save") , self.tr("Invalid filename (\/:?<>*|\").") )
+                    QMessageBox.warning(self, self.tr("Save") , 
+                                        self.tr("Invalid filename (\/:?<>*|\").") )
                     return
 
             if self.modeRepoSave:
@@ -538,7 +541,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
             self.update_location_in_tests.hide()
             self.referer_refresh_in_tests.hide()
             
-    def setMoveFolder(self, project=''):
+    def setMoveFolder(self, project='', update_path=False):
         """
         Set as move folder
 
@@ -568,7 +571,16 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         self.acceptButton.setText(self.tr("Select"))
         self.filenameLabel.hide()
         self.filenameLineEdit.hide()
-
+        
+        self.update_location_in_tests.setChecked(False)
+        self.referer_refresh_in_tests.setChecked(False)
+        if update_path:
+            self.update_location_in_tests.show()
+            self.referer_refresh_in_tests.show()
+        else:
+            self.update_location_in_tests.hide()
+            self.referer_refresh_in_tests.hide()
+            
     def setFilename(self, filename, project=''):
         """
         Set the filename
@@ -597,6 +609,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
 
         self.setWindowTitle(self.tr('Save to remote repository as ...'))
         self.acceptButton.setText(self.tr("Save"))
+        
         # dbr13 >>
         self.update_location_in_tests.setChecked(False)
         self.update_location_in_tests.hide()
@@ -617,7 +630,7 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         """
         return self.referer_refresh_in_tests.isChecked()
 
-    def setImportFilename(self, filename, project=''):
+    def setImportFilename(self, filename, project='', update_path=False):
         """
         Set import filename
 
@@ -647,6 +660,15 @@ class SaveOpenToRepoDialog(QDialog, Logger.ClassLogger):
         self.filenameLabel.show()
         self.filenameLineEdit.show()
         self.filenameLineEdit.setText(filename)
+
+        self.update_location_in_tests.setChecked(False)
+        self.referer_refresh_in_tests.setChecked(False)
+        if update_path:
+            self.update_location_in_tests.show()
+            self.referer_refresh_in_tests.show()
+        else:
+            self.update_location_in_tests.hide()
+            self.referer_refresh_in_tests.hide()
 
     def getFilename(self, type= EXTENSION_TSX, multipleSelection=False, 
                     project='', update_path=False):
@@ -1054,7 +1076,7 @@ class RenameDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
     """
     Rename dialog
     """
-    def __init__(self, currentName, folder, parent=None):
+    def __init__(self, currentName, folder, parent=None, show_update_location=False):
         """
         Dialog to rename file or folder
 
@@ -1070,13 +1092,14 @@ class RenameDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         super(RenameDialog, self).__init__(parent)
         self.dataCurrent = currentName
         self.isFolder = folder
+        self.show_update_location = show_update_location
+        
         self.createDialog()
         self.createConnections()
         
         # new in v12, auto select of the new text 
         self.newnameEdit.setFocus()
         self.newnameEdit.selectAll()
-
 
     def createDialog (self):
         """
@@ -1118,13 +1141,18 @@ class RenameDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         mainLayout.addWidget(self.buttonBox)
         self.setLayout(mainLayout)
 
+        if self.show_update_location:
+            self.update_location.show()
+        else:
+            self.update_location.hide()
+            
         if self.isFolder:
             self.setWindowTitle(self.tr("Rename folder"))
             # dbr13 currently it doesn't work with folders
             self.update_location.hide()
         else:
             self.setWindowTitle(self.tr("Rename file"))
-        
+            
         self.resize(600, 100)
 
     def createConnections (self):
@@ -2053,8 +2081,11 @@ class Repository(QWidget, Logger.ClassLogger):
         self.refreshRemoteAction.setEnabled(True)
         self.wrepository.clear()
 
-        self.testcasesRoot = Item(repo = self, parent = self.wrepository, txt = "Root",  
-                                    type = QTreeWidgetItem.UserType+10, isRoot = True )
+        self.testcasesRoot = Item(repo = self, 
+                                  parent = self.wrepository, 
+                                  txt = "Root",  
+                                  type = QTreeWidgetItem.UserType+10, 
+                                  isRoot = True )
         self.testcasesRoot.setSelected(True)
         self.createRepository(listing=listing, parent=self.testcasesRoot, firstCalled=True)
         self.wrepository.sortItems(0, Qt.AscendingOrder)
@@ -2107,18 +2138,30 @@ class Repository(QWidget, Logger.ClassLogger):
                         reserved = True     
                         virtualTxt = " %s" % dct["name"][1:]
 
-#                   {'nb-folders': '0', 'name': 'SSL', 'nb-files': '3', 'content': [{'modification':
-#                        1342259500, 'type': 'file', 'name': '__init__.py', 'size': '378'}, {'modificati
-#                       on': 1342259500, 'type': 'file', 'name': 'templates.py', 'size': '1795'}, {'modi
-#                       fication': 1342259500, 'type': 'file', 'name': 'client.py', 'size': '7096'}], 'm
-#                       odification': 1342465145, 'type': 'folder', 'size': '32549'}
+                    # {'nb-folders': '0', 'name': 'SSL', 'nb-files': '3', 'content': [{'modification':
+                    # 1342259500, 'type': 'file', 'name': '__init__.py', 'size': '378'}, {'modificati
+                    # on': 1342259500, 'type': 'file', 'name': 'templates.py', 'size': '1795'}, {'modi
+                    # fication': 1342259500, 'type': 'file', 'name': 'client.py', 'size': '7096'}], 'm
+                    # odification': 1342465145, 'type': 'folder', 'size': '32549'}
                     if reserved:
-                        item = Item(repo = self, type = QTreeWidgetItem.UserType+101, parent = parent, 
-                                    txt = dct["name"], propertiesFile=dct, isFolder=True, 
-                                    icon=folderIcon, virtualTxt=virtualTxt, reserved=reserved )
+                        item = Item(repo = self, 
+                                    type = QTreeWidgetItem.UserType+101, 
+                                    parent = parent, 
+                                    txt = dct["name"], 
+                                    propertiesFile=dct, 
+                                    isFolder=True, 
+                                    icon=folderIcon, 
+                                    virtualTxt=virtualTxt, 
+                                    reserved=reserved )
                     else:
-                        item = Item(repo = self, parent = parent, txt = dct["name"], propertiesFile=dct, isFolder=True, 
-                                icon=folderIcon, virtualTxt=virtualTxt, reserved=reserved )
+                        item = Item(repo = self, 
+                                    parent = parent, 
+                                    txt = dct["name"], 
+                                    propertiesFile=dct, 
+                                    isFolder=True, 
+                                    icon=folderIcon, 
+                                    virtualTxt=virtualTxt, 
+                                    reserved=reserved )
 
                     self.createRepository(  dct["content"] , item, fileincluded )
                 else:
@@ -2126,17 +2169,28 @@ class Repository(QWidget, Logger.ClassLogger):
                         if dct["type"] == "file":
                             pname = self.getProjectName(dct["project"])
                             # {'modification': 1342259500, 'type': 'file', 'name': '__init__.py', 'size': '562 }
-                            item = Item(repo = self, parent = parent, txt = dct["name"] , propertiesFile=dct,
-                                            type = QTreeWidgetItem.UserType+0, projectId=dct["project"], projectName=pname )
+                            item = Item(repo = self, 
+                                        parent = parent, 
+                                        txt = dct["name"] , 
+                                        propertiesFile=dct,
+                                        type = QTreeWidgetItem.UserType+0, 
+                                        projectId=dct["project"], 
+                                        projectName=pname )
                             
                             # adding snapshots
                             if 'snapshots' in dct:
                                 if len(dct['snapshots']):
                                     for snap in dct['snapshots']:
                                         # extract snap name 
-                                        itemSnap = Item(repo = self, parent = item, txt = snap['name'] , propertiesFile=dct,
-                                                        type = QTreeWidgetItem.UserType+100, projectId=dct["project"], 
-                                                        projectName=pname, snapRealname=snap['realname'], snapMode=True )
+                                        itemSnap = Item(repo = self, 
+                                                        parent = item, 
+                                                        txt = snap['name'] , 
+                                                        propertiesFile=dct,
+                                                        type = QTreeWidgetItem.UserType+100, 
+                                                        projectId=dct["project"], 
+                                                        projectName=pname, 
+                                                        snapRealname=snap['realname'], 
+                                                        snapMode=True )
 
         except Exception as e:
             self.error( "unable to create tree: %s" % e )
@@ -2155,22 +2209,34 @@ class Repository(QWidget, Logger.ClassLogger):
 
             testId = TestResults.instance().getTestId()
             
-            _json = DocumentViewer.instance().prepareTest( wdocument=None, tabId=testId, background = False, 
-                                                           runAt = (0,0,0,0,0,0), runType=UCI.SCHED_NOW, runNb=-1, 
-                                                           withoutProbes=False, debugActivated=False, 
-                                                           withoutNotif=False, keepTr=True, 
-                                                           prjId=projectId, testFileExtension=self.itemCurrent.fileExtension, 
-                                                           testFilePath=pathFile, testFileName=self.itemCurrent.fileName, 
+            _json = DocumentViewer.instance().prepareTest( wdocument=None, 
+                                                           tabId=testId, 
+                                                           background = False, 
+                                                           runAt = (0,0,0,0,0,0), 
+                                                           runType=UCI.SCHED_NOW, 
+                                                           runNb=-1, 
+                                                           withoutProbes=False, 
+                                                           debugActivated=False, 
+                                                           withoutNotif=False, 
+                                                           keepTr=True, 
+                                                           prjId=projectId, 
+                                                           testFileExtension=self.itemCurrent.fileExtension, 
+                                                           testFilePath=pathFile, 
+                                                           testFileName=self.itemCurrent.fileName, 
                                                            fromTime=(0,0,0,0,0,0), 
-                                                           toTime=(0,0,0,0,0,0), prjName='', 
-                                                           stepByStep=False, breakpoint=False,
+                                                           toTime=(0,0,0,0,0,0), 
+                                                           prjName='', 
+                                                           stepByStep=False, 
+                                                           breakpoint=False,
                                                            channelId=False, 
                                                            basicMode=False  )
                                                            
             if self.itemCurrent.fileExtension in [ RCI.EXT_TESTSUITE, RCI.EXT_TESTABSTRACT, RCI.EXT_TESTUNIT]:
                 RCI.instance().scheduleTest(req=_json, wdocument=None)
+                
             elif self.itemCurrent.fileExtension in [ RCI.EXT_TESTPLAN, RCI.EXT_TESTGLOBAL]:
                 RCI.instance().scheduleTestTpg(req=_json, wdocument=None)
+                
             else:
                 pass
             
@@ -2568,7 +2634,14 @@ class Repository(QWidget, Logger.ClassLogger):
             currentName = self.itemCurrent.folderName
             folder=True
 
-        renameDialog = RenameDialog( currentName = str(currentName), folder=folder )
+        if self.repoType in [ UCI.REPO_ADAPTERS, UCI.REPO_LIBRARIES ]:
+            show_update_location = False
+        else:
+            show_update_location = True
+            
+        renameDialog = RenameDialog( currentName = str(currentName), 
+                                     folder=folder,
+                                     show_update_location = show_update_location)
         if renameDialog.exec_() == QDialog.Accepted:
             # dbr13 >>> for rename
             update_location = renameDialog.getUpdateLocationStatus()

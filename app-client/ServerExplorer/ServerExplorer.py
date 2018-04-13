@@ -36,7 +36,7 @@ try:
     from PyQt4.QtGui import (QWidget, QVBoxLayout, QProgressBar, QFont, QHBoxLayout, QLabel, 
                             QComboBox, QSizePolicy, QLineEdit, QIntValidator, QCheckBox, QGridLayout, 
                             QFrame, QPushButton, QMessageBox, QTabWidget, QIcon, QDialog)
-    from PyQt4.QtCore import (pyqtSignal, Qt, QRect, QUrl, QByteArray, QObject)
+    from PyQt4.QtCore import (pyqtSignal, Qt, QRect, QUrl, QByteArray, QObject, QFile)
     from PyQt4.QtNetwork import (QHttp, QNetworkProxy, QHttpRequestHeader, 
                                 QNetworkAccessManager, QNetworkRequest )
 except ImportError:
@@ -44,7 +44,7 @@ except ImportError:
     from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QProgressBar, QHBoxLayout, QLabel, 
                                 QComboBox, QSizePolicy, QLineEdit, QCheckBox, QGridLayout, 
                                 QFrame, QPushButton, QMessageBox, QTabWidget, QDialog)
-    from PyQt5.QtCore import (pyqtSignal, Qt, QRect, QUrl, QByteArray, QObject)
+    from PyQt5.QtCore import (pyqtSignal, Qt, QRect, QUrl, QByteArray, QObject, QFile)
     from PyQt5.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest)
     
 import UserClientInterface as UCI
@@ -529,7 +529,7 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         """
         Create qt dialog
         """
-        self.setWindowTitle(self.tr("Login on the test center"))
+        self.setWindowTitle(self.tr("Login to the automation center"))
         # self.resize(400, 100)
         
         layout = QVBoxLayout()
@@ -554,7 +554,7 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
                 lastPassword = ''
 
         self.addrComboBox = QComboBox()
-        self.addrComboBox.setMinimumWidth(250)
+        self.addrComboBox.setMinimumWidth(350)
         self.addrComboBox.setEditable(1)
         if isinstance(addrList, str):
             addrList = [ addrList ]
@@ -585,12 +585,10 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         self.proxyPasswordEdit = QLineEdit()
         self.proxyPasswordEdit.setEchoMode( QLineEdit.Password )
         self.proxyPasswordEdit.setDisabled(True)
-        
-        self.savePassCheckBox = QCheckBox( self.tr("Saving credentials" ) )
-        if int(Settings.instance().readValue( key = 'Server/save-credentials')):
-            self.savePassCheckBox.setChecked(True)
-            
+
         # main form
+        layoutMain = QVBoxLayout()
+        
         layout = QHBoxLayout()
         paramLayout = QGridLayout()
         paramLayout.addWidget(QLabel(self.tr("Address:")), 0, 0, Qt.AlignRight)
@@ -600,13 +598,12 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         paramLayout.addWidget(self.usernameEdit, 2, 1)
         paramLayout.addWidget(QLabel(self.tr("Password:")), 3, 0, Qt.AlignRight)
         paramLayout.addWidget(self.passwordEdit, 3, 1)
-        paramLayout.addWidget(self.savePassCheckBox, 4, 1)
- 
+
         self.sep1 = QFrame()
         self.sep1.setGeometry(QRect(110, 221, 51, 20))
         self.sep1.setFrameShape(QFrame.HLine)
         self.sep1.setFrameShadow(QFrame.Sunken)
-        
+
         # proxy support
         self.withProxyCheckBox = QCheckBox( self.tr("Use a HTTPS proxy server" ) )
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Server/proxy-active') ):
@@ -628,18 +625,62 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         proxyLayout.addWidget(self.proxyPasswordEdit, 3, 1)
         
         paramLayout.addLayout(proxyLayout, 7,1)
+        
         layout.addLayout(paramLayout)
         
         # Buttons
+        
+        self.savePassCheckBox = QCheckBox( self.tr("Saving credentials" ) )
+        if int(Settings.instance().readValue( key = 'Server/save-credentials')):
+            self.savePassCheckBox.setChecked(True)
+            
         buttonLayout = QVBoxLayout()
         self.okButton = QPushButton( QIcon(":/ok.png"), self.tr("Connection"), self)
         self.cancelButton = QPushButton( QIcon(":/test-close-black.png"), self.tr("Cancel"), self)
         buttonLayout.addWidget(self.okButton)
         buttonLayout.addWidget(self.cancelButton)
+        buttonLayout.addWidget(self.savePassCheckBox)
         buttonLayout.addStretch()
         layout.addLayout(buttonLayout)
 
-        self.setLayout(layout)
+        layoutMain.addLayout(layout)
+        
+        # security banner
+        try:
+
+            fh = QFile( "%s/BANNER" % QtHelper.dirExec() )
+            fh.open(QFile.ReadOnly)
+            ct = fh.readAll()
+            
+            # convert qbytearray to str
+            if sys.version_info > (3,):
+                ct = unicode(ct, 'utf8') # to support python3 
+            else:
+                ct = unicode(ct)
+ 
+            if len(ct):
+                self.sep2 = QFrame()
+                self.sep2.setGeometry(QRect(110, 221, 51, 20))
+                self.sep2.setFrameShape(QFrame.HLine)
+                self.sep2.setFrameShadow(QFrame.Sunken)
+                
+                labelBanner = QLabel( " " )
+                labelBanner.setWordWrap(True)   
+             
+                labelBanner.setText(ct)
+
+                layoutMain.addWidget(self.sep2)
+                layoutMain.addWidget(labelBanner)
+            
+            fh.close()
+            
+        except Exception as e:
+            pass
+
+        
+       
+        
+        self.setLayout(layoutMain)
 
     def createConnections (self):
         """

@@ -50,7 +50,7 @@ try:
 except NameError: # support python3
     xrange = range
 
-import UserClientInterface as UCI
+# import UserClientInterface as UCI
 import RestClientInterface as RCI
 
 
@@ -221,7 +221,7 @@ class Repository(RemoteRepository.Repository):
         """
         self.createSamplesAction.setEnabled(False)
 
-        if UCI.RIGHTS_ADMIN in RCI.instance().userRights:
+        if RCI.RIGHTS_ADMIN in RCI.instance().userRights:
             self.createSamplesAction.setEnabled(True)
 
         RemoteRepository.Repository.initialize(self, listing)

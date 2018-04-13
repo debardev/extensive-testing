@@ -12,6 +12,7 @@
 		8. (minor) new icon folder for remote repositories
 		9. (medium) test abstract: update to support extra and generic adapters/libraries
 		10. (minor) default template for adapter and library updated
+		11. (minor) new feature to add security banner on login popup
 	Issues Fixed
 		1. (medium) fix regression: unable to zoom in/out in test editor
 		2. (medium) automation assistant: unable to generate testsuite with sikulix and selenium in the same test issue #9
