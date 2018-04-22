@@ -831,7 +831,7 @@ class WHelper(QWidget, Logger.ClassLogger):
         self.helperLibraries.setContextMenuPolicy(Qt.CustomContextMenu)
         
         self.areaTab.addTab(self.helper, QIcon(":/processes.png"), "Framework")
-        self.areaTab.addTab(self.helperInterop, QIcon(":/plugin.png"), "Interoperability")
+        self.areaTab.addTab(self.helperInterop, QIcon(":/plugin.png"), "Third party tools")
         self.extsTab.addTab(self.helperAdapters, QIcon(":/adapters-help.png"), "Adapters")
         self.extsTab.addTab(self.helperLibraries, QIcon(":/libraries-help.png"), "Libraries")
 
