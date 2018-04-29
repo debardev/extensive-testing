@@ -72,7 +72,7 @@ def doc_public(wrapped, instance, args, kwargs):
     public decorator for documentation
     """
     return wrapped(*args, **kwargs)
-    
+   
 from xml.sax.saxutils import escape
 
 __DESCRIPTION__ = """This library enable to create testcase with step support."""

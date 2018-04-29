@@ -35,7 +35,7 @@ try:
                             QVBoxLayout, QHBoxLayout, QDialogButtonBox, QIcon, QToolBar, QTextEdit, 
                             QMessageBox, QTableView, QAbstractItemView, QFrame, QMenu, QDrag, QWidget)
     from PyQt4.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt, QSize, 
-                            pyqtSignal, QMimeData)
+                            pyqtSignal, QMimeData, QByteArray)
 except ImportError:
     from PyQt5.QtGui import (QFont, QIcon, QDrag)
     from PyQt5.QtWidgets import (QItemDelegate, QDialog, QComboBox, QLineEdit, 
@@ -43,7 +43,7 @@ except ImportError:
                                 QToolBar, QTextEdit, QMessageBox, QTableView, QAbstractItemView, 
                                 QFrame, QMenu, QWidget)
     from PyQt5.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt, QSize, 
-                            pyqtSignal, QMimeData)
+                            pyqtSignal, QMimeData, QByteArray)
  
 from Libs import QtHelper, Logger
 
@@ -1088,18 +1088,24 @@ class DescriptionsTableView(QTableView, Logger.ClassLogger):
         """
         if self.datasetView:
             return
+            
+        # check indexes
         indexes = self.selectedIndexes()
         if not indexes:
             return
         for index in indexes:
             if not index.isValid():
                 return
+                
         rowVal = self.model.getValueRow( indexes[0] )
         if len(rowVal) > 1 :
-            meta = "description('%s')" % rowVal['key']
+            meta = QByteArray()
+            meta.append( "description('%s')" % rowVal['key'] )
+            
             # create mime data object
             mime = QMimeData()
-            mime.setData('application/x-%s-description-item' % Settings.instance().readValue( key='Common/acronym' ).lower() , meta )
+            m = 'application/x-%s-description-item' % Settings.instance().readValue( key='Common/acronym' ).lower() 
+            mime.setData( m, meta )
             # start drag 
             drag = QDrag(self)
             drag.setMimeData(mime)

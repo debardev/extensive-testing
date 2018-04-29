@@ -44,7 +44,7 @@ __END__="2018"
 # date and time of the buid
 __BUILDTIME__="13/04/2018 22:16:54"
 # Redirect stdout and stderr to log file only on production
-REDIRECT_STD=True
+REDIRECT_STD=False
 # disable warning from qt framework on production 
 QT_WARNING_MODE=False
 # workspace offline, for dev only

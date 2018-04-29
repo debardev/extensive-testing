@@ -18,3 +18,4 @@
 		2. (medium) automation assistant: unable to generate testsuite with sikulix and selenium in the same test issue #9
 		3. (minor) fix startup of the main app to initialize the style as soon as possible
 		4. (medium) fix regression, filename not updated in workspace after a rename of a file from the repository
+		5. (minor) fix regression, unable to drag and drop test description in a testunit or suite

@@ -77,16 +77,6 @@
 	?>
 </div>
 
-<!--<div class="bxright">
-	<div class="help"><?php echo lang('help') ?><?php echo get_ajaxloader("loader-help", "0") ?></div>
-	<div>
-		<ul class="help_list">
-			<li><?php echo '<a href="javascript:nav(\'./index.php?p='.$ABOUT_PAGE.'&s='.$SUB_PAGE_DESCR.'&c=new\')">'.lang('about-what').'</a>'; ?></li>
-			<li><?php echo '<a href="javascript:nav(\'./index.php?p='.$ABOUT_PAGE.'&s='.$SUB_PAGE_RN.'&c=new\')">'.lang('about-what-new').'</a>'; ?></li>
-		</ul>
-	</div>
-</div>-->
-
 <div class="bxcenter">
 	
 	<div id="box-warn"></div>

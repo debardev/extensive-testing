@@ -600,6 +600,114 @@ class AdminProjectsSearchByName(Handler):
 
         return { "cmd": self.request.path, "project": details[0] }
 
+class AdminUsersPasswordUpdate(Handler):
+    """
+    /rest/administration/users/password/update
+    """
+    @_to_yaml 
+    def post(self):
+        """
+        tags:
+          - admin
+        summary: Update user password
+        description: ''
+        operationId: adminUsersPasswordUpdate
+        consumes:
+          - application/json
+        produces:
+          - application/json
+        parameters:
+          - name: Cookie
+            in: header
+            description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
+            required: true
+            type: string
+          - name: body
+            in: body
+            required: true
+            schema:
+              required: [ user-id, current-password, new-password ]
+              properties:
+                user-id:
+                  type: integer
+                current-password:
+                  type: string
+                new-password:
+                  type: string
+        responses:
+          '200':
+            description: 
+            schema :
+              properties:
+                cmd:
+                  type: string
+                message:
+                  type: string
+            examples:
+              application/json: |
+                {
+                  "cmd": "/administration/users/password/update", 
+                  "message: "password successfully updated"
+                }
+          '400':
+            description: Bad request provided
+          '404':
+            description: User not found
+          '403':
+            description: Bad current password provided
+          '500':
+            description: Server error
+        """
+        user_profile = _get_user(request=self.request)
+        
+        # if not user_profile['administrator']: raise HTTP_403("Access refused")
+            
+        try:
+            userId = self.request.data.get("user-id")
+            if userId is None : raise HTTP_400("Please specify a user id")
+            
+            currentPwd = self.request.data.get("current-password")
+            if currentPwd is None : raise HTTP_400("Please specify the current password")
+            
+            newPwd = self.request.data.get("new-password")
+            if newPwd is None : raise HTTP_400("Please specify the new password")
+        except EmptyValue as e:
+            raise HTTP_400("%s" % e)
+        except Exception as e:
+            raise HTTP_400("Bad request provided (%s ?)" % e)
+            
+        # checking input    
+        if not isinstance(userId, int):
+            raise HTTP_400("Bad user id provided in request, int expected")
+            
+        if not user_profile['administrator']:
+                if userId != user_profile['id']:
+                        raise HTTP_403("Not authorized to change password")
+                        
+        # get user from db
+        success, details = UsersManager.instance().getUserFromDB(userId=userId)
+        if success != Context.instance().CODE_OK:
+            raise HTTP_404(details)
+            
+        # check current password
+        sha1_old = hashlib.sha1()
+        sha1_old.update( currentPwd ) 
+        
+        sha1_pwd = hashlib.sha1()
+        sha1_pwd.update( "%s%s" % ( Settings.get( 'Misc', 'salt'), sha1_old.hexdigest() )  )
+        if sha1_pwd.hexdigest() != details['password']:
+            raise HTTP_403("Bad current password provided")
+        
+        # update 
+        success, details = UsersManager.instance().updatePwdUserInDB(userId=userId, 
+                                                                     newPwd=newPwd)
+        if success == Context.instance().CODE_NOT_FOUND:
+            raise HTTP_404(details)
+        if success == Context.instance().CODE_ERROR:
+            raise HTTP_500(details)
+            
+        return { "cmd": self.request.path, "message": "password successfully updated" } 
+   
 """
 System handlers
 """

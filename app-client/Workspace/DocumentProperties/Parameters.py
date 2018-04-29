@@ -3003,8 +3003,10 @@ class ParametersTableView(QTableView, Logger.ClassLogger):
 
                 # create mime data object
                 mime = QMimeData()
-                mime.setData('application/x-%s-parameter-item' % Settings.instance().readValue( key='Common/acronym' ).lower() , 
-                            meta )
+                
+                m = 'application/x-%s-parameter-item' % Settings.instance().readValue( key='Common/acronym' ).lower()
+                mime.setData( m,  meta )
+                
                 # start drag )
                 drag = QDrag(self)
                 drag.setMimeData(mime)    

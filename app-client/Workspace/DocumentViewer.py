@@ -328,7 +328,7 @@ class WelcomePage(QWidget):
                             font-weight: bold;
                          } """)
         self.productLink = QLabelEnhanced(self)
-        self.productLink.setTextLink("Extensive Testing")
+        self.productLink.setTextLink( Settings.instance().readValue( key = 'Common/product-name' ) )
         self.productLink.setTextDescription("Visit the project's website")
         self.productLink.setIcon(QPixmap(":/logo.png") )
         self.productLink.onClicked = self.onProductLinkClicked
@@ -428,13 +428,13 @@ class WelcomePage(QWidget):
                          } """)
         self.connectLink = QLabelEnhanced(self)
         self.connectLink.setTextLink("Log In")
-        self.connectLink.setTextDescription("Connection to the test center")
+        self.connectLink.setTextDescription("Connection to the automation center")
         self.connectLink.setIcon(QPixmap(":/connect.png") )
         self.connectLink.onClicked = self.onConnectLinkClicked
 
         self.onlineLink = QLabelEnhanced(self)
         self.onlineLink.setTextLink("Online")
-        self.onlineLink.setTextDescription("Website of the test center")
+        self.onlineLink.setTextDescription("Website of the automation center")
         self.onlineLink.setIcon(QPixmap(":/http.png") )
         self.onlineLink.onClicked = self.onOnlineLinkClicked
         
@@ -658,7 +658,7 @@ class WelcomePage(QWidget):
                 return
                 
             self.connectLink.setTextLink("Log Out")
-            self.connectLink.setTextDescription("Disconnection from the test center")
+            self.connectLink.setTextDescription("Disconnection from the automation center")
             self.connectLink.setIcon(QPixmap(":/disconnect.png") )
             self.captureFrame.setEnabled(True)
         else:
@@ -668,7 +668,7 @@ class WelcomePage(QWidget):
             if self.connectLink.textUpQLabel.text() == 'Log In':
                 return
             self.connectLink.setTextLink("Log In")
-            self.connectLink.setTextDescription("Connection to the test center")
+            self.connectLink.setTextDescription("Connection to the automation center")
             self.connectLink.setIcon(QPixmap(":/connect.png") )
             
 class WorkspaceTab(QTabWidget):

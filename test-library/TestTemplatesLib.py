@@ -684,6 +684,12 @@ class TemplateMessage(object):
         except Exception as e:
             raise TestTemplatesException("ERR_TPL_005: remove layer failed: layer unknown")
 
+    def getSize(self):
+        """
+        todo
+        """
+        pass
+        
 def tpl2str(expected):
     """
     replace compare object by unicode val

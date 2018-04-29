@@ -54,11 +54,22 @@ class ProjectsManager(Logger.ClassLogger):
         self.repoTests ='%s/%s' % ( Settings.getDirExec(), Settings.get( 'Paths', 'tests' ) )
         self.context = context
         
+        # load projects in cache
+        self.loadCache()
+        
         # Initialize the repository
         self.info( 'Deploying default common project and reserved folders...' )
         self.createDefaultCommon()
         self.addReservedFolders()
 
+    def loadCache(self):
+        """
+        load all projects in cache
+        """
+        self.trace("load all projects in memory cache")
+        _, projects_list = self.getProjectsFromDB()
+        self.cache = projects_list
+        
     def addReservedFolders(self):
         """
         Add reserved folders (recycle and sandbox)
@@ -159,7 +170,7 @@ class ProjectsManager(Logger.ClassLogger):
         """
         Get default project of the user passed as argument
         """
-        self.trace( 'get default project for the user %s from db' % user)
+        self.trace( 'Getting default project for user=%s' % user)
         pid = 1 # default project
         sql = "SELECT defaultproject FROM `%s` WHERE login='%s'" % (self.table_name_user, user )
         ret, rows = DbManager.instance().querySQL( query=sql, columnName=True)
@@ -211,7 +222,7 @@ class ProjectsManager(Logger.ClassLogger):
 
     def addProject(self, prjId):
         """
-        Add project
+        Add project folder
         """
         self.trace( 'creating the project %s' % prjId )
         ret = False
@@ -239,7 +250,7 @@ class ProjectsManager(Logger.ClassLogger):
 
     def delProject(self, prjId):
         """
-        Delete project
+        Delete project folder
         """
         self.trace( 'deleting the project %s' % prjId )
         ret = False
@@ -288,6 +299,9 @@ class ProjectsManager(Logger.ClassLogger):
             # todo, cancel the previous insert
             return (self.context.CODE_ERROR, "unable to add project")
         
+        # refresh the cache
+        self.loadCache()
+        
         return (self.context.CODE_OK, "%s" % int(lastRowId) )
         
     def updateProjectFromDB(self, projectName, projectId):
@@ -326,7 +340,10 @@ class ProjectsManager(Logger.ClassLogger):
         if not dbRet: 
             self.error( "unable to update project by id" )
             return (self.context.CODE_ERROR, "unable to update project by id")
-            
+        
+        # refresh the cache
+        self.loadCache()
+        
         return (self.context.CODE_OK, "" )
         
     def delProjectFromDB(self, projectId):
@@ -374,7 +391,10 @@ class ProjectsManager(Logger.ClassLogger):
             self.error("unable to delete project")
             # todo, cancel the previous delete
             return (self.context.CODE_ERROR, "unable to delete project")
-            
+
+        # refresh the cache
+        self.loadCache()
+        
         return (self.context.CODE_OK, "" )
         
     def getProjectsFromDB(self):

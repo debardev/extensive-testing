@@ -87,32 +87,33 @@
 	Update a project
 	*/
 	function updateproject( $name, $pid ) {
-		global $db, $CORE, $__LWF_DB_PREFIX;
+		global $db, $RESTAPI, $CORE, $__LWF_DB_PREFIX;
 		$rsp = array();
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');
 		$rsp["moveto"] = null;
 
-		$project = getprojectbyid($pid);
-		if ( $project == null || $project == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-project-not-found');
-			return $rsp;
-		} 
 
-		$sql_req = 'UPDATE `'.$__LWF_DB_PREFIX.'-projects` SET name=\''.mysql_real_escape_string($name).'\' WHERE id=\''.$pid.'\';';
-		$rslt = $db->query( $sql_req ) ;
-		
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to update project")."(".$sql_req.")";
+        list($code, $details) = $RESTAPI->renameProject( $projectName=mysql_real_escape_string($name), 
+                                                         $projectId=intval($pid) );
+        
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
 		} else {
-			$rsp["code"] = 200;
-			$rsp["msg"] = lang('ws-project-updated');
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-project-updated');
 		}
-		
+		return $rsp;
+
 		return $rsp;
 	}
 

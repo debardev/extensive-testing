@@ -20,7 +20,7 @@
 		exit( 'access denied' );
 
 	function changenotfisuser( $uid, $notifications ) {
-		global $db, $CORE, $__LWF_DB_PREFIX;
+		global $db, $CORE, $RESTAPI, $__LWF_DB_PREFIX;
 		$rsp = array();
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');
@@ -68,49 +68,39 @@
 	}
 
 	function resetpwduser( $uid ) {
-		global $db, $CORE, $__LWF_CFG, $__LWF_DB_PREFIX;
+		global $db, $CORE, $RESTAPI, $__LWF_CFG, $__LWF_DB_PREFIX;
 		$rsp = array();
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');
 		$rsp["moveto"] = null;
 		
 		$redirect_page_url = "./index.php?p=".get_pindex('administration')."&s=".get_subpindex( 'administration', 'admin-users' );
-
-		// check uid
-		if ( $CORE->profile['administrator'] != 1 ) {
-			$rsp["code"] = 603;
-			$rsp["msg"] = lang('request denied');
-			return $rsp;
-		}		
-
-		$user = getuserbyid($uid);
-		if ( $user == null || $user == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-not-found');
-			return $rsp;	
-		}	
-
-		// update password
-		$resetpwd = '';
-		$reset_pwd_sha = sha1($__LWF_CFG['misc-salt'].sha1($resetpwd));
-		$sql_req = 'UPDATE `'.$__LWF_DB_PREFIX.'-users` SET password=\''.$reset_pwd_sha.'\' WHERE id=\''.$uid.'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to reset user password")."(".$sql_req.")";
+        
+		// reset password user through rest api
+        list($code, $details) = $RESTAPI->resetPasswordUser($id=intval($uid));
+        
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
 		} else {
-			$rsp["code"] = 200;
-			$rsp["msg"] = lang('ws-user-pwd-reseted');
-			$rsp["moveto"] = $redirect_page_url;
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-user-pwd-reseted');
+            $rsp["moveto"] = $redirect_page_url;
 		}
-
+        
 		return $rsp;	
 	}
 
 	function changepwduser( $uid, $oldpwd, $newpwd ) {
-		global $db, $CORE, $__LWF_CFG, $__LWF_DB_PREFIX;
+		global $db, $CORE, $RESTAPI, $__LWF_CFG, $__LWF_DB_PREFIX;
 		$rsp = array();
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');
@@ -122,47 +112,29 @@
 			$redirect_page_url = "./index.php?p=".get_pindex('administration')."&s=".get_subpindex( 'administration', 'admin-profile' );
 		}
 
-		// check uid
-		if ( $CORE->profile['administrator'] != 1 ) {
-			if ( $CORE->profile['id'] != $uid ) {
-				$rsp["code"] = 603;
-				$rsp["msg"] = lang('request denied');
-				return $rsp;
-			}
-		}		
-
-		$user = getuserbyid($uid);
-		if ( $user == null || $user == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-not-found');
-			return $rsp;	
-		}	
-
-		// check password
-		$old_pwd_sha = sha1($__LWF_CFG['misc-salt'].sha1($oldpwd));
-		if ( $old_pwd_sha != $user['password'])
-		{
-			$rsp["code"] = 603;
-			$rsp["msg"] = lang('ws-user-wrong-old-pwd');
-			return $rsp;
-		} 
-
-		// update password
-		$new_pwd_sha = sha1($__LWF_CFG['misc-salt'].sha1($newpwd));
-		$sql_req = 'UPDATE `'.$__LWF_DB_PREFIX.'-users` SET password=\''.$new_pwd_sha.'\' WHERE id=\''.$uid.'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to update user password")."(".$sql_req.")";
+		// update password user through rest api
+        list($code, $details) = $RESTAPI->updatePasswordUser($id=intval($uid),
+                                                             $oldpwd=$oldpwd, 
+                                                             $newpwd=$newpwd);
+        
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
 		} else {
-			$rsp["code"] = 200;
-			$rsp["msg"] = lang('ws-user-pwd-updated');
-			$rsp["moveto"] = $redirect_page_url;
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-user-pwd-updated');
+            $rsp["moveto"] = $redirect_page_url;
 		}
-
-		return $rsp;	
+        
+		return $rsp;
 	}
 
 	function disconnectuser( $login ) {
@@ -198,7 +170,7 @@
 	}
 
 	function enableuser( $uid, $status) {
-		global $db, $CORE, $__LWF_DB_PREFIX;
+		global $db, $CORE, $RESTAPI, $__LWF_DB_PREFIX;
 		$rsp = array();
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');
@@ -206,26 +178,24 @@
 	
 		$redirect_page_url = "./index.php?p=".get_pindex('administration')."&s=".get_subpindex( 'administration', 'admin-users' );
 
-		// check uid
-		$user = getuserbyid($uid);
-		if ( $user == null || $user == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-not-found');
-			$rsp["moveto"] = $redirect_page_url;
-			return $rsp;
-		}
-
-		// update user
-		$sql_req = 'UPDATE `'.$__LWF_DB_PREFIX.'-users` SET active=\''.mysql_real_escape_string($status).'\' WHERE id=\''.mysql_real_escape_string($uid).'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to enable/disable user")."(".$sql_req.")";
+		// disconnect user through rest api
+        list($code, $details) = $RESTAPI->enableUser($id=intval($uid), 
+                                                     $status=intval($status));
+        
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
 		} else {
-			$rsp["code"] = 200;
-			if ( mysql_real_escape_string($status) == "1" )
+            $rsp["code"] = 200;
+            if ( mysql_real_escape_string($status) == "1" )
 			{
 				$rsp["msg"] = lang('ws-user-enabled');
 			} else {
@@ -246,65 +216,31 @@
 
 		$redirect_page_url = "./index.php?p=".get_pindex('administration')."&s=".get_subpindex( 'administration', 'admin-users' );
 
-		// not possible to delete default users
-		if ( $uid <= 4) 
-		{
-			$rsp["code"] = 603;
-			$rsp["msg"] = lang('common-not-authorized');
-			$rsp["moveto"] = $redirect_page_url;
-			return $rsp;
-		} 
-
-		// check uid
-		$user = getuserbyid($uid);
-		if ( $user == null || $user == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-not-found');
-			$rsp["moveto"] = $redirect_page_url;
-			return $rsp;
-		}
-
-		// him self deletion deny
-		if ( $CORE->profile['login'] == $user['login'] )
-		{
-			$rsp["code"] = 603;
-			$rsp["msg"] = lang('common-not-authorized');
-			$rsp["moveto"] = $redirect_page_url;
-			return $rsp;
-		}
-
-		// disconnect user through rest api
-		list($code, $details) = $RESTAPI->disconnectUser($login=$user['login']);
-
-		// delete user
-		$sql_req = 'DELETE FROM `'.$__LWF_DB_PREFIX.'-users` WHERE id=\''.mysql_real_escape_string($uid).'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to delete user")."(".$sql_req.")";
-			return $rsp;
-		} 
-		
-		// delete relation
-		$sql_req = 'DELETE FROM `'.$__LWF_DB_PREFIX.'-relations-projects` WHERE user_id=\''.mysql_real_escape_string($uid).'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to delete user relations with project")."(".$sql_req.")";
+		// delete user through rest api
+        list($code, $details) = $RESTAPI->deleteUser($id=intval($uid));
+        
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
 		} else {
-			$rsp["code"] = 200;
-			$rsp["msg"] = lang('ws-user-deleted');
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-user-deleted');
 		}
 
-		$rsp["moveto"] = $redirect_page_url;
+        $rsp["moveto"] = $redirect_page_url;
 		return $rsp;
 	}
 
     function duplicateuser( $uid ) {
-		global $db, $CORE, $XMLRPC, $__LWF_DB_PREFIX;
+		global $db, $CORE, $RESTAPI, $__LWF_DB_PREFIX;
 		$rsp = array();
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');
@@ -335,10 +271,16 @@
         if($user['developer'] == 1) $is_developer = "true";
         
         // create the duplication, default project not duplicated
-        $rsp = adduser($login=$user['login'].'-COPY#'.$uniq, $password=$user['password'], $email=$user['email'], $admin=$is_admin, $leader=$is_leader, 
-                    $tester=$is_tester, $developer=$is_developer, $lang=$user['lang'], $style=$user['style'], 
-                    $notifications=$user['notifications'], $projects="1", $defaultproject="1", 
-                    $cli=$user['cli'], $gui=$user['gui'], $web=$user['web']);
+        $rsp = adduser($login=$user['login'].'-COPY#'.$uniq, 
+                        $password=$user['password'], $email=$user['email'], 
+                        $admin=$is_admin, $leader=$is_leader, 
+                        $tester=$is_tester, $developer=$is_developer, 
+                        $lang=$user['lang'], $style=$user['style'], 
+                        $notifications=$user['notifications'],
+                        $projects="1", $defaultproject="1", 
+                        $cli=$user['cli'], 
+                        $gui=$user['gui'], 
+                        $web=$user['web']);
         // duplicate project
         // todo
         
@@ -350,8 +292,9 @@
 		return $rsp;
     }
     
-	function adduser( $login, $password, $email, $admin, $monitor, $tester, $lang, $style, $notifications, $projects, $defaultproject) {
-		global $db, $CORE, $__LWF_CFG, $__LWF_DB_PREFIX;
+	function adduser( $login, $password, $email, $admin, $monitor, $tester, 
+                        $lang, $style, $notifications, $projects, $defaultproject) {
+		global $db, $CORE, $RESTAPI, $__LWF_CFG, $__LWF_DB_PREFIX;
 		$rsp = array();
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');
@@ -413,11 +356,7 @@
         if ( !strbool2int($admin) and !strbool2int($monitor) and !strbool2int($tester) ) {
             $tester = "true";
         }
-        // if ( !strbool2int($cli) and !strbool2int($gui) and !strbool2int($web) ) {
-            // $gui = "true";
-            // $web = "true";
-        // }
-
+        
 		// notifications
 		$regex = '/^(((true)|(false));){7}/'; 
 		if ( !preg_match($regex, $notifications) ) {
@@ -484,7 +423,7 @@
 	}
 
 	function updateuser( $login, $email, $admin, $monitor, $tester, $lang, $style, $notifications, $projects, $defaultproject, $uid) {
-		global $db, $CORE, $__LWF_DB_PREFIX;
+		global $db, $CORE, $RESTAPI, $__LWF_DB_PREFIX;
 		$rsp = array();
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');

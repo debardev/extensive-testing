@@ -52,6 +52,36 @@
             return array($code,$response) ;
         }
         
+        function renameProject($projectName, $projectId){
+            global $__LWF_CFG, $CORE;
+
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+
+            // add project
+            $req = json_encode( array('project-name' => $projectName, 'project-id' => $projectId) );
+            list($code, $rsp) = $this->getRestClient("POST", "/administration/projects/rename", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+            
+        }
+        
         function addProject($projectName){
             global $__LWF_CFG, $CORE;
 
@@ -139,6 +169,125 @@
 
             return array($code, $rsp);
         }
+
+        function enableUser($id, $status) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // set status
+            $req = json_encode( array('user-id' => $id, 'enabled' => $status) );
+            list($code, $rsp) = $this->getRestClient("POST", "/administration/users/status", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
+        function deleteUser($id) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // delete user
+            $req = json_encode( array('user-id' => $id) );
+            list($code, $rsp) = $this->getRestClient("POST", "/administration/users/remove", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
+        function resetPasswordUser($id) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // delete user
+            $req = json_encode( array('user-id' => $id) );
+            list($code, $rsp) = $this->getRestClient("POST", "/administration/users/password/reset", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
+        function updatePasswordUser($id, $oldpwd, $newpwd) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // delete user
+            $req = json_encode( array('user-id' => $id,
+                                      'current-password' => $oldpwd,
+                                      'new-password' => $newpwd) );
+            list($code, $rsp) = $this->getRestClient("POST", "/administration/users/password/update", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
         
         function disconnectAgent($name) {
             global $__LWF_CFG, $CORE;

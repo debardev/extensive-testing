@@ -208,12 +208,16 @@ class RestNetworkHandler(QObject, Logger.ClassLogger):
                         self.error( "REST generic error: %s" % e)
                         self.stopWorking()
                         RCI.instance().onGenericError( title=self.tr("API Decode Error"), 
-                                                        err=self.tr("Unexpected response received") )
+                                                       err=self.tr("Unexpected response received") )
                     else:
                         self.stopWorking()
-                        if RCI.instance() is not None:
-                            RCI.instance().onGenericResponse( response=json_rsp )
-
+                        try:
+                            if RCI.instance() is not None:
+                                RCI.instance().onGenericResponse( response=json_rsp )
+                        except Exception as e:
+                            self.error( "something is wrong in the rest response - %s" % str(e) )
+                            self.error( "rest response received... %s" % json_rsp)
+                            
         reply.close()
         reply.deleteLater()
         

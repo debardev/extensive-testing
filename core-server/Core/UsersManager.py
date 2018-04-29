@@ -95,26 +95,6 @@ class UsersManager(Logger.ClassLogger):
         self.trace( 'get nb tester from db' )
         return self.getNbUserOfType(userType=Settings.get( 'Server', 'level-tester'))
 
-    # def getNbDeveloper(self):
-        # """
-        # Returns the number of developers present in database
-
-        # @return: nb developers
-        # @rtype: int
-        # """
-        # self.trace( 'get nb developer from db' )
-        # return self.getNbUserOfType(userType=Settings.get( 'Server', 'level-developer'))
-
-    # def getNbMonitor(self):
-        # """
-        # Returns the number of leaders present in database
-
-        # @return: nb managers
-        # @rtype: int
-        # """
-        # self.trace( 'get nb managers from db' )
-        # return self.getNbUserOfType(userType=Settings.get( 'Server', 'level-leader'))
-
     def getNbOfUsers(self):
         """
         Returns the total number of users present in database
@@ -193,7 +173,7 @@ class UsersManager(Logger.ClassLogger):
         if not ret:
             self.error("unable to add user stats in db")
     
-    def addUserToDB(self, login, password, email):
+    def addUserToDB(self, level, login, password, email, lang, style, notifications, defaultPrj, listPrjs):
         """
         """
         # init some shortcut
@@ -209,16 +189,31 @@ class UsersManager(Logger.ClassLogger):
         if len(dbRows): return (self.context.CODE_ALREADY_EXISTS, "this user name already exists")
         
         # create user in db
-        lang = "en"
-        style = "default"
-        notifications = "false;false;false;false;false;false;false;"
-        defaultPrj = 1
-        projects = [1]
+        # lang = "en"
+        # style = "default"
+        # notifications = "false;false;false;false;false;false;false;"
+        # defaultPrj = 1
+        # projects = [1]
+        
+        # access level
+        if level == "admin":
+            admin=1
+        elif level == "monitor":
+            monitor=1
+        else:
+            tester=1
+        
         #  password, create a sha1 hash with salt: sha1( salt + sha1(password) )
+        sha1_pwd = hashlib.sha1()
+        sha1_pwd.update( password ) 
+        
         sha1 = hashlib.sha1()
-        sha1.update( "%s%s" % ( Settings.get( 'Misc', 'salt'), password )  )
+        sha1.update( "%s%s" % ( Settings.get( 'Misc', 'salt'), sha1_pwd.hexdigest() )  )
 
+        # create random apikey
         apikey_secret = hexlify(os.urandom(20))
+        
+        # prepare the sql query
         sql = """INSERT INTO `%s-users`(`login`, `password`, `administrator`, """  % prefix
         sql += """`leader`, `tester`, `developer`, `system`, `email`, `lang`, """
         sql += """`style`, `active`, `default`, `online`, `notifications`, """
@@ -252,6 +247,7 @@ class UsersManager(Logger.ClassLogger):
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
+        userId = str(userId)
         
         # not possible to delete default usrs
         if int(userId) <= 4:
@@ -265,10 +261,7 @@ class UsersManager(Logger.ClassLogger):
             self.error( "unable to read user id" )
             return (self.context.CODE_ERROR, "unable to read user id")
         if not len(dbRows): return (self.context.CODE_NOT_FOUND, "this user id does not exist")
-        
-        # disconnect user before deletion
-        # todo
-        
+
         # delete from db
         sql = """DELETE FROM `%s-users` WHERE  id='%s'""" % ( prefix, escape(userId) )
         dbRet, dbRows = DbManager.instance().querySQL( query = sql  )
@@ -413,12 +406,12 @@ class UsersManager(Logger.ClassLogger):
             return (self.context.CODE_ERROR, "unable to read user id")
         if not len(dbRows): return (self.context.CODE_NOT_FOUND, "this user id does not exist")
 
-        # disconnect user before 
-        # todo
-        
         # update password
+        sha1_old = hashlib.sha1()
+        sha1_old.update( newPwd ) 
+        
         sha1 = hashlib.sha1()
-        sha1.update( "%s%s" % ( Settings.get( 'Misc', 'salt'), newPwd )  )
+        sha1.update( "%s%s" % ( Settings.get( 'Misc', 'salt'), sha1_old.hexdigest()  )  )
         
         sql = """UPDATE `%s-users` SET password='%s' WHERE id='%s'""" % (prefix, sha1.hexdigest(), userId)
         dbRet, _ = DbManager.instance().querySQL( query = sql )
@@ -459,8 +452,8 @@ class UsersManager(Logger.ClassLogger):
         if userLogin is not None: sql += """login LIKE '%%%s%%'""" % escape( "%s" % userLogin)
         dbRet, dbRows = DbManager.instance().querySQL( query = sql, columnName=True  )
         if not dbRet: 
-            self.error( "unable to search user table" )
-            return (self.context.CODE_ERROR, "unable to search user table")
+            self.error( "unable to find user" )
+            return (self.context.CODE_ERROR, "unable to find user")
 
         return (self.context.CODE_OK, dbRows[0] )
     

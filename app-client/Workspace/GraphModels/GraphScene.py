@@ -1082,8 +1082,7 @@ class DiagramScene(QGraphicsScene):
         self.myFont = QFont()
         
         self.endItem = None
-
-        self.gridLines = []
+        
         self.drawGrid()
 
     def setMode(self, mode):
@@ -1124,29 +1123,22 @@ class DiagramScene(QGraphicsScene):
             xc = x * block_size_x
             line_x = self.addLine(xc,0,xc,GRAPHIC_SCENE_SIZE,pen)
             line_x.setOpacity(opacity)
-            self.gridLines.append(line_x)
 
         for y in range(0,nb_blocks_y+1):
             yc = y * block_size_y
             line_y = self.addLine(0,yc,GRAPHIC_SCENE_SIZE,yc,pen)
-            line_y.setOpacity(opacity)
-            self.gridLines.append(line_y)  
+            line_y.setOpacity(opacity) 
           
     def setGridVisible(self,visible=True):
         """
         Set the visibility of the grid
         """
-        for line in self.gridLines:
-            line.setVisible(visible)
+        for line in self.items():
+            if isinstance(line, QGraphicsLineItem):
+                # ignore arrow
+                if not hasattr(line, 'arrowHead'):
+                    line.setVisible(visible)
 
-    def deleteGrid(self):
-        """
-        Delete the grid
-        """
-        for line in self.gridLines:
-            self.removeItem(line)
-        del self.gridLines[:]
-        
     def mousePressEvent(self, mouseEvent):
         """
         On mouse press event
@@ -1391,7 +1383,7 @@ class GraphAbstract(QWidget, Logger.ClassLogger):
         Display the grid or not
         """
         self.scene.setGridVisible(visible=toggled)
-        
+
     def toolbar(self):
         """
         Return toolbar

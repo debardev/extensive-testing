@@ -1686,7 +1686,7 @@ class AdminProjectsRename(Handler):
             in: body
             required: true
             schema:
-              required: [ project-name, project-ic ]
+              required: [ project-name, project-id ]
               properties:
                 project-id:
                   type: integer
@@ -2019,7 +2019,7 @@ class AdminUsersAdd(Handler):
         """
         tags:
           - admin
-        summary: Add a user
+        summary: Add a new user in the server
         description: ''
         operationId: adminUsersAdd
         consumes:
@@ -2036,10 +2036,26 @@ class AdminUsersAdd(Handler):
             in: body
             required: true
             schema:
-              required: [ shift ]
+              required: [ login, password, email, level, lang, style, notifications, default-project, authorized-projects ]
               properties:
-                shift:
-                  type: integer
+                login:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+                level:
+                  type: string
+                lang:
+                  type: string
+                style:
+                  type: string
+                notifications:
+                  type: string
+                default-project:
+                  type: string
+                authorized-projects:
+                  type: string
         responses:
           '200':
             description: 
@@ -2052,13 +2068,15 @@ class AdminUsersAdd(Handler):
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/users/add", 
+                  "message: "user successfully added"
                 }
           '400':
             description: Bad request provided
           '404':
-            description: Probe not found
+            description: User not found
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
         
@@ -2069,16 +2087,44 @@ class AdminUsersAdd(Handler):
             if not login: raise EmptyValue("Please specify a login")
             
             password = self.request.data.get("password")
-            if not password: raise EmptyValue("Please specify a password")
+            if password is None: raise EmptyValue("Please specify a password")
             
             email = self.request.data.get("email")
-            if not email: raise EmptyValue("Please specify a email")
+            if email is None: raise EmptyValue("Please specify a email")
+            
+            level = self.request.data.get("level")
+            if level is None: raise EmptyValue("Please specify a level")
+            
+            lang = self.request.data.get("lang")
+            if lang is None: raise EmptyValue("Please specify a lang")
+            
+            style = self.request.data.get("style")
+            if style is None: raise EmptyValue("Please specify a style")
+            
+            notifications = self.request.data.get("notifications")
+            if notifications is None: raise EmptyValue("Please specify a notifications")
+            
+            defaultPrj = self.request.data.get("default-project")
+            if defaultPrj is None: raise EmptyValue("Please specify a default project")
+            
+            listPrjs = self.request.data.get("authorized-projects")
+            if listPrjs is None: raise EmptyValue("Please specify a list of authorized project")
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
         
-        success, details = UsersManager.instance().addUserToDB(login=login, password=password, email=email)
+        success, details = UsersManager.instance().addUserToDB(
+                                                       level="tester",
+                                                       login=login, 
+                                                       password=password, 
+                                                       email=email,
+                                                       lang="en",
+                                                       style="default",
+                                                       notifications="false;false;false;false;false;false;false;",
+                                                       defaultPrj=1,
+                                                       listPrjs=[1]
+                                                   )
         if success == Context.instance().CODE_ERROR:
             raise HTTP_500(details)
         if success == Context.instance().CODE_ALREADY_EXISTS:
@@ -2112,9 +2158,9 @@ class AdminUsersUpdate(Handler):
             in: body
             required: true
             schema:
-              required: [ shift ]
+              required: [ user-id ]
               properties:
-                shift:
+                user-id:
                   type: integer
         responses:
           '200':
@@ -2185,9 +2231,9 @@ class AdminUsersRemove(Handler):
             in: body
             required: true
             schema:
-              required: [ shift ]
+              required: [ user-id ]
               properties:
-                shift:
+                user-id:
                   type: integer
         responses:
           '200':
@@ -2201,13 +2247,17 @@ class AdminUsersRemove(Handler):
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/users/remove", 
+                  "message: "user successfully removed"
                 }
           '400':
             description: Bad request provided
+          '403':
+            description: Not authorized
           '404':
-            description: Probe not found
+            description: User not found
+          '500':
+            description: Unable to remove the user
         """
         user_profile = _get_user(request=self.request)
         
@@ -2215,12 +2265,16 @@ class AdminUsersRemove(Handler):
             
         try:
             userId = self.request.data.get("user-id")
-            if not userId : raise HTTP_400("Please specify a user id")
+            if userId is None: raise HTTP_400("Please specify a user id")
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
+        # checking input    
+        if not isinstance(userId, int):
+            raise HTTP_400("Bad user id provided in request, int expected")
+            
         # him self deletion deny
         if int(userId) == int(user_profile["id"]):
             raise HTTP_403("deletion not authorized")
@@ -2242,7 +2296,7 @@ class AdminUsersStatus(Handler):
         """
         tags:
           - admin
-        summary: Status of the user
+        summary: Set the status of the user (enabled or not)
         description: ''
         operationId: adminUsersStatus
         consumes:
@@ -2259,9 +2313,11 @@ class AdminUsersStatus(Handler):
             in: body
             required: true
             schema:
-              required: [ shift ]
+              required: [ user-id, enabled ]
               properties:
-                shift:
+                user-id:
+                  type: integer
+                enabled:
                   type: integer
         responses:
           '200':
@@ -2275,13 +2331,15 @@ class AdminUsersStatus(Handler):
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
+                  "cmd": "/administration/users/status", 
                   "message: "probe successfully disconnected"
                 }
           '400':
             description: Bad request provided
           '404':
-            description: Probe not found
+            description: User not found
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
         
@@ -2289,16 +2347,24 @@ class AdminUsersStatus(Handler):
             
         try:
             userId = self.request.data.get("user-id")
-            if not userId : raise HTTP_400("Please specify a user id")
+            if userId is None: raise HTTP_400("Please specify a user id")
             
             enabled = self.request.data.get("enabled")
+            if enabled is None : raise HTTP_400("Please specify status of the user, enabled parameter")
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
             
+        # checking input    
+        if not isinstance(userId, int):
+            raise HTTP_400("Bad user id provided in request, int expected")
+        if not isinstance(enabled, int):
+            raise HTTP_400("Bad enabled parameter provided in request, int expected")
+              
         # update 
-        success, details = UsersManager.instance().updateStatusUserInDB(userId=userId, status=enabled)
+        success, details = UsersManager.instance().updateStatusUserInDB(userId=userId, 
+                                                                        status=enabled)
         if success == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404(details)
         if success == Context.instance().CODE_ERROR:
@@ -2403,9 +2469,9 @@ class AdminUsersDuplicate(Handler):
             in: body
             required: true
             schema:
-              required: [ shift ]
+              required: [ user-id ]
               properties:
-                shift:
+                user-id:
                   type: integer
         responses:
           '200':
@@ -2473,9 +2539,9 @@ class AdminUsersPasswordReset(Handler):
             in: body
             required: true
             schema:
-              required: [ shift ]
+              required: [ user-id ]
               properties:
-                shift:
+                user-id:
                   type: integer
         responses:
           '200':
@@ -2489,13 +2555,15 @@ class AdminUsersPasswordReset(Handler):
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/users/password/reset", 
+                  "message: "password successfully reseted"
                 }
           '400':
             description: Bad request provided
           '404':
-            description: Probe not found
+            description: User not found
+          '500':
+            description: Unable to reset the password
         """
         user_profile = _get_user(request=self.request)
         
@@ -2503,11 +2571,15 @@ class AdminUsersPasswordReset(Handler):
             
         try:
             userId = self.request.data.get("user-id")
-            if not userId : raise HTTP_400("Please specify a user id")
+            if userId is None : raise HTTP_400("Please specify a user id")
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
+            
+        # checking input    
+        if not isinstance(userId, int):
+            raise HTTP_400("Bad user id provided in request, int expected")
             
         success, details = UsersManager.instance().resetPwdUserInDB(userId=userId)
         if success == Context.instance().CODE_NOT_FOUND:
@@ -2516,89 +2588,6 @@ class AdminUsersPasswordReset(Handler):
             raise HTTP_500(details)
             
         return { "cmd": self.request.path, "message": "password successfully reseted" } 
-        
-class AdminUsersPasswordUpdate(Handler):
-    """
-    /rest/administration/users/password/update
-    """
-    @_to_yaml 
-    def post(self):
-        """
-        tags:
-          - admin
-        summary: Update user password
-        description: ''
-        operationId: adminUsersPasswordUpdate
-        consumes:
-          - application/json
-        produces:
-          - application/json
-        parameters:
-          - name: Cookie
-            in: header
-            description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
-            required: true
-            type: string
-          - name: body
-            in: body
-            required: true
-            schema:
-              required: [ shift ]
-              properties:
-                shift:
-                  type: integer
-        responses:
-          '200':
-            description: 
-            schema :
-              properties:
-                cmd:
-                  type: string
-                message:
-                  type: string
-            examples:
-              application/json: |
-                {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
-                }
-          '400':
-            description: Bad request provided
-          '404':
-            description: Probe not found
-        """
-        user_profile = _get_user(request=self.request)
-        
-        if not user_profile['administrator']: raise HTTP_403("Access refused")
-            
-        try:
-            userId = self.request.data.get("user-id")
-            if not userId : raise HTTP_400("Please specify a user id")
-            
-            currentPwd = self.request.data.get("current-password")
-            if not currentPwd : raise HTTP_400("Please specify the current password")
-            
-            newPwd = self.request.data.get("new-password")
-            if not newPwd : raise HTTP_400("Please specify the new password")
-        except EmptyValue as e:
-            raise HTTP_400("%s" % e)
-        except Exception as e:
-            raise HTTP_400("Bad request provided (%s ?)" % e)
-        
-        # check current password
-        sha1 = hashlib.sha1()
-        sha1.update( "%s%s" % ( Settings.get( 'Misc', 'salt'), currentPwd )  )
-        if sha1.hexdigest() != user_profile['password']:
-            raise HTTP_403("bad current password provided")
-        
-        # update 
-        success, details = UsersManager.instance().updatePwdUserInDB(userId=userId, newPwd=newPwd)
-        if success == Context.instance().CODE_NOT_FOUND:
-            raise HTTP_404(details)
-        if success == Context.instance().CODE_ERROR:
-            raise HTTP_500(details)
-            
-        return { "cmd": self.request.path, "message": "password successfully updated" } 
 
 class AdminUsersSearch(Handler):
     """
@@ -2626,9 +2615,9 @@ class AdminUsersSearch(Handler):
             in: body
             required: true
             schema:
-              required: [ shift ]
+              required: [ user-id ]
               properties:
-                shift:
+                user-id:
                   type: integer
         responses:
           '200':

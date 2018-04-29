@@ -380,7 +380,7 @@ class _WebServices(WSGI):
         ( '/administration/users/status',               RestAdminFunctions.AdminUsersStatus()),
         ( '/administration/users/duplicate',            RestAdminFunctions.AdminUsersDuplicate()),
         ( '/administration/users/password/reset',       RestAdminFunctions.AdminUsersPasswordReset()),
-        ( '/administration/users/password/update',      RestAdminFunctions.AdminUsersPasswordUpdate()),
+        ( '/administration/users/password/update',      RestCommonFunctions.AdminUsersPasswordUpdate()),
         ( '/administration/users/search',               RestAdminFunctions.AdminUsersSearch()),
         ( '/administration/users/statistics',           RestAdminFunctions.AdminUsersStatistics()),
         ( '/administration/projects/listing',           RestAdminFunctions.AdminProjectsListing()),

@@ -390,7 +390,7 @@ INSERT INTO `%s-test-environment` (`name`, `value`, `project_id` ) VALUES
 ('TIMEOUT', '1.0', 1),
 ('SAMPLE_NODE', '{
     "COMMON": {
-        "HOSTNAME": "extensivetesting"
+        "HOSTNAME": "extensiveautomation"
     },
     "INSTANCES": {
         "SSH": {
@@ -413,7 +413,7 @@ INSERT INTO `%s-test-environment` (`name`, `value`, `project_id` ) VALUES
                 "HTTP_DEST_HOST": "%s",
                 "HTTP_DEST_PORT": 443,
                 "HTTP_DEST_SSL": true,
-                "HTTP_HOSTNAME": "www.extensvitesting.org",
+                "HTTP_HOSTNAME": "www.extensiveautomation.org",
                 "HTTP_AGENT_SUPPORT": false,
                 "HTTP_AGENT": {
                     "type": "socket",
@@ -437,7 +437,7 @@ INSERT INTO `%s-test-environment` (`name`, `value`, `project_id` ) VALUES
            "LDAP": {
                "DB_HOST": "%s",
                "DB_PORT": 389,
-               "DB_LOGIN":  "cn=ldapadm,dc=extensivetesting,dc=local",
+               "DB_LOGIN":  "cn=ldapadm,dc=extensiveautomation,dc=local",
                "DB_PWD":  ""
            }
        }

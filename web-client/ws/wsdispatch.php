@@ -295,11 +295,9 @@
 			if ( $req->cmd == "user.change.password")
 			{
 				if ( empty_obj( $req->args->oldpwd ) )
-					$req->args->password = '';
-					//response(400, "You must fill the old password." );
+					$req->args->oldpwd = '';
 				if ( empty_obj( $req->args->newpwd ) )
-					$req->args->password = '';
-					//response(400, "You must fill the new password." );
+					$req->args->newpwd = '';
 				if ( empty_obj( $req->args->uid ) or ! is_numeric( $req->args->uid ) )
 					response(400, "You must fill the field user id (integer)." );
 				// request seems to be ok, call ws
