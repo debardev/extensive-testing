@@ -25,46 +25,29 @@
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');
 		$rsp["moveto"] = null;
-
-		// check uid
-		if ( ! $CORE->profile['administrator'] ) {
-			if ( $CORE->profile['id'] != $uid ) {
-				$rsp["code"] = 603;
-				$rsp["msg"] = lang('request denied');
-				return $rsp;
-			}
-		}	
-
-		$user = getuserbyid($uid);
-		if ( $user == null || $user == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-not-found');
-			return $rsp;
-		} 
-
-		// notifications
-		$regex = '/^(((true)|(false));){7}/'; 
-		if ( !preg_match($regex, $notifications) ) {
-			$rsp["code"] = 500;
-			$rsp["msg"] = lang('common-not-authorized'); 
-			return $rsp;
-		} 
-
-		// update db
-		$sql_req = 'UPDATE `'.$__LWF_DB_PREFIX.'-users` SET notifications=\''.$notifications.'\'  WHERE id=\''.$uid.'\';';
-		$rslt = $db->query( $sql_req ) ;
-		
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to update notifications user")."(".$sql_req.")";
+        
+        // update user through rest api
+        list($code, $details) = $RESTAPI->updateUserNotifications(
+                                                  $uid=intval($uid),
+                                                  $notifications=$notifications
+                                                  );
+        
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
 		} else {
-			$rsp["code"] = 200;
-			$rsp["msg"] = lang('ws-user-updated');
-		}
-		
-		return $rsp;
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-user-updated');
+        }
+        return $rsp;
 	}
 
 	function resetpwduser( $uid ) {
@@ -247,49 +230,29 @@
 		$rsp["moveto"] = null;
 
 		$redirect_page_url = "./index.php?p=".get_pindex('administration')."&s=".get_subpindex( 'administration', 'admin-users' );
-        
-		// check uid
-		$user = getuserbyid($uid);
-		if ( $user == null || $user == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-not-found');
-			$rsp["moveto"] = $redirect_page_url;
-			return $rsp;
-		}
-        
-        // get random id
-        $uniq = uniqid();
 
-        $is_admin=false;
-        $is_leader=false;
-        $is_tester=false;
-        $is_developer=false;
-        if($user['administrator'] == 1) $is_admin = "true";
-        if($user['leader'] == 1) $is_leader = "true";
-        if($user['tester'] == 1) $is_tester = "true";
-        if($user['developer'] == 1) $is_developer = "true";
+		// delete user through rest api
+        list($code, $details) = $RESTAPI->duplicateUser($id=intval($uid));
         
-        // create the duplication, default project not duplicated
-        $rsp = adduser($login=$user['login'].'-COPY#'.$uniq, 
-                        $password=$user['password'], $email=$user['email'], 
-                        $admin=$is_admin, $leader=$is_leader, 
-                        $tester=$is_tester, $developer=$is_developer, 
-                        $lang=$user['lang'], $style=$user['style'], 
-                        $notifications=$user['notifications'],
-                        $projects="1", $defaultproject="1", 
-                        $cli=$user['cli'], 
-                        $gui=$user['gui'], 
-                        $web=$user['web']);
-        // duplicate project
-        // todo
-        
-        // change the user message
-        if ( $rsp["code"] == 200 ) {
-			$rsp["msg"] = lang('ws-user-duplicated');
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
+		} else {
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-user-duplicated');
 		}
-		$rsp["moveto"] = $redirect_page_url;
+
+        $rsp["moveto"] = $redirect_page_url;
 		return $rsp;
+        
     }
     
 	function adduser( $login, $password, $email, $admin, $monitor, $tester, 
@@ -300,295 +263,134 @@
 		$rsp["msg"] = lang('ws-trying');
 		$rsp["moveto"] = null;
 	
-		//projects format: 22;32;23;22
-		$regex = '/^(\d+;)*(\d+)\z/'; 
-		if ( !preg_match($regex, $projects) ) {
-			$rsp["code"] = 500;
-			$rsp["msg"] = lang('common-not-authorized'); 
-			return $rsp;
-		} 
-		# starts with 1
-		$regex = '/(^1\z|^1;(.*))/'; 
-		if ( !preg_match($regex, $projects) ) {
-			$rsp["code"] = 500;
-			$rsp["msg"] = lang('common-not-authorized'); 
-			return $rsp;
-		} 
+        $level = "tester";
+        if ( strbool2int($admin) ) $level = "admin";
+        if ( strbool2int($monitor) ) $level = "monitor";
+        if ( strbool2int($tester) ) $level = "tester";
 
-		$projects_exploded = explode( ';', $projects );
-		$defprj_found = false;
-		for($i = 0; $i < count($projects_exploded); ++$i) {
-			if ( intval($projects_exploded[$i])	== intval($defaultproject) ) { $defprj_found = true; }
-		}
-		if ( !$defprj_found ) {
-			$rsp["code"] = 500;
-			$rsp["msg"] = lang('ws-project-bad-default'); 
-			return $rsp;
-		} 
-
-		// check if login is not already used
-		$ret = getuserbylogin($login);
-		if ( $ret )
-		{
-			$rsp["code"] = 603;
-			$rsp["msg"] = lang('ws-user-duplicate-1').$login.lang('ws-user-duplicate-2');
-			return $rsp;
-		}
-
-		// lang
-		if ( ! in_array( $lang, get_installed_lang() ) ) 
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-lang-unknown');
-			return $rsp;
-		}
-
-		// style
-		if ( ! in_array( $style, get_installed_style() ) ) 
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-style-unknown');
-			return $rsp;
-		}
-
-
-        // set default values
-        if ( !strbool2int($admin) and !strbool2int($monitor) and !strbool2int($tester) ) {
-            $tester = "true";
-        }
+        // add user through rest api
+        list($code, $details) = $RESTAPI->addUser($login=$login, 
+                                                  $password=$password,
+                                                  $email=$email, 
+                                                  $level=$level,
+                                                  $lang=$lang, 
+                                                  $style=$style,
+                                                  $notifications=$notifications,
+                                                  $default=intval($defaultproject), 
+                                                  $projects=explode( ';', $projects )
+                                                  );
         
-		// notifications
-		$regex = '/^(((true)|(false));){7}/'; 
-		if ( !preg_match($regex, $notifications) ) {
-			$rsp["code"] = 500;
-			$rsp["msg"] = lang('common-not-authorized'); 
-			return $rsp;
-		} 
-		
-		// this login is free then create user
-		$active = 1;
-		$default = 0;
-		$online = 0;
-		$system = 0;
-        $developer = 0;
-        $system = 0;
-        $cli = 1;
-        $gui = 1;
-        $web = 1;
-		$pwd_sha = sha1($__LWF_CFG['misc-salt'].sha1($password));
-
-        $apikey_secret = bin2hex(openssl_random_pseudo_bytes(20));
-
-		$sql_req = 'INSERT INTO `'.$__LWF_DB_PREFIX.'-users`(`login`, `password`, `administrator`, `leader`, `tester`, `developer`, `system`, `email`, `lang`, `style`, `active`, `default`, `online`, `notifications`, `defaultproject`, `cli`, `gui`, `web`, `apikey_id`, `apikey_secret`) VALUES(\''.mysql_real_escape_string($login).'\',\''.$pwd_sha.'\',\''.strbool2int($admin).'\',\''.strbool2int($monitor).'\',\''.strbool2int($tester).'\',\''.$developer.'\',\''.$system.'\',\''.mysql_real_escape_string($email).'\',\''.$lang.'\',\''.$style.'\',\''.$active.'\',\''.$default.'\',\''.$online.'\',\''.$notifications.'\',\''.$defaultproject.'\',\''.$cli.'\',\''.$gui.'\',\''.$web.'\',\''.mysql_real_escape_string($login).'\',\''.$apikey_secret.'\');';
-
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to add user")."(".$sql_req.")";
-			return $rsp;
-		} 
-		
-		// get user id 
-		$user = getuserbylogin(mysql_real_escape_string($login));
-		if ( $user == null || $user == false)
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to get the new user id")."(".$sql_req.")";
-			return $rsp;
-		} 
-
-		// update relations
-		$sql_req = 'INSERT INTO `'.$__LWF_DB_PREFIX.'-relations-projects`(`user_id`, `project_id`) VALUES';
-		for($i = 0; $i < count($projects_exploded); ++$i) {
-			$sql_req .= ' (\''.$user['id'].'\', \''.$projects_exploded[$i].'\' )';
-			if ( $i < ( count($projects_exploded) -1) ) { $sql_req .= ', '; }
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
+		} else {
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-user-added');
 		}
-		$sql_req .= ';';
-
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to add relations")."(".$sql_req.")";
-			return $rsp;
-		} 
-		else {
-			$rsp["code"] = 200;
-			$rsp["msg"] = lang('ws-user-added');
-		}
-		
-		
 		return $rsp;
 	}
 
-	function updateuser( $login, $email, $admin, $monitor, $tester, $lang, $style, $notifications, $projects, $defaultproject, $uid) {
+	function updateuser( $login, $email, $admin, $monitor, $tester, $lang, 
+                         $style, $notifications, $projects, $defaultproject, 
+                         $uid) {
 		global $db, $CORE, $RESTAPI, $__LWF_DB_PREFIX;
 		$rsp = array();
 		$rsp["code"] = 100;
 		$rsp["msg"] = lang('ws-trying');
 		$rsp["moveto"] = null;
 
-		//projects 
-		// 22;32;23;22
-		$regex = '/^(\d+;)*(\d+)\z/'; 
-		if ( !preg_match($regex, $projects) ) {
-			$rsp["code"] = 500;
-			$rsp["msg"] = lang('common-not-authorized'); 
-			return $rsp;
-		} 
-		# starts with 1
-		$regex = '/(^1\z|^1;(.*))/'; 
-		if ( !preg_match($regex, $projects) ) {
-			$rsp["code"] = 500;
-			$rsp["msg"] = lang('common-not-authorized'); 
-			return $rsp;
-		} 
-		$projects_exploded = explode( ';', $projects );
-		$defprj_found = false;
-		for($i = 0; $i < count($projects_exploded); ++$i) {
-			if ( intval($projects_exploded[$i])	== intval($defaultproject) ) { $defprj_found = true; }
-		}
-		if ( !$defprj_found ) {
-			$rsp["code"] = 500;
-			$rsp["msg"] = lang('ws-project-bad-default'); 
-			return $rsp;
-		} 
-
-		$user = getuserbyid($uid);
-		if ( $user == null || $user == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-not-found');
-			return $rsp;
-		} 
-
-		// lang
-		if ( ! in_array( $lang, get_installed_lang() ) ) 
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-lang-unknown');
-			return $rsp;
-		}
-
-		// style
-		if ( ! in_array( $style, get_installed_style() ) ) 
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-user-style-unknown');
-			return $rsp;
-		}
-
-		// check if login is not already used
-		$ret = getuserbylogin_expectuid($login, $uid);
-		if ( $ret )
-		{
-			$rsp["code"] = 603;
-			$rsp["msg"] = lang('ws-user-duplicate-1').$login.lang('ws-user-duplicate-2');
-			return $rsp;
-		}
-
-		// notifications
-		$regex = '/^(((true)|(false));){7}/'; 
-		if ( !preg_match($regex, $notifications) ) {
-			$rsp["code"] = 500;
-			$rsp["msg"] = lang('common-not-authorized'); 
-			return $rsp;
-		} 
-
-		// not possible to change group id for the default users
-		if ( $uid >= 6 )
-			$sql_req = 'UPDATE `'.$__LWF_DB_PREFIX.'-users` SET  login=\''.mysql_real_escape_string($login).'\', administrator=\''.strbool2int($admin).'\', leader=\''.strbool2int($monitor).'\', tester=\''.strbool2int($tester).'\', email=\''.mysql_real_escape_string($email).'\', lang=\''.$lang.'\', style=\''.$style.'\', notifications=\''.$notifications.'\', defaultproject=\''.$defaultproject.'\' WHERE id=\''.$uid.'\';';
-		else
-			$sql_req = 'UPDATE `'.$__LWF_DB_PREFIX.'-users` SET email=\''.mysql_real_escape_string($email).'\', lang=\''.$lang.'\', style=\''.$style.'\', notifications=\''.$notifications.'\', defaultproject=\''.$defaultproject.'\' WHERE id=\''.$uid.'\';';
-		$rslt = $db->query( $sql_req ) ;
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to update user")."(".$sql_req.")";
-			return $rsp;
-		}
-
-		// delete relation to update it
-		$sql_req = 'DELETE FROM `'.$__LWF_DB_PREFIX.'-relations-projects` WHERE user_id=\''.mysql_real_escape_string($uid).'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to delete user relations with project")."(".$sql_req.")";
-			return $rsp;
-		} 
-		
-		// update relations
-		$sql_req = 'INSERT INTO `'.$__LWF_DB_PREFIX.'-relations-projects`(`user_id`, `project_id`) VALUES';
-		for($i = 0; $i < count($projects_exploded); ++$i) {
-			$sql_req .= ' (\''.$uid.'\', \''.$projects_exploded[$i].'\' )';
-			if ( $i < ( count($projects_exploded) -1) ) { $sql_req .= ', '; }
-		}
-		$sql_req .= ';';
-
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to add relations on update")."(".$sql_req.")";
-			return $rsp;
+        $level = "tester";
+        if ( strbool2int($admin) ) $level = "admin";
+        if ( strbool2int($monitor) ) $level = "monitor";
+        if ( strbool2int($tester) ) $level = "tester";
+        
+        // update user through rest api
+        list($code, $details) = $RESTAPI->updateUser(
+                                                  $uid=intval($uid),
+                                                  $login=$login, 
+                                                  $email=$email, 
+                                                  $level=$level,
+                                                  $lang=$lang, 
+                                                  $style=$style,
+                                                  $notifications=$notifications,
+                                                  $default=intval($defaultproject), 
+                                                  $projects=explode( ';', $projects )
+                                                  );
+        
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
 		} else {
-			$rsp["code"] = 200;
-			$rsp["msg"] = lang('ws-user-updated');
-		}
-		
-		return $rsp;
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-user-updated');
+        }
+        return $rsp;
 	}
 
-	function getuserbyid($uid){
-		global $db, $CORE, $__LWF_DB_PREFIX;
-		$sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-users` WHERE  id=\''.mysql_real_escape_string($uid).'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			return null;
-		} else {
-			if ( $db->num_rows($rslt) == 0 )
-			{
-				return false;
-			} else {
-				return $db->fetch_assoc($rslt);
-			}
-		}
-	}
+	// function getuserbyid($uid){
+		// global $db, $CORE, $__LWF_DB_PREFIX;
+		// $sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-users` WHERE  id=\''.mysql_real_escape_string($uid).'\';';
+		// $rslt = $db->query( $sql_req );
+		// if ( !$rslt ) 
+		// {
+			// return null;
+		// } else {
+			// if ( $db->num_rows($rslt) == 0 )
+			// {
+				// return false;
+			// } else {
+				// return $db->fetch_assoc($rslt);
+			// }
+		// }
+	// }
 
-	function getuserbylogin($login){
-		global $db, $CORE, $__LWF_DB_PREFIX;
-		$sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-users` WHERE  login=\''.mysql_real_escape_string($login).'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			return null;
-		} else {
-			if ( $db->num_rows($rslt) == 0 )
-			{
-				return false;
-			} else {
-				return $db->fetch_assoc($rslt);
-			}
-		}
-	}
+	// function getuserbylogin($login){
+		// global $db, $CORE, $__LWF_DB_PREFIX;
+		// $sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-users` WHERE  login=\''.mysql_real_escape_string($login).'\';';
+		// $rslt = $db->query( $sql_req );
+		// if ( !$rslt ) 
+		// {
+			// return null;
+		// } else {
+			// if ( $db->num_rows($rslt) == 0 )
+			// {
+				// return false;
+			// } else {
+				// return $db->fetch_assoc($rslt);
+			// }
+		// }
+	// }
     
-	function getuserbylogin_expectuid($login, $uid){
-		global $db, $CORE, $__LWF_DB_PREFIX;
-		$sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-users` WHERE  login=\''.mysql_real_escape_string($login).'\' AND id!='.$uid.' ;';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			return null;
-		} else {
-			if ( $db->num_rows($rslt) == 0 )
-			{
-				return false;
-			} else {
-				return $db->fetch_assoc($rslt);
-			}
-		}
-	}
+	// function getuserbylogin_expectuid($login, $uid){
+		// global $db, $CORE, $__LWF_DB_PREFIX;
+		// $sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-users` WHERE  login=\''.mysql_real_escape_string($login).'\' AND id!='.$uid.' ;';
+		// $rslt = $db->query( $sql_req );
+		// if ( !$rslt ) 
+		// {
+			// return null;
+		// } else {
+			// if ( $db->num_rows($rslt) == 0 )
+			// {
+				// return false;
+			// } else {
+				// return $db->fetch_assoc($rslt);
+			// }
+		// }
+	// }
 ?>

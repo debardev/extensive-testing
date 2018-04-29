@@ -113,50 +113,48 @@
             $rsp["msg"] = lang('ws-project-updated');
 		}
 		return $rsp;
-
-		return $rsp;
 	}
 
 	
 	/*
 	Return the project according to the identifier passed as argument
 	*/
-	function getprojectbyid($pid)
-	{
-		global $db, $CORE, $__LWF_DB_PREFIX;
-		$sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-projects` WHERE  id=\''.mysql_real_escape_string($pid).'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			return null;
-		} else {
-			if ( $db->num_rows($rslt) == 0 )
-			{
-				return false;
-			} else {
-				return $db->fetch_assoc($rslt);
-			}
-		}
-	}
+	// function getprojectbyid($pid)
+	// {
+		// global $db, $CORE, $__LWF_DB_PREFIX;
+		// $sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-projects` WHERE  id=\''.mysql_real_escape_string($pid).'\';';
+		// $rslt = $db->query( $sql_req );
+		// if ( !$rslt ) 
+		// {
+			// return null;
+		// } else {
+			// if ( $db->num_rows($rslt) == 0 )
+			// {
+				// return false;
+			// } else {
+				// return $db->fetch_assoc($rslt);
+			// }
+		// }
+	// }
 
 	/*
 	Return the project according to the name passed as argument
 	*/
-	function getprojectbyname($name)
-	{
-		global $db, $CORE, $__LWF_DB_PREFIX;
-		$sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-projects` WHERE  name=\''.mysql_real_escape_string($name).'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			return null;
-		} else {
-			if ( $db->num_rows($rslt) == 0 )
-			{
-				return false;
-			} else {
-				return $db->fetch_assoc($rslt);
-			}
-		}
-	}
+	// function getprojectbyname($name)
+	// {
+		// global $db, $CORE, $__LWF_DB_PREFIX;
+		// $sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-projects` WHERE  name=\''.mysql_real_escape_string($name).'\';';
+		// $rslt = $db->query( $sql_req );
+		// if ( !$rslt ) 
+		// {
+			// return null;
+		// } else {
+			// if ( $db->num_rows($rslt) == 0 )
+			// {
+				// return false;
+			// } else {
+				// return $db->fetch_assoc($rslt);
+			// }
+		// }
+	// }
 ?>

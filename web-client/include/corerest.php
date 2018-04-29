@@ -228,6 +228,35 @@
             return array($code, $rsp);
         }
         
+        function duplicateUser($id) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // delete user
+            $req = json_encode( array('user-id' => $id) );
+            list($code, $rsp) = $this->getRestClient("POST", "/administration/users/duplicate", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
         function resetPasswordUser($id) {
             global $__LWF_CFG, $CORE;
             
@@ -275,6 +304,112 @@
                                       'current-password' => $oldpwd,
                                       'new-password' => $newpwd) );
             list($code, $rsp) = $this->getRestClient("POST", "/administration/users/password/update", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
+        function addUser($login, $password, $email, $level, $lang, $style, $notifications, $default, $projects) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // delete user
+            $req = json_encode( array('login' => $login,
+                                      'password' => $password,
+                                      'level' => $level, 
+                                      'email' => $email,
+                                      'lang' => $lang,
+                                      'style' => $style,
+                                      'notifications' => $notifications,
+                                      'default' => $default,
+                                      'projects' => $projects) );
+            list($code, $rsp) = $this->getRestClient("POST", "/administration/users/add", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
+        function updateUser($uid, $login, $email, $level, $lang, 
+                            $style, $notifications, $default, $projects) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // update user
+            $req = json_encode( array('user-id' => $uid,
+                                      'login' => $login,
+                                      'level' => $level, 
+                                      'email' => $email,
+                                      'lang' => $lang,
+                                      'style' => $style,
+                                      'notifications' => $notifications,
+                                      'default' => $default,
+                                      'projects' => $projects) );
+            list($code, $rsp) = $this->getRestClient("POST", "/administration/users/update", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
+        
+        function updateUserNotifications($uid, $notifications) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // update user notifications
+            $req = json_encode( array('user-id' => $uid,
+                                      'notifications' => $notifications) );
+            list($code, $rsp) = $this->getRestClient("POST", "/administration/users/update", 
                                                      $req, 
                                                      array("Content-Type: appplication/json",
                                                            "Cookie: session_id=".$session_id));

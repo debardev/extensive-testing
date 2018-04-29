@@ -212,15 +212,11 @@ function adduser(id)
 							arg( 'admin', getcheck('req_level_admin') ),
 							arg( 'monitor', getcheck('req_level_monitor') ),
 							arg( 'tester', getcheck('req_level_tester') ),
-							// arg( 'developer', getcheck('req_level_developer') ),
 							arg( 'lang', getval('req_lang') ),
 							arg( 'style', getval('req_style') ),
 							arg( 'notifications', getcheck('pass') + ';' + getcheck('fail')  + ';' + getcheck('undef') + ';'
 									+ getcheck('complete') + ';' + getcheck('error')  + ';' + getcheck('killed')  + ';' + getcheck('cancelled') + ';'  ),
 							arg( 'defaultproject', getval('req_default_project') )
-							// arg( 'cli', getcheck('req_access_cli') ),
-							// arg( 'gui', getcheck('req_access_gui') ),
-							// arg( 'web', getcheck('req_access_web') )
 						);
 	
 	// append selected projects 
