@@ -29,6 +29,7 @@ from Libs import Settings, Logger
 import wrapt
 import platform
 import base64
+import hashlib
 
 try:
     import Context
@@ -685,13 +686,13 @@ class AdminUsersPasswordUpdate(Handler):
                         raise HTTP_403("Not authorized to change password")
                         
         # get user from db
-        success, details = UsersManager.instance().getUserFromDB(userId=userId)
-        if success != Context.instance().CODE_OK:
-            raise HTTP_404(details)
+        # success, details = UsersManager.instance().getUserFromDB(userId=userId)
+        # if success != Context.instance().CODE_OK:
+            # raise HTTP_404(details)
             
         # check current password
         sha1_old = hashlib.sha1()
-        sha1_old.update( currentPwd ) 
+        sha1_old.update( currentPwd.encode("utf8") ) 
         
         sha1_pwd = hashlib.sha1()
         sha1_pwd.update( "%s%s" % ( Settings.get( 'Misc', 'salt'), sha1_old.hexdigest() )  )
@@ -707,7 +708,127 @@ class AdminUsersPasswordUpdate(Handler):
             raise HTTP_500(details)
             
         return { "cmd": self.request.path, "message": "password successfully updated" } 
-   
+
+class AdminUsersUpdate(Handler):
+    """
+    /rest/administration/users/update
+    """
+    @_to_yaml    
+    def post(self):
+        """
+        tags:
+          - admin
+        summary: Update the profile of a user
+        description: ''
+        operationId: adminUsersUpdate
+        consumes:
+          - application/json
+        produces:
+          - application/json
+        parameters:
+          - name: Cookie
+            in: header
+            description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
+            required: true
+            type: string
+          - name: body
+            in: body
+            required: true
+            schema:
+              required: [ user-id ]
+              properties:
+                user-id:
+                  type: integer
+                login:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+                level:
+                  type: string
+                lang:
+                  type: string
+                style:
+                  type: string
+                notifications:
+                  type: string
+                default:
+                  type: integer
+                projects:
+                  type: array
+                  items:
+                    type: string
+        responses:
+          '200':
+            description: 
+            schema :
+              properties:
+                cmd:
+                  type: string
+                message:
+                  type: string
+            examples:
+              application/json: |
+                {
+                  "cmd": "/administration/users/update", 
+                  "message: "user successfully updated"
+                }
+          '400':
+            description: Bad request provided
+          '404':
+            description: User not found
+          '500':
+            description: Server error
+        """
+        user_profile = _get_user(request=self.request)
+
+        try:
+            userId = self.request.data.get("user-id")
+            if userId is None : raise HTTP_400("Please specify a user id")
+
+            login = self.request.data.get("login")
+            email = self.request.data.get("email")
+            level = self.request.data.get("level")
+            lang = self.request.data.get("lang")
+            style = self.request.data.get("style")
+            notifications = self.request.data.get("notifications")
+            default = self.request.data.get("default")
+            projects = self.request.data.get("projects", [])
+        except EmptyValue as e:
+            raise HTTP_400("%s" % e)
+        except Exception as e:
+            raise HTTP_400("Bad request provided (%s ?)" % e)
+
+        # checking input    
+        if not isinstance(userId, int):
+            raise HTTP_400("Bad user id provided in request, int expected")
+        
+        if user_profile['administrator']:
+            success, details = UsersManager.instance().updateUserInDB(userId=userId, 
+                                                                  email=email,
+                                                                  login=login,
+                                                                  level=level,
+                                                                  lang=lang,
+                                                                  style=style,
+                                                                  notifications=notifications,
+                                                                  default=default,
+                                                                  projects=projects)
+        else:
+            if userId != user_profile['id']:
+                raise HTTP_403("Not authorized to change notifications for other user")
+            success, details = UsersManager.instance().updateUserInDB(userId=userId, 
+                                                                      notifications=notifications)
+                                                                  
+        if success == Context.instance().CODE_NOT_FOUND:
+            raise HTTP_404(details)
+        if success == Context.instance().CODE_ALLREADY_EXISTS:
+            raise HTTP_500(details)
+        if success == Context.instance().CODE_ERROR:
+            raise HTTP_500(details)
+            
+        return { "cmd": self.request.path, "message": "user successfully updated" }
+
 """
 System handlers
 """

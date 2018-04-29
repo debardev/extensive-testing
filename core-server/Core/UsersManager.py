@@ -59,123 +59,68 @@ class UsersManager(Logger.ClassLogger):
         self.table_name = '%s-users' % Settings.get( 'MySql', 'table-prefix')
         self.table_name_stats = '%s-users-stats' % Settings.get( 'MySql', 'table-prefix')
 
-    def getNbUserOfType(self, userType):
-        """
-        Returns the number of admins present in database
+        # load projects in cache, new in v19
+        self.__cache = {}
+        self.loadCache()
 
-        @param userType: user type (RIGHTS_ADMIN/RIGHTS_USER/RIGHTS_TESTER/RIGHTS_MANAGER)
-        @type userType: string
-
-        @return: nb user of the user type passed as argument
-        @rtype: int
+    def loadCache(self):
         """
-        nb = 0
-        ok, nb_entries = DbManager.instance().querySQL( query="""SELECT count(*) FROM `%s` WHERE %s='1'""" % (self.table_name,userType) )
-        if ok:
-            nb = int( nb_entries[0][0] )
-        return nb
-
-    def getNbAdmin(self):
+        load all projects in cache
         """
-        Returns the number of admins present in database
-
-        @return: nb admins
-        @rtype: int
+        self.trace("Updating memory cache with users from database")
+        code, users_list = self.getUsersFromDB()
+        if code == self.context.CODE_ERROR:
+            raise Exception("Unable to get users from database")
+            
+        # save users in the cache and order by login before
+        users_dict = {}
+        for row in users_list:
+                users_dict[row['login']] = row
+        del users_list
+        self.__cache = users_dict
+        self.trace("Users cache Size=%s" % len(self.__cache) )
+        
+    def cache(self):
         """
-        self.trace( 'get nb admin from db' )
-        return self.getNbUserOfType(userType=Settings.get( 'Server', 'level-admin'))
-
-    def getNbTester(self):
+        Return accessor for the cache
         """
-        Returns the number of testers present in database
-
-        @return: nb testers
-        @rtype: int
-        """
-        self.trace( 'get nb tester from db' )
-        return self.getNbUserOfType(userType=Settings.get( 'Server', 'level-tester'))
-
-    def getNbOfUsers(self):
-        """
-        Returns the total number of users present in database
-        """
-        self.trace( 'get nb users from db' )
-        nb = 0
-        ok, nb_entries = DbManager.instance().querySQL( query="SELECT count(*) FROM `%s`" % self.table_name )
-        if not ok:
-            self.error( 'unable to count the number of user from db: %s' % str(ok) )
-        else:
-            nb = int( nb_entries[0][0] )
-        return nb
-
-    def getUser(self, login):
-        """
-        Return user according the login passed as argument
-        """
-        self.trace( 'get user from db' )
-        ret, rows = DbManager.instance().querySQL( query = """SELECT * FROM `%s` WHERE login='%s'""" % (self.table_name,login), columnName=True )
-        if not ret:
-            self.error( 'unable to select user from db: %s' % str(ret) )
-            return None
-        elif len(rows) > 1:
-            self.error( 'several users founded: %s' % str(ret) )
-            return None
-        else:
-            return rows[0]
-
-    def getUsers(self):
-        """
-        Returns users with colomn name
-        """
-        self.trace( 'get users from db' )
-        sql = """SELECT * FROM `%s`""" % self.table_name
-        ret, rows = DbManager.instance().querySQL( query = sql, columnName=True)
-        if not ret:
-            self.error( 'unable to select users from db: %s' % str(ret) )
-            return None
-        return rows
-
-    def getUsersByLogin (self):
-        """
-        Returns a dict of all users present in the database
-        reindex by the login
-
-        @return: all users from the database
-        @rtype: dict
-        """
-        self.trace( 'get users as dict' )
-        users = {}
-
-        usersdb = self.getUsers()
-        if usersdb is not None:
-            # reindex user by login
-            for row in usersdb:
-                users[row['login']] = row
-        return users
+        self.trace("Reading users from cache Size=%s" % len(self.__cache) )
+        return self.__cache
 
     def setOnlineStatus(self, login, online):
         """
         Set the online status of a specific user
         """
-        self.trace( 'set online status %s' % login )
-        ret, rows = DbManager.instance().querySQL( query = "UPDATE `%s` SET online=%s WHERE login='%s'" % ( self.table_name, online, login) )
+        self.trace( 'Set online status User=%s' % login )
+        
+        sql = "UPDATE `%s` SET online=%s WHERE login='%s'" % ( self.table_name, online, login)
+        ret, rows = DbManager.instance().querySQL( query =sql  )
         if not ret:
             self.error("unable to update db online user field for user %s to %s" % (login, online) )
 
+        # new in v19, refresh the users cache
+        self.loadCache()
+        
     def addStats(self, user, connId, startTime, duration):
         """
         Add statistics of a specific user
         """
-        self.trace( 'add user stats %s' % user )
+        self.trace( 'Add stats for User=%s' % user )
+        
         strDate = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(startTime))
-        ret, rows = DbManager.instance().querySQL(  query = "INSERT INTO `%s` (user, connection, date, duration) VALUES ('%s',%s,'%s',%s)" 
-                            % (self.table_name_stats, user, int(connId), strDate, int(duration)  ) )
+        sql = "INSERT INTO `%s` (user, connection, date, duration) VALUES ('%s',%s,'%s',%s)" \
+                            % (self.table_name_stats, user, int(connId), strDate, int(duration)  )
+        ret, rows = DbManager.instance().querySQL(  query =sql  )
         if not ret:
             self.error("unable to add user stats in db")
     
-    def addUserToDB(self, level, login, password, email, lang, style, notifications, defaultPrj, listPrjs):
+    def addUserToDB(self, level, login, password, email, lang, 
+                    style, notifications, defaultPrj, listPrjs):
         """
+        Add a new user in database
         """
+        self.trace( 'Add user in database Login=%s' % login )
+        
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
@@ -187,14 +132,7 @@ class UsersManager(Logger.ClassLogger):
             self.error( "unable to read user by name" )
             return (self.context.CODE_ERROR, "unable to read user by name")
         if len(dbRows): return (self.context.CODE_ALREADY_EXISTS, "this user name already exists")
-        
-        # create user in db
-        # lang = "en"
-        # style = "default"
-        # notifications = "false;false;false;false;false;false;false;"
-        # defaultPrj = 1
-        # projects = [1]
-        
+
         # access level
         if level == "admin":
             admin=1
@@ -205,7 +143,7 @@ class UsersManager(Logger.ClassLogger):
         
         #  password, create a sha1 hash with salt: sha1( salt + sha1(password) )
         sha1_pwd = hashlib.sha1()
-        sha1_pwd.update( password ) 
+        sha1_pwd.update( password.encode("utf8") ) 
         
         sha1 = hashlib.sha1()
         sha1.update( "%s%s" % ( Settings.get( 'Misc', 'salt'), sha1_pwd.hexdigest() )  )
@@ -230,7 +168,7 @@ class UsersManager(Logger.ClassLogger):
         # adding relations-projects`
         sql = """INSERT INTO `%s-relations-projects`(`user_id`, `project_id`) VALUES""" % prefix
         sql_values = []
-        for prj in projects:
+        for prj in listPrjs:
             sql_values.append( """('%s', '%s')""" % (lastRowId, prj) )
         
         sql += ', '.join(sql_values)
@@ -239,11 +177,17 @@ class UsersManager(Logger.ClassLogger):
             self.error("unable to insert relations")
             return (self.context.CODE_ERROR, "unable to insert relations")
                 
+        # new in v19, refresh the cache
+        self.loadCache()
+        
         return (self.context.CODE_OK, "%s" % int(lastRowId) )
         
     def delUserInDB(self, userId):
         """
+        Delete a user from database
         """
+        self.trace( 'Delete user from database Id=%s' % userId )
+        
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
@@ -276,27 +220,73 @@ class UsersManager(Logger.ClassLogger):
             self.error( "unable to remove user relation" )
             return (self.context.CODE_ERROR, "unable to remove user relation")
             
+        # new in v19, refresh the cache
+        self.loadCache()
+        
         return (self.context.CODE_OK, "" )
         
-    def updateUserInDB(self, userId, email=None):
+    def updateUserInDB(self, userId, email=None, login=None, lang=None, 
+                       style=None, notifications=None, default=None, 
+                       projects=[], level=None):
         """
         """
+        self.trace( 'Update user in database Id=%s' % userId )
+        
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
+        userId = str(userId)
         
-        # find user by id
+        # search  user by id
         sql = """SELECT * FROM `%s-users` WHERE  id='%s'""" % ( prefix, escape(userId) )
         dbRet, dbRows = DbManager.instance().querySQL( query = sql, columnName=True  )
         if not dbRet: 
-            self.error( "unable to read user id" )
+            self.error( "unable to search user by id" )
             return (self.context.CODE_ERROR, "unable to read user id")
-        if not len(dbRows): return (self.context.CODE_NOT_FOUND, "this user id does not exist")
-        
+
         sql_values = []
+        if login is not None:
+            # check if this new login if available ?
+            sql = """SELECT * FROM `%s-users` WHERE  login='%s' AND id != '%s'""" % ( prefix, escape(login), escape(userId) )
+            dbRet, dbRows = DbManager.instance().querySQL( query = sql, columnName=True  )
+            if not dbRet: 
+                self.error( "unable to search user login" )
+                return (self.context.CODE_ERROR, "unable to read user id")
+            if len(dbRows): 
+                return (self.context.CODE_ALLREADY_EXISTS, "This login already exist")
+            else:
+                sql_values.append( """login='%s'""" % escape(login))
         if email is not None:
             sql_values.append( """email='%s'""" % escape(email))
+        if lang is not None:
+            sql_values.append( """lang='%s'""" % escape(lang))
+        if style is not None:
+            sql_values.append( """style='%s'""" % escape(style))
+        if notifications is not None:
+            sql_values.append( """notifications='%s'""" % escape(notifications))
+        if default is not None:
+            default = str(default)
+            sql_values.append( """defaultproject='%s'""" % escape(default))
             
+        # access level
+        # the level can not modified for default users (system, admin, monitor and tester)
+        if level is not None and int(userId) > 4:
+            if level == "admin":  
+                sql_values.append( """administrator='1'""")
+                sql_values.append( """leader='0'""")
+                sql_values.append( """tester='0'""")
+                sql_values.append( """developer='0'""")
+            elif level == "monitor":
+                sql_values.append( """administrator='0'""")
+                sql_values.append( """leader='1'""")
+                sql_values.append( """tester='0'""")
+                sql_values.append( """developer='0'""")
+            else:
+                sql_values.append( """administrator='0'""")
+                sql_values.append( """leader='0'""")
+                sql_values.append( """tester='1'""")
+                sql_values.append( """developer='1'""")
+
         # update
         if len(sql_values):
             sql = """UPDATE `%s-users` SET %s WHERE id='%s'""" % (prefix, ','.join(sql_values) , userId)
@@ -305,11 +295,37 @@ class UsersManager(Logger.ClassLogger):
                 self.error("unable to update user")
                 return (self.context.CODE_ERROR, "unable to update user")
             
+        if len(projects):
+            # delete relation to update it
+            sql = """DELETE FROM `%s-relations-projects` WHERE user_id='%s'""" % (prefix, escape(userId))
+            dbRet, _ = DbManager.instance().querySQL( query = sql  )
+            if not dbRet: 
+                self.error("unable to delete relations")
+                return (self.context.CODE_ERROR, "unable to delete relations")
+            
+            # adding relations-projects`
+            sql = """INSERT INTO `%s-relations-projects`(`user_id`, `project_id`) VALUES""" % prefix
+            sql_values = []
+            for prj in projects:
+                sql_values.append( """('%s', '%s')""" % (userId, prj) )
+            
+            sql += ', '.join(sql_values)
+            dbRet, _ = DbManager.instance().querySQL( query = sql, insertData=True  )
+            if not dbRet: 
+                self.error("unable to insert relations")
+                return (self.context.CODE_ERROR, "unable to insert relations")
+        
+        # new in v19, refresh the cache
+        self.loadCache()
+        
         return (self.context.CODE_OK, "" )
         
     def duplicateUserInDB(self, userId):
         """
+        Duplicate a user in database
         """
+        self.trace( 'Duplicate user from database Id=%s' % userId )
+        
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
@@ -326,15 +342,29 @@ class UsersManager(Logger.ClassLogger):
         
         # duplicate user
         newLogin = "%s-COPY#%s" % (user['login'], uniqid())
-        sha1 = hashlib.sha1()
-        sha1.update( '' )
-        emptypwd = sha1.hexdigest()
-        
-        return self.addUserToDB(login=newLogin, password=emptypwd, email=user['email'])
+        level = "tester"
+        if user['administrator']:
+            level = "admin"
+        if user['leader']:
+            level = "monitor"
+        if user['tester']:
+            level = "level"
+        return self.addUserToDB(login=newLogin, 
+                                password='', 
+                                email=user['email'],
+                                level=level, 
+                                lang=user['lang'], 
+                                style=user['style'], 
+                                notifications=user['notifications'], 
+                                defaultPrj=user['default'], 
+                                listPrjs=[user['default']])
         
     def updateStatusUserInDB(self, userId, status):
         """
+        Enable or disable a user in database
         """
+        self.trace( 'Enable/disable user in database Id=%s' % userId )
+        
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
@@ -354,12 +384,18 @@ class UsersManager(Logger.ClassLogger):
         if not dbRet: 
             self.error("unable to change the status of the user")
             return (self.context.CODE_ERROR, "unable to change the status of the user")
-            
+        
+        # new in v19, refresh the cache
+        self.loadCache()
+        
         return (self.context.CODE_OK, "" )
         
     def resetPwdUserInDB(self, userId):
         """
+        Reset a password in database
         """
+        self.trace( 'Reset user`\'s password in database Id=%s' % userId )
+        
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
@@ -388,11 +424,17 @@ class UsersManager(Logger.ClassLogger):
             self.error("unable to reset pwd")
             return (self.context.CODE_ERROR, "unable to reset pwd")
             
+        # new in v19, refresh the cache
+        self.loadCache()
+        
         return (self.context.CODE_OK, "" )
         
     def updatePwdUserInDB(self, userId, newPwd):
         """
+        Update password's user in database
         """
+        self.trace( 'Update user\'s password in database Id=%s' % userId )
+        
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
@@ -402,13 +444,13 @@ class UsersManager(Logger.ClassLogger):
         sql = """SELECT * FROM `%s-users` WHERE  id='%s'""" % ( prefix, escape(userId) )
         dbRet, dbRows = DbManager.instance().querySQL( query = sql, columnName=True  )
         if not dbRet: 
-            self.error( "unable to read user id" )
-            return (self.context.CODE_ERROR, "unable to read user id")
+            self.error( "unable to find user id" )
+            return (self.context.CODE_ERROR, "unable to find user id")
         if not len(dbRows): return (self.context.CODE_NOT_FOUND, "this user id does not exist")
 
         # update password
         sha1_old = hashlib.sha1()
-        sha1_old.update( newPwd ) 
+        sha1_old.update( newPwd.encode("utf8") ) 
         
         sha1 = hashlib.sha1()
         sha1.update( "%s%s" % ( Settings.get( 'Misc', 'salt'), sha1_old.hexdigest()  )  )
@@ -419,11 +461,17 @@ class UsersManager(Logger.ClassLogger):
             self.error("unable to update pwd")
             return (self.context.CODE_ERROR, "unable to update pwd")
             
+        # new in v19, refresh the cache
+        self.loadCache()
+        
         return (self.context.CODE_OK, "" )
         
     def getUsersFromDB(self):
         """
+        Get all users from database
         """
+        self.trace( 'Get all users from database')
+        
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
@@ -439,6 +487,7 @@ class UsersManager(Logger.ClassLogger):
         
     def getUserFromDB(self, userId=None, userLogin=None):
         """
+        Get user from database according to the id or login name
         """
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
@@ -459,6 +508,7 @@ class UsersManager(Logger.ClassLogger):
     
     def getStatisticsFromDb(self):
         """
+        Get statistics users from database
         """
         prefix = Settings.get( 'MySql', 'table-prefix')
         

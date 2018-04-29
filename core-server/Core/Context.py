@@ -477,9 +477,9 @@ class Context(Logger.ClassLogger):
                                                                      Settings.get( 'Paths', 'tests')) )
 
 
-            nbLinesTableUsers = UsersManager.instance().getNbOfUsers()
-            ret['nb-line-table-users'] = nbLinesTableUsers
-            self.trace( "Nb [usr=%s]" % nbLinesTableUsers)
+            # nbLinesTableUsers = UsersManager.instance().getNbOfUsers()
+            ret['nb-line-table-users'] = len(UsersManager.instance().cache())
+            # self.trace( "Nb [usr=%s]" % nbLinesTableUsers)
             
             nbTests = StatsManager.instance().getNbTests()
             self.trace( "Nb [sc=%s], [tg=%s], [tp=%s], [ts=%s], [tu=%s], [ta=%s], [tc=%s]" % (
@@ -591,7 +591,7 @@ class Context(Logger.ClassLogger):
                 decoded = base64.b64decode(encoded)
                 apikey_id, apikey_secret = decoded.rsplit(":", 1)
 
-                usersDb = UsersManager.instance().getUsersByLogin()
+                usersDb = UsersManager.instance().cache()
                 userOk = None
                 for user, profile in usersDb.items():
                     if profile["apikey_id"] == apikey_id and profile["apikey_secret"] == apikey_secret:
@@ -612,7 +612,7 @@ class Context(Logger.ClassLogger):
         expires = ''
         
         # check if this login exists on the database
-        usersDb = UsersManager.instance().getUsersByLogin()
+        usersDb = UsersManager.instance().cache()
         if not login in usersDb:
             self.trace( "Login=%s account not found" % login )
             return (self.CODE_NOT_FOUND, expires)

@@ -376,7 +376,7 @@ class _WebServices(WSGI):
         ( '/administration/users/add',                  RestAdminFunctions.AdminUsersAdd()),
         ( '/administration/users/remove',               RestAdminFunctions.AdminUsersRemove()),
         ( '/administration/users/channel/disconnect',   RestAdminFunctions.AdminUsersChannelDisconnect()),
-        ( '/administration/users/update',               RestAdminFunctions.AdminUsersUpdate()),
+        ( '/administration/users/update',               RestCommonFunctions.AdminUsersUpdate()),
         ( '/administration/users/status',               RestAdminFunctions.AdminUsersStatus()),
         ( '/administration/users/duplicate',            RestAdminFunctions.AdminUsersDuplicate()),
         ( '/administration/users/password/reset',       RestAdminFunctions.AdminUsersPasswordReset()),

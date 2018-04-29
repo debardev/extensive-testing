@@ -2185,10 +2185,11 @@ class Task(Logger.ClassLogger):
             self.trace('Emails notifications disabled')
             return
 
-        user_profile = UsersManager.instance().getUser(login=self.userName)
-        if user_profile is None:
-            self.error( 'user not found, send mail failed' )
+        if self.userName not in UsersManager.instance().cache():
+            self.error( 'User=%s not found, send mail failed' % self.userName )
         else:
+            user_profile = UsersManager.instance().cache()[self.userName]
+            
             # PASS,FAIL,UNDEF,COMPLETE,ERROR,KILLED,CANCELLED
             # false;false;false;false;false;false;false
             notifications  = user_profile['notifications'].split(';')
@@ -2445,7 +2446,7 @@ class TaskManager(Scheduler.SchedulerThread, Logger.ClassLogger):
         """
         self.trace("run tasks in simultaneous")
         # get user id
-        usersDb = UsersManager.instance().getUsersByLogin()
+        usersDb = UsersManager.instance().cache()
         user_profile = usersDb[userName]
         
         runType = SCHED_QUEUE
@@ -2474,7 +2475,7 @@ class TaskManager(Scheduler.SchedulerThread, Logger.ClassLogger):
         """
 
         # get user id
-        usersDb = UsersManager.instance().getUsersByLogin()
+        usersDb = UsersManager.instance().cache()
         user_profile = usersDb[userName]
 
         runType = SCHED_QUEUE

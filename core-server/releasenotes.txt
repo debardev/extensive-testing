@@ -22,7 +22,9 @@
 		18. (minor) web: new feature to add security banner on the login page of the web interface
 		19. (minor) rest api: some update in the swagger api documentation
 		20. (medium) rest api: improvment in administration user part (TBC!!!)
-        21. (medium) web server: update to use the rest api on user part (TBC!!!)
+        21. (medium) web server: update to use the rest api on user part
+		22. (minor) ignore __pycache__ during build of adapters and libraries packages
+		23. (major) new cache memory for users, optimization to reduce the number of queries in database
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only

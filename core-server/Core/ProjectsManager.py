@@ -54,7 +54,8 @@ class ProjectsManager(Logger.ClassLogger):
         self.repoTests ='%s/%s' % ( Settings.getDirExec(), Settings.get( 'Paths', 'tests' ) )
         self.context = context
         
-        # load projects in cache
+        # load projects in cache, new in v19
+        self.__cache = []
         self.loadCache()
         
         # Initialize the repository
@@ -66,9 +67,9 @@ class ProjectsManager(Logger.ClassLogger):
         """
         load all projects in cache
         """
-        self.trace("load all projects in memory cache")
+        self.trace("update memory cache with projects from database")
         _, projects_list = self.getProjectsFromDB()
-        self.cache = projects_list
+        self.__cache = projects_list
         
     def addReservedFolders(self):
         """

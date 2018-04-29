@@ -140,8 +140,8 @@ class TasksKillAll(Handler):
                   "message": "tasks successfully killed",
                   "cmd": "/tasks/kill/all"
                 }
-          '401':
-            description: Access denied 
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
         
@@ -187,8 +187,8 @@ class TasksCancelAll(Handler):
                   "message": "tasks successfully cancelled",
                   "cmd": "/tasks/cancel/all"
                 }
-          '401':
-            description: Access denied 
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
         
@@ -234,8 +234,10 @@ class TasksHistoryClear(Handler):
                   "message": "tasks successfully reseted",
                   "cmd": "/tasks/history/clear"
                 }
-          '401':
-            description: Access denied 
+          '403':
+            description: Access refused
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
         
@@ -289,6 +291,8 @@ class AdaptersCheckSyntaxAll(Handler):
                   "syntax-status": True,
                   "syntax-error": ""
                 }
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(self.request)
 
@@ -335,6 +339,8 @@ class AdaptersStatistics(Handler):
                   "cmd": "/adapters/statistics", 
                   "statistics": "...."
                 }
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(self.request)
         
@@ -381,8 +387,8 @@ class AdaptersFileUnlockAll(Handler):
                   "cmd": "/adapters/file/unlock/all", 
                   "message": "unlocked"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -441,8 +447,10 @@ class AdaptersBackup(Handler):
                 }
           '400':
             description: Bad request provided
-          '401':
-            description: unauthorized
+          '403':
+            description: Access refused
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
 
@@ -515,7 +523,9 @@ class AdaptersBackupDownload(Handler):
           '400':
             description: Bad request provided
           '403':
-            description: Access denied to this project
+            description: Access refused
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
 
@@ -576,10 +586,8 @@ class AdaptersBackupListing(Handler):
                   "cmd": "/adapters/backup/listing", 
                   "backups": "..."
                 }
-          '400':
-            description: Bad request provided
-          '401':
-            description: unauthorized
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
 
@@ -625,8 +633,8 @@ class AdaptersBackupRemoveAll(Handler):
                   "cmd": "/tests/adapters/remove/all", 
                   "message": "deleted"
                 }
-          '401':
-            description: access denied, unauthorized
+          '403':
+            description: Access refused
           '500':
             description: server error
         """
@@ -677,8 +685,8 @@ class AdaptersReset(Handler):
                   "cmd": "/adapters/reset", 
                   "message": "reseted"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -738,6 +746,8 @@ class AdaptersDirectoryRemoveAll(Handler):
                 }
           '400':
             description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -809,6 +819,8 @@ class LibrariesCheckSyntaxAll(Handler):
                   "syntax-status": True,
                   "syntax-error": ""
                 }
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(self.request)
 
@@ -864,6 +876,8 @@ class LibrariesDirectoryRemoveAll(Handler):
                 }
           '400':
             description: Bad request provided
+          '403':
+            description: Removing directory denied
           '500':
             description: Server error
         """
@@ -937,8 +951,10 @@ class LibrariesBackup(Handler):
                 }
           '400':
             description: Bad request provided
-          '401':
-            description: unauthorized
+          '403':
+            description: Access refused
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
 
@@ -1012,7 +1028,9 @@ class LibrariesBackupDownload(Handler):
           '400':
             description: Bad request provided
           '403':
-            description: Access denied to this project
+            description: Access refused
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
 
@@ -1073,10 +1091,8 @@ class LibrariesBackupListing(Handler):
                   "cmd": "/libraries/backup/listing", 
                   "backups": "..."
                 }
-          '400':
-            description: Bad request provided
-          '401':
-            description: unauthorized
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
 
@@ -1122,10 +1138,10 @@ class LibrariesBackupRemoveAll(Handler):
                   "cmd": "/tests/libraries/remove/all", 
                   "message": "deleted"
                 }
-          '401':
-            description: access denied, unauthorized
+          '403':
+            description: Access refused
           '500':
-            description: server error
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
 
@@ -1174,8 +1190,8 @@ class LibrariesFileUnlockAll(Handler):
                   "cmd": "/libraries/file/unlock/all", 
                   "message": "unlocked"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -1226,6 +1242,8 @@ class LibrariesStatistics(Handler):
                   "cmd": "/libraries/statistics", 
                   "statistics": "...."
                 }
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(self.request)
         
@@ -1272,8 +1290,8 @@ class LibrariesReset(Handler):
                   "cmd": "/libraries/reset", 
                   "message": "reseted"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -1312,14 +1330,6 @@ class AdminConfigListing(Handler):
             description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
             required: true
             type: string
-          - name: body
-            in: body
-            required: true
-            schema:
-              required: [ shift ]
-              properties:
-                shift:
-                  type: integer
         responses:
           '200':
             description: 
@@ -1327,18 +1337,13 @@ class AdminConfigListing(Handler):
               properties:
                 cmd:
                   type: string
-                message:
-                  type: string
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/configurationg/listing"
                 }
-          '400':
-            description: Bad request provided
-          '404':
-            description: Probe not found
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
         
@@ -1373,14 +1378,6 @@ class AdminConfigReload(Handler):
             description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
             required: true
             type: string
-          - name: body
-            in: body
-            required: true
-            schema:
-              required: [ shift ]
-              properties:
-                shift:
-                  type: integer
         responses:
           '200':
             description: 
@@ -1388,18 +1385,16 @@ class AdminConfigReload(Handler):
               properties:
                 cmd:
                   type: string
-                message:
+                status:
                   type: string
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/configuration/reload", 
+                  "status": "reloaded" 
                 }
-          '400':
-            description: Bad request provided
-          '404':
-            description: Probe not found
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
         
@@ -1431,14 +1426,6 @@ class AdminClientsDeploy(Handler):
             description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
             required: true
             type: string
-          - name: body
-            in: body
-            required: true
-            schema:
-              required: [ shift ]
-              properties:
-                shift:
-                  type: integer
         responses:
           '200':
             description: 
@@ -1446,18 +1433,16 @@ class AdminClientsDeploy(Handler):
               properties:
                 cmd:
                   type: string
-                message:
+                status:
                   type: string
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/clients/deploy", 
+                  "status": "deployed"
                 }
-          '400':
-            description: Bad request provided
-          '404':
-            description: Probe not found
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
         
@@ -1490,14 +1475,6 @@ class AdminProjectsListing(Handler):
             description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
             required: true
             type: string
-          - name: body
-            in: body
-            required: true
-            schema:
-              required: [ shift ]
-              properties:
-                shift:
-                  type: integer
         responses:
           '200':
             description: 
@@ -1550,14 +1527,6 @@ class AdminProjectsStatistics(Handler):
             description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
             required: true
             type: string
-          - name: body
-            in: body
-            required: true
-            schema:
-              required: [ shift ]
-              properties:
-                shift:
-                  type: integer
         responses:
           '200':
             description: 
@@ -1844,9 +1813,9 @@ class AdminUsersProfile(Handler):
             in: body
             required: true
             schema:
-              required: [ shift ]
+              required: [ user-id ]
               properties:
-                shift:
+                user-id:
                   type: integer
         responses:
           '200':
@@ -1860,26 +1829,27 @@ class AdminUsersProfile(Handler):
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/users/profile"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '404':
-            description: Probe not found
+            description: User not found
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
 
         try:
             userId = self.request.data.get("user-id")
-            if not userId : raise HTTP_400("Please specify a user id")
+            if userId  is None: raise HTTP_400("Please specify a user id")
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
 
         if int(userId) != int(user_profile["id"]) and not user_profile['administrator']:
-            raise HTTP_401("Access refused")
+            raise HTTP_403("Access refused")
         else:
             success, details = UsersManager.instance().getUserFromDB(userId=userId)
             if success == Context.instance().CODE_NOT_FOUND:
@@ -1911,14 +1881,6 @@ class AdminUsersListing(Handler):
             description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
             required: true
             type: string
-          - name: body
-            in: body
-            required: true
-            schema:
-              required: [ shift ]
-              properties:
-                shift:
-                  type: integer
         responses:
           '200':
             description: 
@@ -1931,18 +1893,16 @@ class AdminUsersListing(Handler):
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/users/listing"
                 }
-          '400':
-            description: Bad request provided
-          '404':
-            description: Probe not found
+          '403':
+            description: Access refused
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
         
-        if not user_profile['administrator']:
-            raise HTTP_401("Access refused")
+        if not user_profile['administrator']: raise HTTP_403("Access refused")
             
         success, details = UsersManager.instance().getUsersFromDB()
         if success == Context.instance().CODE_ERROR:
@@ -1972,14 +1932,6 @@ class AdminUsersStatistics(Handler):
             description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
             required: true
             type: string
-          - name: body
-            in: body
-            required: true
-            schema:
-              required: [ shift ]
-              properties:
-                shift:
-                  type: integer
         responses:
           '200':
             description: 
@@ -1992,13 +1944,12 @@ class AdminUsersStatistics(Handler):
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/users/statistics"
                 }
-          '400':
-            description: Bad request provided
-          '404':
-            description: Probe not found
+          '403':
+            description: Access refused
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
         
@@ -2036,7 +1987,7 @@ class AdminUsersAdd(Handler):
             in: body
             required: true
             schema:
-              required: [ login, password, email, level, lang, style, notifications, default-project, authorized-projects ]
+              required: [ login, password, email, level, lang, style, notifications, default, projects ]
               properties:
                 login:
                   type: string
@@ -2052,10 +2003,10 @@ class AdminUsersAdd(Handler):
                   type: string
                 notifications:
                   type: string
-                default-project:
-                  type: string
-                authorized-projects:
-                  type: string
+                default:
+                  type: array
+                  items:
+                    type: string
         responses:
           '200':
             description: 
@@ -2104,10 +2055,10 @@ class AdminUsersAdd(Handler):
             notifications = self.request.data.get("notifications")
             if notifications is None: raise EmptyValue("Please specify a notifications")
             
-            defaultPrj = self.request.data.get("default-project")
+            defaultPrj = self.request.data.get("default")
             if defaultPrj is None: raise EmptyValue("Please specify a default project")
             
-            listPrjs = self.request.data.get("authorized-projects")
+            listPrjs = self.request.data.get("projects")
             if listPrjs is None: raise EmptyValue("Please specify a list of authorized project")
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
@@ -2115,15 +2066,15 @@ class AdminUsersAdd(Handler):
             raise HTTP_400("Bad request provided (%s ?)" % e)
         
         success, details = UsersManager.instance().addUserToDB(
-                                                       level="tester",
+                                                       level=level,
                                                        login=login, 
                                                        password=password, 
                                                        email=email,
-                                                       lang="en",
-                                                       style="default",
-                                                       notifications="false;false;false;false;false;false;false;",
-                                                       defaultPrj=1,
-                                                       listPrjs=[1]
+                                                       lang=lang,
+                                                       style=style,
+                                                       notifications=notifications,
+                                                       defaultPrj=defaultPrj,
+                                                       listPrjs=listPrjs
                                                    )
         if success == Context.instance().CODE_ERROR:
             raise HTTP_500(details)
@@ -2131,79 +2082,6 @@ class AdminUsersAdd(Handler):
             raise HTTP_500(details)
             
         return { "cmd": self.request.path, "message": "user successfully added", "user-id": details }
-
-class AdminUsersUpdate(Handler):
-    """
-    /rest/administration/users/update
-    """
-    @_to_yaml    
-    def post(self):
-        """
-        tags:
-          - admin
-        summary: Update the profile of a user
-        description: ''
-        operationId: adminUsersUpdate
-        consumes:
-          - application/json
-        produces:
-          - application/json
-        parameters:
-          - name: Cookie
-            in: header
-            description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M 
-            required: true
-            type: string
-          - name: body
-            in: body
-            required: true
-            schema:
-              required: [ user-id ]
-              properties:
-                user-id:
-                  type: integer
-        responses:
-          '200':
-            description: 
-            schema :
-              properties:
-                cmd:
-                  type: string
-                message:
-                  type: string
-            examples:
-              application/json: |
-                {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
-                }
-          '400':
-            description: Bad request provided
-          '404':
-            description: Probe not found
-        """
-        user_profile = _get_user(request=self.request)
-        
-        if not user_profile['administrator']:
-            raise HTTP_401("Access refused")
-
-        try:
-            userId = self.request.data.get("user-id")
-            if not userId : raise HTTP_400("Please specify a user id")
-
-            email = self.request.data.get("email")
-        except EmptyValue as e:
-            raise HTTP_400("%s" % e)
-        except Exception as e:
-            raise HTTP_400("Bad request provided (%s ?)" % e)
-            
-        success, details = UsersManager.instance().updateUserInDB(userId=userId, email=email)
-        if success == Context.instance().CODE_NOT_FOUND:
-            raise HTTP_404(details)
-        if success == Context.instance().CODE_ERROR:
-            raise HTTP_500(details)
-            
-        return { "cmd": self.request.path, "message": "user successfully updated" }
 
 class AdminUsersRemove(Handler):
     """
@@ -2485,13 +2363,15 @@ class AdminUsersDuplicate(Handler):
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/users/duplicate", 
+                  "message: "user successfully duplicated"
                 }
           '400':
             description: Bad request provided
           '404':
-            description: Probe not found
+            description: User not found
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
         
@@ -2499,12 +2379,16 @@ class AdminUsersDuplicate(Handler):
             
         try:
             userId = self.request.data.get("user-id")
-            if not userId : raise HTTP_400("Please specify a user id")
+            if userId is None : raise HTTP_400("Please specify a user id")
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
             raise HTTP_400("Bad request provided (%s ?)" % e)
-            
+
+        # checking input    
+        if not isinstance(userId, int):
+            raise HTTP_400("Bad user id provided in request, int expected")
+             
         success, details = UsersManager.instance().duplicateUserInDB(userId=userId)
         if success == Context.instance().CODE_NOT_FOUND:
             raise HTTP_404(details)
@@ -2615,10 +2499,11 @@ class AdminUsersSearch(Handler):
             in: body
             required: true
             schema:
-              required: [ user-id ]
               properties:
                 user-id:
                   type: integer
+                login:
+                  type: string
         responses:
           '200':
             description: 
@@ -2626,28 +2511,30 @@ class AdminUsersSearch(Handler):
               properties:
                 cmd:
                   type: string
-                message:
-                  type: string
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/users/search"
                 }
           '400':
             description: Bad request provided
+          '403':
+            description: Access refused
           '404':
-            description: Probe not found
+            description: User not found
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
         
         if not user_profile['administrator']: raise HTTP_403("Access refused")
            
         try:
-            userLogin = self.request.data.get("user-login")
+            userLogin = self.request.data.get("login")
             userId = self.request.data.get("user-id")
             
-            if userLogin is None and userId is None: raise EmptyValue("Please specify the name/id of the user")
+            if userLogin is None and userId is None: 
+                raise EmptyValue("Please specify the name or id of the user")
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -2657,7 +2544,7 @@ class AdminUsersSearch(Handler):
         if success == Context.instance().CODE_ERROR:
             raise HTTP_500(details)
         if len(details) == 0:
-            raise HTTP_500("no user found")
+            raise HTTP_404("no user found")
         
         if len(details) == 1:
             return { "cmd": self.request.path, "user": details[0] }
@@ -2706,13 +2593,13 @@ class AdminTimeShift(Handler):
             examples:
               application/json: |
                 {
-                  "cmd": "/administration/disconnect", 
-                  "message: "probe successfully disconnected"
+                  "cmd": "/administration/time/shift", 
+                  "message": "shifted"
                 }
           '400':
             description: Bad request provided
-          '404':
-            description: Probe not found
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
         
@@ -2731,7 +2618,7 @@ class AdminTimeShift(Handler):
         f.write("%s" % shift)
         f.close()
         
-        return { "cmd": self.request.path, "users": details }
+        return { "cmd": self.request.path, "message": "shifted"}
 
 """
 Metrics handlers
@@ -2773,8 +2660,8 @@ class MetricsTestsReset(Handler):
                   "cmd": "/metrics/reset", 
                   "message": "tests statistics reseted"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -2828,8 +2715,8 @@ class TestsBuild(Handler):
                   "cmd": "/tests/build/samples", 
                   "message": "unlocked"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -2880,8 +2767,8 @@ class TestsFileUnlockAll(Handler):
                   "cmd": "/tests/file/unlock/all", 
                   "message": "unlocked"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -2931,8 +2818,8 @@ class TestsFileDefaultAll(Handler):
                   "cmd": "/tests/file/unlock/all", 
                   "message": "unlocked"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -2975,7 +2862,7 @@ class TestsStatistics(Handler):
               required: [ project-id ]
               properties:
                 project-id:
-                  type: string
+                  type: integer
         responses:
           '200':
             description: tests statistics
@@ -2991,6 +2878,10 @@ class TestsStatistics(Handler):
                   "cmd": "/tests/statistics", 
                   "statistics": "...."
                 }
+          '400':
+            description: Bad request provided
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
         
@@ -3065,7 +2956,7 @@ class TestsDirectoryRemoveAll(Handler):
           '400':
             description: Bad request provided
           '403':
-            description: Access denied to this project
+            description: Access refused
           '500':
             description: Server error
         """
@@ -3147,6 +3038,8 @@ class TestsBackup(Handler):
                 }
           '400':
             description: Bad request provided
+          '403':
+            description: Access refused
           '401':
             description: unauthorized
         """
@@ -3222,7 +3115,9 @@ class TestsBackupDownload(Handler):
           '400':
             description: Bad request provided
           '403':
-            description: Access denied to this project
+            description: Access refused
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
 
@@ -3283,10 +3178,8 @@ class TestsBackupListing(Handler):
                   "cmd": "/tests/backup/listing", 
                   "backups": "..."
                 }
-          '400':
-            description: Bad request provided
-          '401':
-            description: unauthorized
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(request=self.request)
 
@@ -3332,8 +3225,8 @@ class TestsBackupRemoveAll(Handler):
                   "cmd": "/tests/tests/backup/remove/all", 
                   "message": "deleted"
                 }
-          '401':
-            description: access denied, unauthorized
+          '403':
+            description: Access refused
           '500':
             description: server error
         """
@@ -3384,8 +3277,8 @@ class TestsReset(Handler):
                   "cmd": "/tests/reset", 
                   "message": "reseted"
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '500':
             description: Server error
         """
@@ -3452,7 +3345,7 @@ class TestsSnapshotRemoveAll(Handler):
           '400':
             description: Bad request provided
           '403':
-            description: Access denied to this project
+            description: Access refused
           '500':
             description: Server error
         """
@@ -3549,7 +3442,7 @@ class VariablesReset(Handler):
           '400':
             description: Bad request provided | Bad project id provided | Bad json provided in value
           '403':
-            description: Access denied to this project
+            description: Access refused
           '500':
             description: Server error
         """
@@ -3713,6 +3606,8 @@ class ResultsBackup(Handler):
                 }
           '400':
             description: Bad request provided
+          '403':
+            description: Access refused
           '401':
             description: unauthorized
         """
@@ -3770,8 +3665,8 @@ class ResultsBackupListing(Handler):
                   "cmd": "/results/backup/listing", 
                   "backups": "..."
                 }
-          '400':
-            description: Bad request provided
+          '403':
+            description: Access refused
           '401':
             description: unauthorized
         """
@@ -3837,7 +3732,9 @@ class ResultsBackupDownload(Handler):
           '400':
             description: Bad request provided
           '403':
-            description: Access denied to this project
+            description: Access refused
+          '500':
+            description: Server error
         """
         user_profile = _get_user(request=self.request)
 
@@ -3898,8 +3795,8 @@ class ResultsBackupRemoveAll(Handler):
                   "cmd": "/tests/results/remove/all", 
                   "message": "deleted"
                 }
-          '401':
-            description: access denied, unauthorized
+          '403':
+            description: Access refused
           '500':
             description: server error
         """
@@ -3958,6 +3855,10 @@ class ResultsStatistics(Handler):
                   "cmd": "/results/statistics", 
                   "statistics": "...."
                 }
+          '400':
+            description: Bad request provided
+          '403':
+            description: Access refused
         """
         user_profile = _get_user(self.request)
         

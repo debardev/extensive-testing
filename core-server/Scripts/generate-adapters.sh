@@ -33,6 +33,7 @@ PKG_NAME=SutAdapters
 find ../SutAdapters/. -name "*.pyo" -exec rm -rf {} \;
 find ../SutAdapters/. -name "*.pyc" -exec rm -rf {} \;
 find ../SutAdapters/. -name "*.lock" -exec rm -rf {} \;
+find ../SutAdapters/. -name "__pycache__" -exec rm -rf {} \;
 
 NB_ADP=$(find ../SutLibraries/* -maxdepth 1 -type d | wc -l)
 if [ $NB_ADP -eq 0 ]; then

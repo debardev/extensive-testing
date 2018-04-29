@@ -33,6 +33,7 @@ PKG_NAME=SutLibraries
 find ../SutLibraries/. -name "*.pyo" -exec rm -rf {} \;
 find ../SutLibraries/. -name "*.pyc" -exec rm -rf {} \;
 find ../SutLibraries/. -name "*.lock" -exec rm -rf {} \;
+find ../SutLibraries/. -name "__pycache__" -exec rm -rf {} \;
 
 NB_LIB=$(find ../SutLibraries/* -maxdepth 1 -type d | wc -l)
 if [ $NB_LIB -eq 0 ]; then
