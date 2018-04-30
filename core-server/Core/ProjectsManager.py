@@ -34,9 +34,11 @@ import json
 try:
     import DbManager
     import Common
+    import UsersManager
 except ImportError: # python3 support
     from . import DbManager
     from . import Common
+    from . import UsersManager
 
 from Libs import Settings, Logger
 
@@ -67,9 +69,20 @@ class ProjectsManager(Logger.ClassLogger):
         """
         load all projects in cache
         """
-        self.trace("update memory cache with projects from database")
-        _, projects_list = self.getProjectsFromDB()
+        self.trace("Updating memory cache with projects from database")
+        
+        code, projects_list = self.getProjectsFromDB()
+        if code == self.context.CODE_ERROR:
+            raise Exception("Unable to get projects from database")
+            
         self.__cache = projects_list
+        self.trace("Projects cache Size=%s" % len(self.__cache) )
+        
+    def cache(self):
+        """
+        Return accessor for the cache
+        """
+        return self.__cache
         
     def addReservedFolders(self):
         """
@@ -86,7 +99,6 @@ class ProjectsManager(Logger.ClassLogger):
                 os.mkdir( "%s/%s/@Sandbox" % (self.repoTests, prj["id"]) )
             except Exception as e:
                 pass
-        self.trace("terminated")
             
     def createDefaultCommon(self):
         """
@@ -106,119 +118,91 @@ class ProjectsManager(Logger.ClassLogger):
         """
         Return projects
         """
-        # get user id 
-        prjs = []
-        sql = 'SELECT r.project_id, p.name FROM `%s-users` u,`%s-relations-projects` r, `%s-projects` p ' % (
-                                                                                    Settings.get( 'MySql', 'table-prefix'), 
-                                                                                    Settings.get( 'MySql', 'table-prefix'), 
-                                                                                    Settings.get( 'MySql', 'table-prefix')
-                                                                                 )
-        sql += 'WHERE u.login="%s" and u.id=r.user_id AND r.project_id=p.id ;' % ( user )
-        ret, rows = DbManager.instance().querySQL( query=sql, columnName=True )
-        if not ret:
-            self.error( 'unable to get project from db for the user %s: %s' % (user, str(ret)) )
-        else:
-            self.trace( "List of projects for user %s: %s" % (user,rows) )
-            prjs = rows
-
-        return prjs
+        # search the user in the cache
+        if user not in UsersManager.instance().cache():
+            self.error( 'Get project for Login=%s not found in cache' % (user) )
+            return False
+            
+        user_projects = UsersManager.instance().cache()[user]['projects']
+        projects_list = []
+        for p in user_projects:
+            projects_dict = {}
+            projects_dict['project_id'] = int(p)
+            projects_dict['name'] = self.getProjectName(prjId=int(p))
+            projects_list.append(projects_dict)
+            
+        return projects_list
             
     def checkProjectsAuthorization(self, user, projectId):
         """
         Check if the project id provided is authorized for the user
         """
-        ret = False
-        sql = 'SELECT r.project_id, p.name FROM `%s-users` u,`%s-relations-projects` r, `%s-projects` p ' % (
-                                                                                        Settings.get( 'MySql', 'table-prefix'),
-                                                                                        Settings.get( 'MySql', 'table-prefix'),
-                                                                                        Settings.get( 'MySql', 'table-prefix')
-                                                                                     )
-        sql += 'WHERE u.login="%s" and u.id=r.user_id AND r.project_id=p.id ;' % (  user )
-        retDb, rows = DbManager.instance().querySQL( query=sql, columnName=True )
-        if not retDb:
-            self.error( 'unable to get project from db for the user %s: %s' % (user, str(retDb)) )
-        else:
-            projectAuthorized = False
-            for prj in rows:
-                if "%s" % prj["project_id"] == "%s" % projectId:
-                    projectAuthorized = True
-            self.trace( '[Login=%s] [ProjectID=%s] authorized projects list: %s' % (user, projectId, rows) )
-            ret = projectAuthorized
-        return ret
+        # search the user in the cache
+        if user not in UsersManager.instance().cache():
+            self.error( 'Check project access for Login=%s not found in cache' % (user) )
+            return False
         
-    def checkProjectsAuthorizationV2(self, user, projectId):
-        """
-        Check if the project id provided is authorized for the user
-        """
-        ret = False
-        rows = []
-        sql = 'SELECT r.project_id, p.name FROM `%s-users` u,`%s-relations-projects` r, `%s-projects` p  WHERE u.login="%s" and u.id=r.user_id AND r.project_id=p.id ;' % (
-            Settings.get( 'MySql', 'table-prefix'), Settings.get( 'MySql', 'table-prefix'), Settings.get( 'MySql', 'table-prefix'),  user )
-        retDb, rows = DbManager.instance().querySQL( query=sql, columnName=True )
-        if not retDb:
-            self.error( 'unable to get project from db for the user %s: %s' % (user, str(retDb)) )
-        else:
-            projectAuthorized = False
-            for prj in rows:
-                if "%s" % prj["project_id"] == "%s" % projectId:
-                    projectAuthorized = True
-            self.trace( '[Login=%s] [ProjectID=%s] authorized projects list: %s' % (user, projectId, rows) )
-            ret = projectAuthorized
-
-        return (ret,rows)
+        # check if the provided project id is authorized for the user
+        granted = False
+        user_profile = UsersManager.instance().cache()[user]
+        for p in user_profile['projects']:
+            if int(p) == int(projectId):
+                granted = True
+                break
+        
+        # return the final result
+        self.trace( 'Check project access for Login=%s and ProjectID=%s Result=%s' % (user, projectId, str(granted)) )
+        return granted
         
     def getDefaultProjectForUser(self, user):
         """
         Get default project of the user passed as argument
         """
-        self.trace( 'Getting default project for user=%s' % user)
-        pid = 1 # default project
-        sql = "SELECT defaultproject FROM `%s` WHERE login='%s'" % (self.table_name_user, user )
-        ret, rows = DbManager.instance().querySQL( query=sql, columnName=True)
-        if not ret:
-            self.error( 'unable to get the default project for the user %s from db: %s' % ( user, str(ret) ) )
-        else:
-            if rows:
-                pid = rows[0]['defaultproject']
-            else:
-                self.error( 'no default project returned for user' )
+        pid = 1
+        found = False
+        
+        for u, profile in UsersManager.instance().cache().items():
+            if u == user:
+                pid = profile['defaultproject']
+                found = True
+                break
+                
+        if not found: self.error( 'no default project returned for User=%s' % user)
+        self.trace( 'Get default project for User=%s Result=%s' % (user, pid) )
         return pid
 
     def getProjectID(self, name):
         """
         Return project id according to the name passed as argument
         """
-        self.trace( 'Get project id by name "%s" from db' % name)
         pid = 0 # default project
-        sql = "SELECT id FROM `%s` WHERE name='%s'" % (self.table_name, name )
-        ret, rows = DbManager.instance().querySQL( query=sql, columnName=True)
-        if not ret:
-            self.error( 'unable to get the project id for the name %s from db: %s' % ( name, str(ret) ) )
-        else:
-            if rows:
-                pid = rows[0]['id']
-            else:
-                self.error( 'no project id returned for name=%s' % name )
+        found = False
+        
+        for p in self.cache():
+            if p["name"] == name:
+                pid = p["id"]
+                found = True
+                break
+                
+        if not found: self.error( 'no project id returned with name=%s' % name )
+        self.trace( 'Get project ID with Name=%s Result=%s ' % (name, pid) )
         return pid
         
     def getProjectName(self, prjId):
         """
         Return project name according to the id passed as argument
         """
-        self.trace( 'Get project name by id "%s" from db' % prjId)
         prjName = 'Common' # default project
+        found = False
         
-        if int(prjId) == 0: return prjName
-        
-        sql = "SELECT name FROM `%s` WHERE id=%s" % (self.table_name, prjId )
-        ret, rows = DbManager.instance().querySQL( query=sql, columnName=True)
-        if not ret:
-            self.error( 'unable to get the project name for id %s from db: %s' % ( prjId, str(ret) ) )
-        else:
-            if rows:
-                prjName = rows[0]['name']
-            else:
-                self.error( 'no project name returned for id=%s' % prjId )
+        for p in self.cache():
+            if int(p["id"]) == int(prjId):
+                prjName = p["name"]
+                found = True
+                break
+                
+        if not found: self.error( 'no project name returned with id=%s' % prjId )
+        self.trace( 'Get project name with Id=%s Result=%s' % (prjId, prjName) )
         return prjName
 
     def addProject(self, prjId):
@@ -300,7 +284,7 @@ class ProjectsManager(Logger.ClassLogger):
             # todo, cancel the previous insert
             return (self.context.CODE_ERROR, "unable to add project")
         
-        # refresh the cache
+        # refresh the cache, new in v19
         self.loadCache()
         
         return (self.context.CODE_OK, "%s" % int(lastRowId) )
@@ -342,7 +326,7 @@ class ProjectsManager(Logger.ClassLogger):
             self.error( "unable to update project by id" )
             return (self.context.CODE_ERROR, "unable to update project by id")
         
-        # refresh the cache
+        # refresh the cache, new in v19
         self.loadCache()
         
         return (self.context.CODE_OK, "" )
@@ -393,7 +377,7 @@ class ProjectsManager(Logger.ClassLogger):
             # todo, cancel the previous delete
             return (self.context.CODE_ERROR, "unable to delete project")
 
-        # refresh the cache
+        # refresh the cache, new in v19
         self.loadCache()
         
         return (self.context.CODE_OK, "" )

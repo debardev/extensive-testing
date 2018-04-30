@@ -67,15 +67,31 @@ class UsersManager(Logger.ClassLogger):
         """
         load all projects in cache
         """
-        self.trace("Updating memory cache with users from database")
+        self.trace("Updating users memory cache from database")
+
         code, users_list = self.getUsersFromDB()
         if code == self.context.CODE_ERROR:
             raise Exception("Unable to get users from database")
             
+        code, relations_list = self.getRelationsFromDB()
+        if code == self.context.CODE_ERROR:
+            raise Exception("Unable to get relations from database")
+
         # save users in the cache and order by login before
         users_dict = {}
-        for row in users_list:
-                users_dict[row['login']] = row
+        for row_user in users_list:
+        
+            # get all linked projects to the user
+            projects = []
+            for row_relation in relations_list:
+                if row_relation['user_id'] == row_user['id']:
+                    projects.append( row_relation['project_id'] )     
+            row_user['projects'] = projects
+            
+            # store in the dict
+            users_dict[row_user['login']] = row_user
+            
+        # delete the list of users and save the dict in the cache  
         del users_list
         self.__cache = users_dict
         self.trace("Users cache Size=%s" % len(self.__cache) )
@@ -84,7 +100,6 @@ class UsersManager(Logger.ClassLogger):
         """
         Return accessor for the cache
         """
-        self.trace("Reading users from cache Size=%s" % len(self.__cache) )
         return self.__cache
 
     def setOnlineStatus(self, login, online):
@@ -482,6 +497,25 @@ class UsersManager(Logger.ClassLogger):
         if not dbRet: 
             self.error( "unable to read user's table" )
             return (self.context.CODE_ERROR, "unable to read user's table")
+
+        return (self.context.CODE_OK, dbRows )
+
+    def getRelationsFromDB(self):
+        """
+        Get all relations from database
+        """
+        self.trace( 'Get all relations from database')
+        
+        # init some shortcut
+        prefix = Settings.get( 'MySql', 'table-prefix')
+        escape = MySQLdb.escape_string
+        
+        # get all users
+        sql = """SELECT * FROM `%s-relations-projects`""" % ( prefix)
+        dbRet, dbRows = DbManager.instance().querySQL( query = sql, columnName=True  )
+        if not dbRet: 
+            self.error( "unable to read relation's table" )
+            return (self.context.CODE_ERROR, "unable to read relation's table")
 
         return (self.context.CODE_OK, dbRows )
         
