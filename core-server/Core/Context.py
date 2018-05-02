@@ -47,6 +47,7 @@ try:
     import RepoAdapters
     import ProjectsManager
     import Common
+    import RepoTests
 except ImportError: # python3 support
     from . import EventServerInterface as ESI
     from . import DbManager
@@ -56,6 +57,7 @@ except ImportError: # python3 support
     from . import RepoAdapters
     from . import ProjectsManager
     from . import Common
+    from . import RepoTests
     
 from Libs import Settings, Logger
 
@@ -482,7 +484,7 @@ class Context(Logger.ClassLogger):
             # self.trace( "Nb [usr=%s]" % nbLinesTableUsers)
             
             nbTests = StatsManager.instance().getNbTests()
-            self.trace( "Nb [sc=%s], [tg=%s], [tp=%s], [ts=%s], [tu=%s], [ta=%s], [tc=%s]" % (
+            self.trace( "Nb tests executed [sc=%s], [tg=%s], [tp=%s], [ts=%s], [tu=%s], [ta=%s], [tc=%s]" % (
                                                     int(nbTests[0]['nbsc']),
                                                     int(nbTests[0]['nbtg']),
                                                     int(nbTests[0]['nbtp']),
@@ -661,11 +663,12 @@ class Context(Logger.ClassLogger):
         Return levels
         """
         levels = []
-        if userProfile['administrator']: levels.append( Settings.get('Server', 'level-admin') )
-        if userProfile['leader']: levels.append( Settings.get('Server', 'level-monitor') )
-        if userProfile['tester']: levels.append( Settings.get('Server', 'level-tester') )
-        # if userProfile['developer']: levels.append( Settings.get('Server', 'level-developer') )
-        # if userProfile['system']: levels.append( Settings.get('Server', 'level-system') )
+        if userProfile['administrator']: 
+            levels.append( Settings.get('Server', 'level-admin') )
+        if userProfile['leader']: 
+            levels.append( Settings.get('Server', 'level-monitor') )
+        if userProfile['tester']: 
+            levels.append( Settings.get('Server', 'level-tester') )
         return levels
 
     def registerUser (self, user):
@@ -758,7 +761,7 @@ class Context(Logger.ClassLogger):
             return found
         else:
             found = self.usersConnected[login]
-            self.trace( 'User Login=%s connected with channel? yes' % str(login) )
+            # self.trace( 'User Login=%s connected with channel? yes' % str(login) )
         return found
 
     def getInformations(self, user=None, b64=False):
@@ -1091,89 +1094,102 @@ class Context(Logger.ClassLogger):
             return None
         return eth
 
-    def __parseDict(self, d):
-        """
-        """
-        ret = {}
-        for k,v in d.items():
-            if isinstance(v, unicode):
-                ret[k.encode("utf8")] = v.encode("utf8")
-            elif isinstance(v, dict):
-                ret[k.encode("utf8")] = self.__parseDict(d=v)
-            elif isinstance(v, list):
-                ret[k.encode("utf8")] = self.__parseList(d=v)
-            else:
-                ret[k.encode("utf8")] = v
+    # def __parseDict(self, d):
+        # """
+        # """
+        # ret = {}
+        # for k,v in d.items():
+            # if isinstance(v, unicode):
+                # ret[k.encode("utf8")] = v.encode("utf8")
+            # elif isinstance(v, dict):
+                # ret[k.encode("utf8")] = self.__parseDict(d=v)
+            # elif isinstance(v, list):
+                # ret[k.encode("utf8")] = self.__parseList(d=v)
+            # else:
+                # ret[k.encode("utf8")] = v
                 
-        return ret
+        # return ret
         
-    def __parseList(self, d):
-        """
-        """
-        ret = []
-        for itm in d:
-            if isinstance(itm, unicode):
-                ret.append( itm.encode("utf8") )
-            elif isinstance(itm, dict):
-                ret.append( self.__parseDict(d=itm) )
-            elif isinstance(itm, list):
-                ret.append( self.__parseList(d=itm) )
-            else:
-                ret.append(itm)
+    # def __parseList(self, d):
+        # """
+        # """
+        # ret = []
+        # for itm in d:
+            # if isinstance(itm, unicode):
+                # ret.append( itm.encode("utf8") )
+            # elif isinstance(itm, dict):
+                # ret.append( self.__parseDict(d=itm) )
+            # elif isinstance(itm, list):
+                # ret.append( self.__parseList(d=itm) )
+            # else:
+                # ret.append(itm)
                 
-        return ret
+        # return ret
         
     def getTestEnvironment(self, user, b64=False):
         """
         Return the test environment according to the user
         """
-        self.trace("Return the test environment for the user: %s" % user)
+        self.trace("Return test variables for User=%s" % user)
         
         if isinstance(user, UserContext):
             projects = user.getProjects()
         else:
             projects = ProjectsManager.instance().getProjects(user=user)
+            
         testEnvironment = []
         for prj in projects:
-            if int( Settings.get( 'MySql', 'test-environment-encrypted' ) ):
-                sql = 'SELECT name, AES_DECRYPT(value, "%s") as value FROM `%s-test-environment` WHERE project_id="%s";' % (
-                                    Settings.get( 'MySql', 'test-environment-password' ),
-                                    Settings.get( 'MySql', 'table-prefix'), 
-                                    prj['project_id'] 
-                        )
-            else:
-                sql = 'SELECT * FROM `%s-test-environment` WHERE project_id="%s";' % ( Settings.get( 'MySql', 'table-prefix'), 
-                                                                                       prj['project_id'] )
-            ret, rows = DbManager.instance().querySQL( query=sql, columnName=True )
-            if not ret:
-                self.error( 'unable to get test environment for user %s: %s' % (user, str(ret)) )
-            else:
-                envDecoded = []
-                for env in rows:
-                    try:
-                        env_json = json.loads(env['value'])
+            vars_list = RepoTests.instance().cacheVars()
+            
+            env_filtered = []
+            for var in vars_list:
+                if int(var['project_id']) == int(prj['project_id']):
+                    env_filtered.append( {'name': var['name'], 'value': var['value'] } )
+            
+            testEnvironment.append( { 'project_id': prj['project_id'], 
+                                      'project_name': prj['name'], 
+                                      'test_environment': env_filtered } 
+                                  )
+            
+            # if int( Settings.get( 'MySql', 'test-environment-encrypted' ) ):
+                # sql = 'SELECT name, AES_DECRYPT(value, "%s") as value FROM `%s-test-environment` WHERE project_id="%s";' % (
+                                    # Settings.get( 'MySql', 'test-environment-password' ),
+                                    # Settings.get( 'MySql', 'table-prefix'), 
+                                    # prj['project_id'] 
+                        # )
+            # else:
+                # sql = 'SELECT * FROM `%s-test-environment` WHERE project_id="%s";' % ( Settings.get( 'MySql', 'table-prefix'), 
+                                                                                       # prj['project_id'] )
+            # ret, rows = DbManager.instance().querySQL( query=sql, columnName=True )
+            # if not ret:
+                # self.error( 'unable to get test environment for user %s: %s' % (user, str(ret)) )
+            # else:
+                # envDecoded = []
+                # for env in rows:
+                    # try:
+                        # env_json = json.loads(env['value'])
                         
-                        if sys.version_info > (3,):
-                            pass
-                        else:
+                        # if sys.version_info > (3,):
+                            # pass
+                        # else:
                             # convert unicode to str encoded in utf8
-                            if sys.version_info > (2,6,):
-                                if isinstance(env_json, unicode):
-                                    env_json = env_json.encode("utf8")
-                                elif isinstance(env_json, dict):
-                                    env_json = self.__parseDict(d=env_json)
-                                elif isinstance(env_json, list):
-                                    env_json = self.__parseList(d=env_json)
-                                else:
-                                    env_json = env_json
+                            # if sys.version_info > (2,6,):
+                                # if isinstance(env_json, unicode):
+                                    # env_json = env_json.encode("utf8")
+                                # elif isinstance(env_json, dict):
+                                    # env_json = self.__parseDict(d=env_json)
+                                # elif isinstance(env_json, list):
+                                    # env_json = self.__parseList(d=env_json)
+                                # else:
+                                    # env_json = env_json
                                 
-                    except Exception as e:
-                        self.error( "Unable to encode in json: %s" % str(e) )
-                    else:
-                        envDecoded.append( {'name': env['name'], 'value': env_json } )
-                testEnvironment.append( {'project_id': prj['project_id'], 'project_name': prj['name'], 'test_environment': envDecoded } )
+                    # except Exception as e:
+                        # self.error( "Unable to encode in json: %s" % str(e) )
+                    # else:
+                        # envDecoded.append( {'name': env['name'], 'value': env_json } )
+                # testEnvironment.append( {'project_id': prj['project_id'], 'project_name': prj['name'], 'test_environment': envDecoded } )
         
-        self.trace( "Test environment retrieved for Login=%s" % (user) )
+        # self.trace( "Test environment retrieved for Login=%s" % (user) )
 
         return testEnvironment
 

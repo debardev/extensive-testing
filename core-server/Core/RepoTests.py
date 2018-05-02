@@ -110,6 +110,10 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                                             Settings.get( 'Paths', 'packages' ),  
                                             Settings.get( 'Paths', 'samples' ) )
         
+        # load variables in cache, new in v19
+        self.__cache_vars = []
+        self.loadCacheVars()
+        
         # Initialize the repository
         self.info( 'Deploying test samples...' )
         self.deploy()
@@ -117,6 +121,25 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         # cleanup all lock files on init
         self.cleanupLocks()
 
+    def loadCacheVars(self):
+        """
+        load all projects in cache
+        """
+        self.trace("Updating variables memory cache from database")
+        
+        code, vars_list = self.getVariablesFromDB()
+        if code == self.context.CODE_ERROR:
+            raise Exception("Unable to get variables from database")
+
+        self.__cache_vars = vars_list
+        self.trace("Variables cache Size=%s" % len(self.__cache_vars) )
+        
+    def cacheVars(self):
+        """
+        Return accessor for the cache
+        """
+        return self.__cache_vars
+        
     def trace(self, txt):
         """
         Trace message
@@ -1211,13 +1234,19 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
             sql += """, value"""
         sql += """ FROM `%s-test-environment`""" % ( prefix)
         if projectId is not None:
+            projectId = str(projectId)
             sql += """ WHERE project_id='%s'""" % escape("%s" % projectId)
         sql += """ ORDER BY name"""
         dbRet, dbRows = DbManager.instance().querySQL( query = sql, columnName=True  )
         if not dbRet: 
             self.error( "unable to read test environment table" )
             return (self.context.CODE_ERROR, "unable to test environment table")
-
+            
+        # new in v17 convert as json the result 
+        for d in dbRows:
+            d['value'] = json.loads( d['value'] )        
+        # end of new
+        
         return (self.context.CODE_OK, dbRows)
         
     def getVariableFromDB(self, projectId, variableName=None, variableId=None):
@@ -1227,6 +1256,7 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         # init some shortcut
         prefix = Settings.get( 'MySql', 'table-prefix')
         escape = MySQLdb.escape_string
+        projectId = str(projectId)
         
         # get all users
         sql = """SELECT id, name, project_id"""
@@ -1239,12 +1269,18 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         if variableName is not None:
             sql += """ AND name LIKE '%%%s%%'""" % escape(variableName)
         if variableId is not None:
+            variableId = str(variableId)
             sql += """ AND id='%s'""" % escape( "%s" % variableId)
         dbRet, dbRows = DbManager.instance().querySQL( query = sql, columnName=True  )
         if not dbRet: 
             self.error( "unable to search test environment table" )
             return (self.context.CODE_ERROR, "unable to search variable in test environment table")
 
+        # new in v17 convert as json the result 
+        for d in dbRows:
+            d['value'] = json.loads( d['value'] )        
+        # end of new
+        
         return (self.context.CODE_OK, dbRows)
         
     def addVariableInDB(self, projectId, variableName, variableValue):
@@ -1290,7 +1326,13 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         if not dbRet: 
             self.error("unable to insert variable")
             return (self.context.CODE_ERROR, "unable to insert variable")
-            
+        
+        # new in v19, refresh the cache
+        self.loadCacheVars()
+        
+        # refresh the context of all connected users
+        self.context.refreshTestEnvironment()
+
         return (self.context.CODE_OK, "%s" % int(lastRowId) )
         
     def duplicateVariableInDB(self, variableId, projectId=None):
@@ -1305,6 +1347,7 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         # find variable by id
         sql = """SELECT * FROM `%s-test-environment` WHERE  id='%s'""" % ( prefix, escape(variableId) )
         if projectId is not None:
+            projectId = str(projectId)
             sql += """ AND project_id='%s'""" % escape(projectId)
             
         dbRet, dbRows = DbManager.instance().querySQL( query = sql, columnName=True  )
@@ -1366,7 +1409,13 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
             if not dbRet: 
                 self.error("unable to update variable")
                 return (self.context.CODE_ERROR, "unable to update variable")
-            
+        
+        # new in v19, refresh the cache
+        self.loadCacheVars()
+        
+        # refresh the context of all connected users
+        self.context.refreshTestEnvironment()
+        
         return (self.context.CODE_OK, "" )
         
     def delVariableInDB(self, variableId, projectId=None):
@@ -1381,6 +1430,7 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         # check if the name is not already used
         sql = """SELECT * FROM `%s-test-environment` WHERE id='%s'""" % ( prefix, escape(variableId) )
         if projectId is not None:
+            projectId = str(projectId)
             sql += """ AND project_id='%s'""" % escape( "%s" % projectId)
             
         dbRet, dbRows = DbManager.instance().querySQL( query = sql, columnName=True  )
@@ -1392,13 +1442,20 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         # delete from db
         sql = """DELETE FROM `%s-test-environment` WHERE  id='%s'""" % ( prefix, escape(variableId) )
         if projectId is not None:
+            projectId = str(projectId)
             sql += """ AND project_id='%s'""" % escape( "%s" % projectId)
             
         dbRet, dbRows = DbManager.instance().querySQL( query = sql  )
         if not dbRet: 
             self.error( "unable to remove variable by id" )
             return (self.context.CODE_ERROR, "unable to remove variable by id")
-            
+           
+        # new in v19, refresh the cache
+        self.loadCacheVars()
+        
+        # refresh the context of all connected users
+        self.context.refreshTestEnvironment()
+        
         return (self.context.CODE_OK, "" )
         
     def delVariablesInDB(self, projectId):
@@ -1417,6 +1474,12 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
             self.error( "unable to reset variables" )
             return (self.context.CODE_ERROR, "unable to reset variables")
             
+        # new in v19, refresh the cache
+        self.loadCacheVars()
+        
+        # refresh the context of all connected users
+        self.context.refreshTestEnvironment()
+        
         return (self.context.CODE_OK, "" )
 
         

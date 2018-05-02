@@ -26,6 +26,10 @@
 		22. (minor) ignore __pycache__ during build of adapters and libraries packages
 		23. (major) new cache memory for users and relations, optimization to reduce the number of queries in db
 		24. (major) new cache memory for projects, optimization to reduce the number of queries in db
+        25. (minor) rest api: update parameters on search variable by name or id
+		26. (minor) web server: pretty json print called automatically on test variable load
+        27. (major) web server: update to use the rest api on test variables part
+        28. (major) new cache memory for test variables, sql queries decreased
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only

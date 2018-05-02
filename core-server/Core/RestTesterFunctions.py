@@ -8951,8 +8951,8 @@ class VariablesListing(Handler):
             raise HTTP_500(details)
         
         # new in v17 convert as json the result 
-        for d in details:
-            d['value'] = json.loads( d['value'] )        
+        # for d in details:
+            # d['value'] = json.loads( d['value'] )        
         # end of new
         
         return { "cmd": self.request.path, "message": "listing result", "variables": details }
@@ -9070,18 +9070,18 @@ class VariablesSearchByName(Handler):
             raise HTTP_404("Variable not found")
 
         
-        if len(details) == 1:
+        # if len(details) == 1:
             # new in v17, convert as json the value
-            details[0]['value'] = json.loads( details[0]['value'] )
+            # details[0]['value'] = json.loads( details[0]['value'] )
             # end of new
-            return { "cmd": self.request.path, "variable": details[0] }
-        else:
+            # return { "cmd": self.request.path, "variable": details[0] }
+        # else:
             # new in v17 convert value as json
-            for d in details:
-                d['value'] = json.loads( d['value'] )
+            # for d in details:
+                # d['value'] = json.loads( d['value'] )
             # end of new
             
-            return { "cmd": self.request.path, "message": "search result", "variables": details }
+        return { "cmd": self.request.path, "message": "search result", "variables": details }
 
 class VariablesSearchById(Handler):
     """
@@ -9196,18 +9196,18 @@ class VariablesSearchById(Handler):
             raise HTTP_404("Variable not found")
 
         
-        if len(details) == 1:
+        # if len(details) == 1:
             # new in v17, convert as json the value
-            details[0]['value'] = json.loads( details[0]['value'] )
+            # details[0]['value'] = json.loads( details[0]['value'] )
             # end of new
-            return { "cmd": self.request.path, "variable": details[0] }
-        else:
+            # return { "cmd": self.request.path, "variable": details[0] }
+        # else:
             # new in v17 convert value as json
-            for d in details:
-                d['value'] = json.loads( d['value'] )
+            # for d in details:
+                # d['value'] = json.loads( d['value'] )
             # end of new
             
-            return { "cmd": self.request.path, "message": "search result", "variables": details }
+        return { "cmd": self.request.path, "message": "search result", "variables": details }
 
 """
 Tests Results handlers
