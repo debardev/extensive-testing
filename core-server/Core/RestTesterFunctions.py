@@ -10351,7 +10351,6 @@ class ResultsReportReviews(Handler):
                   type: string
                 test-report:
                   type: string
-                  description: in base64 and gzipped
                 project-id:
                   type: string
             examples:

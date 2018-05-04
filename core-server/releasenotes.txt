@@ -17,19 +17,19 @@
 		13. (minor) new python ansible library embedded by default
 		14. (minor) PyYAML library installed by default, to support the new ansible adapter
 		15. (major) embedded python libraries updated and drop support of python 2.6
-		16. (minor) new chef interop module
+		16. (minor) new chef interop module (TBC!!)
 		17. (minor) small improvments in cron scripts
 		18. (minor) web: new feature to add security banner on the login page of the web interface
 		19. (minor) rest api: some update in the swagger api documentation
 		20. (medium) rest api: improvment in administration user part
-        21. (medium) web server: update to use the rest api on user part
+		21. (medium) web server: update to use the rest api on user part
 		22. (minor) ignore __pycache__ during build of adapters and libraries packages
 		23. (major) new cache memory for users and relations, optimization to reduce the number of queries in db
 		24. (major) new cache memory for projects, optimization to reduce the number of queries in db
-        25. (minor) rest api: update parameters on search variable by name or id
+		25. (minor) rest api: update parameters on search variable by name or id
 		26. (minor) web server: pretty json print called automatically on test variable load
-        27. (major) web server: update to use the rest api on test variables part
-        28. (major) new cache memory for test variables, sql queries decreased
+		27. (major) web server: update to use the rest api on test variables part
+		28. (major) new cache memory for test variables, sql queries decreased
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only
@@ -38,3 +38,4 @@
 		5. (medium) fix regression: unable to check syntax of a test global
 		6. (minor) password update from web server, fix PHP Warning expects string parameter, object given
 		7. (medium) rest api: fix update password ressource, missing sha1 procedure
+		8. (medium) web server: unable to display test report from test results

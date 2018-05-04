@@ -343,7 +343,8 @@
 
 		if ( $code == 200 ) {
             $rsp["code"] = 200;
-            $rsp["msg"] = "<br />".$RESTAPI->decodeData($details['basic-review'], $json=False);
+            // $rsp["msg"] = "<br />".$RESTAPI->decodeData($details['basic-review'], $json=False);
+            $rsp["msg"] = "<br />".$details['basic-review'];
         } else {
             $rsp["code"] = 500;
 			$rsp["msg"] = 'No report available: '.$details;
@@ -1090,50 +1091,25 @@
 		$rsp["msg"] = lang('ws-trying');
 		$rsp["moveto"] = null;
 
-        //refused separator ":" in name
-        if ( strpos($name, ":") !== false )
-        {
-			$rsp["code"] = 603;
-			$rsp["msg"] = lang('ws-env-bad-name');
-			return $rsp;
-        }
+
+        list($code, $details) = $RESTAPI->addVariable($pid=intval($pid), 
+                                                      $name=$name, 
+                                                      $value=json_decode($values) );
         
-		// check if the name is not already used
-		$ret = getenv_elementbyname($name, $pid);
-		if ( $ret )
-		{
-			$rsp["code"] = 603;
-			$rsp["msg"] = lang('ws-env-duplicate-1').$name.lang('ws-env-duplicate-2');
-			return $rsp;
-		}
-
-		// good json ?
-		$json_values = json_decode($values);
-		if ( $json_values === null)
-		{
-			$rsp["msg"] = lang('ws-env-bad-value');
-			$rsp["code"] = 500;
-			return $rsp;
-		}
-
-		// this name is free then create project
-		$active = 1;
-        if ( $__LWF_CFG['mysql-test-environment-encrypted'] ) {
-            $sql_req = 'INSERT INTO `'.$__LWF_DB_PREFIX.'-test-environment` (`name`, `value`, `project_id` ) VALUES(\''.mysql_real_escape_string(strtoupper($name)).'\', AES_ENCRYPT(\''.$values.'\',\''.$__LWF_CFG['mysql-test-environment-password'].'\'), \''.$pid.'\');';
-        } else {
-            $sql_req = 'INSERT INTO `'.$__LWF_DB_PREFIX.'-test-environment` (`name`, `value`, `project_id` ) VALUES(\''.mysql_real_escape_string(strtoupper($name)).'\', \''.mysql_real_escape_string($values).'\', \''.$pid.'\');';
-		}
-        $rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to add environment")."(".$sql_req.")";
-			return $rsp;
-		}  else {
-			$RESTAPI->refreshTestEnvironment();
-
-			$rsp["msg"] = lang('ws-env-added');
-			$rsp["code"] = 200;
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
+		} else {
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-env-added');
 		}
 
 		return $rsp;
@@ -1150,30 +1126,29 @@
 		$rsp["moveto"] = null;
 
 		$redirect_page_url = "./index.php?p=".get_pindex('tests')."&s=".get_subpindex( 'tests', 'test-environment' )."&prj=".$pid;
+
+
+        list($code, $details) = $RESTAPI->duplicateVariable($pid=intval($pid), 
+                                                         $id=intval($eid));
         
-		// check eid
-		$project = getenv_elementbyid($eid);
-		if ( $project == null || $project == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-env-not-found');
-			$rsp["moveto"] = $redirect_page_url;
-			return $rsp;
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
+		} else {
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-env-duplicated');
 		}
-        
-        // get random id
-        $uniq = uniqid();
-        
-        // duplicate the element
-        $rsp = env_addelement($name=$project['name']."-COPY#".$uniq, $values=$project['value'], $pid=$project['project_id']);
-        
-        // change the user message
-        if ( $rsp["code"] == 200 ) {
-			$rsp["msg"] = lang('ws-env-duplicated');
-		}
-        
-		$rsp["moveto"] = $redirect_page_url;
-		return $rsp;
+
+        $rsp["moveto"] = $redirect_page_url;
+        return $rsp;
 	}
 
 	/*
@@ -1188,36 +1163,27 @@
 
 		$redirect_page_url = "./index.php?p=".get_pindex('tests')."&s=".get_subpindex( 'tests', 'test-environment' )."&prj=".$pid;
 
-		// check eid
-		$project = getenv_elementbyid($eid);
-		if ( $project == null || $project == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-env-not-found');
-			$rsp["moveto"] = $redirect_page_url;
-			return $rsp;
-		}
 
-
-		// delete element in db
-		$sql_req = 'DELETE FROM `'.$__LWF_DB_PREFIX.'-test-environment` WHERE id=\''.$eid.'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to delete element on test environment")."(".$sql_req.")";
-			$rsp["moveto"] = $redirect_page_url;
-			return $rsp;
+        list($code, $details) = $RESTAPI->deleteVariable($pid=intval($pid), 
+                                                         $id=intval($eid) );
+        
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
 		} else {
-			$RESTAPI->refreshTestEnvironment();
-
-			$rsp["msg"] = lang('ws-env-deleted');
-			$rsp["code"] = 200;
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-env-deleted');
 		}
-		
-		
 
-		$rsp["moveto"] = $redirect_page_url;
+        $rsp["moveto"] = $redirect_page_url;
 		return $rsp;
 	}
 
@@ -1231,85 +1197,28 @@
 		$rsp["msg"] = lang('ws-trying');
 		$rsp["moveto"] = null;
 
-		// check eid
-		$project = getenv_elementbyid($eid);
-		if ( $project == null || $project == false)
-		{
-			$rsp["code"] = 404;
-			$rsp["msg"] = lang('ws-env-not-found');
-			$rsp["moveto"] = $redirect_page_url;
-			return $rsp;
-		}
 
-		// good json ?
-		$json_values = json_decode($values);
-		if ( $json_values === null)
-		{
-			$rsp["msg"] = lang('ws-env-bad-value');
-			$rsp["code"] = 500;
-			return $rsp;
-		}
-
-        if ( $__LWF_CFG['mysql-test-environment-encrypted'] ) {
-            $sql_req = 'UPDATE `'.$__LWF_DB_PREFIX.'-test-environment` SET name=\''.mysql_real_escape_string(strtoupper($name)).'\', value=AES_ENCRYPT(\''.$values.'\',\''.$__LWF_CFG['mysql-test-environment-password'].'\'), project_id='.$pid.' WHERE id=\''.$eid.'\';';
-        } else {
-            $sql_req = 'UPDATE `'.$__LWF_DB_PREFIX.'-test-environment` SET name=\''.mysql_real_escape_string(strtoupper($name)).'\', value=\''.mysql_real_escape_string($values).'\', project_id='.$pid.' WHERE id=\''.$eid.'\';';
-		}
-        $rslt = $db->query( $sql_req ) ;
-		
-		if ( !$rslt ) 
-		{
-			$rsp["code"] = 500;
-			$rsp["msg"] = $db->str_error("Unable to update element")."(".$sql_req.")";
+        list($code, $details) = $RESTAPI->updateVariable($pid=intval($pid), 
+                                                         $id=intval($eid),
+                                                         $name=$name, 
+                                                         $value=json_decode($values));
+        
+        $rsp["code"] = 500;
+		if ($code == 401) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 400) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 500) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 403) {
+			$rsp["msg"] = $details;
+		} elseif ($code == 404) {
+			$rsp["msg"] = $details;
 		} else {
-			$RESTAPI->refreshTestEnvironment();
-
-			$rsp["code"] = 200;
-			$rsp["msg"] = lang('ws-env-updated');
+            $rsp["code"] = 200;
+            $rsp["msg"] = lang('ws-env-updated');
 		}
 
-		return $rsp;
-	}
-
-	/*
-	Return the element according to the identifier passed as argument
-	*/
-	function getenv_elementbyid($eid)
-	{
-		global $db, $CORE, $__LWF_DB_PREFIX;
-		$sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-test-environment` WHERE  id=\''.mysql_real_escape_string($eid).'\';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			return null;
-		} else {
-			if ( $db->num_rows($rslt) == 0 )
-			{
-				return false;
-			} else {
-				return $db->fetch_assoc($rslt);
-			}
-		}
-	}
-
-	/*
-	Return the element according to the name passed as argument
-	*/
-	function getenv_elementbyname($name, $pid)
-	{
-		global $db, $CORE, $__LWF_DB_PREFIX;
-		$sql_req = 'SELECT * FROM `'.$__LWF_DB_PREFIX.'-test-environment` WHERE  name=\''.mysql_real_escape_string($name).'\' AND project_id='.$pid.';';
-		$rslt = $db->query( $sql_req );
-		if ( !$rslt ) 
-		{
-			return null;
-		} else {
-			if ( $db->num_rows($rslt) == 0 )
-			{
-				return false;
-			} else {
-				return $db->fetch_assoc($rslt);
-			}
-		}
+        return $rsp;
 	}
 ?>
