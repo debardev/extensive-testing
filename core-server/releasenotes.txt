@@ -30,6 +30,7 @@
 		26. (minor) web server: pretty json print called automatically on test variable load
 		27. (major) web server: update to use the rest api on test variables part
 		28. (major) new cache memory for test variables, sql queries decreased
+		29. (minor) code splitted in testmodel file to be more readable
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only
@@ -38,4 +39,4 @@
 		5. (medium) fix regression: unable to check syntax of a test global
 		6. (minor) password update from web server, fix PHP Warning expects string parameter, object given
 		7. (medium) rest api: fix update password ressource, missing sha1 procedure
-		8. (medium) web server: unable to display test report from test results
+		8. (medium) web server: unable to display test report in test results part

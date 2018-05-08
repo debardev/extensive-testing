@@ -141,6 +141,129 @@
             return array($code, $rsp);
         }
         
+        function addVariable($pid, $name, $value) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // add variable
+            $req = json_encode( array('project-id' => $pid,
+                                      'variable-name' => $name,
+                                      'variable-value' => $value) );
+            list($code, $rsp) = $this->getRestClient("POST", "/variables/add", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
+        function deleteVariable($pid, $id) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // delete variable
+            $req = json_encode( array('project-id' => $pid,
+                                      'variable-id' => $id) );
+            list($code, $rsp) = $this->getRestClient("POST", "/variables/remove", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
+        function duplicateVariable($pid, $id) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // duplicate variable
+            $req = json_encode( array('project-id' => $pid,
+                                      'variable-id' => $id) );
+            list($code, $rsp) = $this->getRestClient("POST", "/variables/duplicate", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
+        function updateVariable($pid, $id, $name, $value) {
+            global $__LWF_CFG, $CORE;
+            
+            // login
+            $req = json_encode( array('login' => $CORE->profile['login'], 
+                                      'password' => $CORE->profile['user-password']) );
+            list($code, $rsp) = $this->getRestClient("POST", "/session/login", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json"));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+
+            $session_id = $rsp['session_id'];
+            
+            // update variable
+            $req = json_encode( array('project-id' => $pid,
+                                      'variable-id' => $id,
+                                      'variable-name' => $name,
+                                      'variable-value' => $value) );
+            list($code, $rsp) = $this->getRestClient("POST", "/variables/update", 
+                                                     $req, 
+                                                     array("Content-Type: appplication/json",
+                                                           "Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }
+            
+            // logout
+            list($code,$rsp) = $this->getRestClient("GET", "/session/logout", "", 
+                                                    array("Cookie: session_id=".$session_id));
+            if ( $code != 200 ) { return array($code,$rsp['error']); }                                        
+
+            return array($code, $rsp);
+        }
+        
         function disconnectUser($login) {
             global $__LWF_CFG, $CORE;
             

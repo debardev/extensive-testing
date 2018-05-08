@@ -46,7 +46,9 @@ import json
 try:
     import Common
     import TestModel
-    import SubTestModel
+    import TestModelDesign
+    import TestModelCommon
+    import TestModelSub
     import EventServerInterface as ESI
     import TestServerInterface as TSI
     import RepoManager
@@ -62,7 +64,9 @@ try:
 except ImportError:
     from . import Common
     from . import TestModel
-    from . import SubTestModel
+    from . import TestModelDesign
+    from . import TestModelCommon
+    from . import TestModelSub
     from . import EventServerInterface as ESI
     from . import TestServerInterface as TSI
     from . import RepoManager
@@ -1059,7 +1063,7 @@ class Task(Logger.ClassLogger):
                 # Creation te 
                 self.trace("Parse test design: creating the test executable for test design check")
                 try:
-                    te = TestModel.createTestDesign(    
+                    te = TestModelDesign.createTestDesign(    
                                                 dataTest = self.dataTest, 
                                                 userName=self.userName, 
                                                 testName=self.testName, 
@@ -1242,7 +1246,8 @@ class Task(Logger.ClassLogger):
                 isTg = True     
                 
             if  isTu or isTs or isTa:
-                subte = SubTestModel.createSubTest( dataTest = self.dataTest, trPath=self.getTestPath(),
+                subte = TestModelSub.createSubTest( dataTest = self.dataTest, 
+                                                    trPath=self.getTestPath(),
                                                     descriptions=self.dataTest['test-properties']['descriptions']['description'],
                                                     defaultLibrary=RepoLibraries.instance().getDefault(),
                                                     defaultAdapter=RepoAdapters.instance().getDefault(), 
@@ -1272,8 +1277,8 @@ class Task(Logger.ClassLogger):
                             
                         if ts['extension'] == RepoManager.TEST_PLAN_EXT and ts['separator'] == 'terminated':
                             insideTp=''
-                    if ts['enable'] == TestModel.TS_ENABLED:
-                        subte = SubTestModel.createSubTest( dataTest = ts, 
+                    if ts['enable'] == TestModelCommon.TS_ENABLED:
+                        subte = TestModelSub.createSubTest( dataTest = ts, 
                                                         trPath=self.getTestPath(),
                                                         descriptions=self.dataTest['test-properties']['descriptions']['description'],
                                                         defaultLibrary=RepoLibraries.instance().getDefault(),
@@ -1467,11 +1472,13 @@ class Task(Logger.ClassLogger):
                 isTg = True   
                 
             if  isTu or isTs or isTa:
-                subte = SubTestModel.createSubTest( dataTest = dataTest, trPath=self.getTestPath(),
+                subte = TestModelSub.createSubTest( dataTest = dataTest, 
+                                                    trPath=self.getTestPath(),
                                                     descriptions=dataTest['test-properties']['descriptions']['description'],
                                                     defaultLibrary=RepoLibraries.instance().getDefault(),
                                                     defaultAdapter=RepoAdapters.instance().getDefault(),
-                                                    isTestUnit=isTu, isTestAbstract=isTa )
+                                                    isTestUnit=isTu, 
+                                                    isTestAbstract=isTa )
                 sub_tes.append( subte )
 
             if  isTp or isTg:
@@ -1484,14 +1491,16 @@ class Task(Logger.ClassLogger):
                         if ts['extension'] == RepoManager.TEST_ABSTRACT_EXT:
                             isSubTa=True
                             
-                    if ts['enable'] == TestModel.TS_ENABLED:
-                        subte = SubTestModel.createSubTest( dataTest = ts, 
+                    if ts['enable'] == TestModelCommon.TS_ENABLED:
+                        subte = TestModelSub.createSubTest( dataTest = ts, 
                                                             descriptions=dataTest['test-properties']['descriptions']['description'],
                                                             trPath=self.getTestPath(),
                                                             defaultLibrary=RepoLibraries.instance().getDefault(),
                                                             defaultAdapter=RepoAdapters.instance().getDefault(), 
-                                                            isTestUnit=isSubTu, isTestAbstract=isSubTa,
-                                                            isTestPlan=isTp, isTestGlobal=isTg )
+                                                            isTestUnit=isSubTu, 
+                                                            isTestAbstract=isSubTa,
+                                                            isTestPlan=isTp, 
+                                                            isTestGlobal=isTg )
                         sub_tes.append( subte )
 
         except Exception as e:
@@ -1507,16 +1516,23 @@ class Task(Logger.ClassLogger):
                 dataTest = copy.deepcopy(self.dataTest)
 
             te = TestModel.createTestExecutable(    
-                                                dataTest = dataTest, userName=self.userName, 
-                                                testName=self.testName, trPath=self.getTestPath(), 
-                                                logFilename=self.completeId(), withoutProbes=self.withoutProbes,
+                                                dataTest = dataTest, 
+                                                userName=self.userName, 
+                                                testName=self.testName, 
+                                                trPath=self.getTestPath(), 
+                                                logFilename=self.completeId(), 
+                                                withoutProbes=self.withoutProbes,
                                                 defaultLibrary=RepoLibraries.instance().getDefault(), 
                                                 defaultAdapter=RepoAdapters.instance().getDefault(),
-                                                userId=self.userId, projectId=self.projectId, 
-                                                subTEs=len(sub_tes), channelId=self.channelId,
+                                                userId=self.userId, 
+                                                projectId=self.projectId, 
+                                                subTEs=len(sub_tes), 
+                                                channelId=self.channelId,
                                                 parametersShared=self.ctx.instance().getTestEnvironment(user=self.userName),
-                                                stepByStep=self.stepByStep, breakpoint=self.breakpoint, 
-                                                testId=self.testId, testLocation=self.getTestLocation(),
+                                                stepByStep=self.stepByStep, 
+                                                breakpoint=self.breakpoint, 
+                                                testId=self.testId, 
+                                                testLocation=self.getTestLocation(),
                                                 runningAgents=AgentsManager.instance().getRunning(), 
                                                 runningProbes=ProbesManager.instance().getRunning(),
                                                 taskUuid=self.taskUuid
@@ -3051,14 +3067,25 @@ class TaskManager(Scheduler.SchedulerThread, Logger.ClassLogger):
                                                                                                         breakpoint, 
                                                                                                         channelId) )
 
-        task = Task( testData=testData, testName=testName, testPath=testPath, 
-                     testUser=testUser, testId=testId, testUserId=testUserId,
-                     testBackground=testBackground, taskEnabled=runEnabled, 
-                     withoutProbes=withoutProbes, debugActivated=debugActivated,
-                     withoutNotif=withoutNotif, noKeepTr=noKeepTr, testProjectId=testProjectId, 
-                     stepByStep=stepByStep, breakpoint=breakpoint,
-                     runSimultaneous=runSimultaneous, channelId=channelId, 
-                     statsmgr=self.statsmgr, context=self.ctx)
+        task = Task( testData=testData, 
+                     testName=testName, 
+                     testPath=testPath, 
+                     testUser=testUser, 
+                     testId=testId, 
+                     testUserId=testUserId,
+                     testBackground=testBackground, 
+                     taskEnabled=runEnabled, 
+                     withoutProbes=withoutProbes, 
+                     debugActivated=debugActivated,
+                     withoutNotif=withoutNotif, 
+                     noKeepTr=noKeepTr, 
+                     testProjectId=testProjectId, 
+                     stepByStep=stepByStep, 
+                     breakpoint=breakpoint,
+                     runSimultaneous=runSimultaneous, 
+                     channelId=channelId, 
+                     statsmgr=self.statsmgr, 
+                     context=self.ctx)
         task.setId( self.getEventId() )
 
         if groupId is not None:
@@ -3074,7 +3101,7 @@ class TaskManager(Scheduler.SchedulerThread, Logger.ClassLogger):
         else:
             self.trace("disk usage ok? yes, continue")
             
-        self.trace( "Prepare the task %s and check the syntax" % task.getId() )
+        self.trace( "Prepare the task=%s and check the syntax" % task.getId() )
         # Prepare the test and check if the syntax is correct
         try:
             task.initPrepare()

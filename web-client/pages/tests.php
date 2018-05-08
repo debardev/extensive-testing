@@ -496,15 +496,10 @@
 				$tb .= '<tr><td  class="col1">'.lang('test-environment-project').': </td><td>'.$projects_select.'</td></tr>';
 
 				$tb .= '<tr><td  class="col1">'.lang('test-environment-value').': </td><td>';
-  
-                //$tb .= '<br /><input type="radio" name="typeval"  value="text" checked disabled />text';
-                ///$tb .= '<input type="radio" name="typeval"  value="number" disabled />number';
-                //$tb .= '<input type="radio" name="typeval"  value="boolean" disabled />boolean';
-                //$tb .= '<input type="radio" name="typeval"  value="dict" disabled />key/value<br />';
-                $tb .= '<div class="textwrapper"><textarea  id="req_element_values" type="text" cols="100" rows="20">'.$el_value.'</textarea></div>';
+                
+                $tb .= '<div class="textwrapper"><textarea  id="req_element_values" type="text" cols="100" rows="20" autofocus="true" onfocus="prettyJsonPrint();">'.$el_value.'</textarea></div>';
                 
                 $tb .= '</td></tr>';
-                // <button onclick="prettyJsonPrint()">Pretty JSON</button>
 				$tb .= '<tr><td class="col1"></td><td align="right" class="col2"><br />';
                 $tb .= '[ <a href="javascript:prettyJsonPrint()">Pretty JSON</a> ] ';
                 if ($c_called == "edit") {

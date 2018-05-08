@@ -29,25 +29,29 @@
 import sys
 
 try:
-    import TestModel
+    import TestModelCommon
     import RepoAdapters
     import RepoLibraries
     import Common
 except ImportError: # python3 support
-    from . import TestModel
+    from . import TestModelCommon
     from . import RepoAdapters
     from . import RepoLibraries
     from . import Common
-    
-# indent = Common.indent
 
 # unicode = str with python3
 if sys.version_info > (3,):
     unicode = str
     
-def createSubTest(dataTest, descriptions, trPath, defaultLibrary='', 
-                  defaultAdapter='', isTestUnit=True, 
-                  isTestAbstract=False, isTestPlan=False, isTestGlobal=False):
+def createSubTest(dataTest, 
+                  descriptions, 
+                  trPath, 
+                  defaultLibrary='', 
+                  defaultAdapter='', 
+                  isTestUnit=True, 
+                  isTestAbstract=False, 
+                  isTestPlan=False, 
+                  isTestGlobal=False):
     """
     """
 
@@ -73,15 +77,15 @@ def createSubTest(dataTest, descriptions, trPath, defaultLibrary='',
     te = []
 
     # import python libraries
-    te.append( TestModel.IMPORT_PY_LIBS )
+    te.append( TestModelCommon.IMPORT_PY_LIBS )
 
     te.append( """import re\nimport TestExecutorLib.TestRepositoriesLib as TestRepositories\n""" )
     
     # import static arguments
-    te.append( TestModel.getStaticArgs() )
+    te.append( TestModelCommon.getStaticArgs() )
 
     # import test executor libraries
-    te.append( TestModel.IMPORT_TE_LIBS )
+    te.append( TestModelCommon.IMPORT_TE_LIBS )
 
     if isTestPlan or isTestGlobal:
         te.append( """
@@ -151,8 +155,8 @@ try:
 		return TestProperties.Descriptions().get(name=name)
 	
 """)
-    te.append(TestModel.INPUT_CUSTOM)
-    te.append(TestModel.INPUT_CACHE)
+    te.append(TestModelCommon.INPUT_CUSTOM)
+    te.append(TestModelCommon.INPUT_CACHE)
     
     if SutLibrariesGeneric:
         te.append("""

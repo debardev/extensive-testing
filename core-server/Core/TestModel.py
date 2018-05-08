@@ -26,14 +26,10 @@
 # the test is not compliant with python recommandation
 # /!\ WARNING /!\
 
-import os
-import base64
 import sys
 
-from Libs import Settings
-import Libs.FileModels.TestData as TestData
-
 try:
+    import TestModelCommon
     import RepoManager
     import RepoTests
     import RepoAdapters
@@ -41,6 +37,7 @@ try:
     import ProjectsManager
     import Common 
 except ImportError: # support python 3
+    from . import TestModelCommon
     from . import RepoManager
     from . import RepoTests
     from . import RepoAdapters
@@ -51,1964 +48,27 @@ except ImportError: # support python 3
 # unicode = str with python3
 if sys.version_info > (3,):
     unicode = str
-        
-TS_ENABLED				= "2"
-TS_DISABLED				= "0"
 
-# indent = Common.indent
-
-def getTestsPath(envTmp=False):
-    """
-    Get the path of all tests result
-
-    @return:
-    @rtype: string
-    """
-    if envTmp:
-        trPath = '%s%s' % ( Settings.getDirExec(), Settings.get( 'Paths', 'testsresults-tmp' ) )
-    else:
-        trPath = '%s%s' % ( Settings.getDirExec(), Settings.get( 'Paths', 'testsresults' ) )
-    return trPath
-
-def getStaticArgs(envTmp=False):
-    """
-    """
-    te_args = """root = '%s'
-tests_result_path = '%s'
-controller_ip = '%s'
-controller_port = %s
-""" % ( 
-            Settings.getDirExec(), 
-            getTestsPath(envTmp=envTmp),
-            Settings.get( 'Bind', 'ip-tsi' ),
-            Settings.get( 'Bind', 'port-tsi' )
-        )
-    return te_args
-
-IMPORT_PY_LIBS = """#!/usr/bin/python -O
-# -*- coding: utf-8 -*-
-import sys
-import time
-import re
-
-"""
-
-IMPORT_INTRO = """
-task_id = sys.argv[1]
-test_id = sys.argv[2]
-replay_id = sys.argv[3]
-
-result_path = '%s/%s' % (tests_result_path, test_result_path)
-sys.path.insert(0, root )
-
-if sys.version_info > (3,):
-	sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a+', 1) 
-else:
-	sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-import TestExecutorLib.TestRepositoriesLib as TestRepositories
-TestRepositories.setTestsPath(path=tests_path)
-TestRepositories.setAdpsPath(path=adapters_path)
-TestRepositories.setLibsPath(path=libraries_path)
-"""
-
-IMPORT_TE_LIBS = """
-try:
-	from Libs import Scheduler
-except ImportError as e:
-	pass
-import TestExecutorLib.TestLoggerXml as TLX
-import TestExecutorLib.TestDataStorage as TDS
-import TestExecutorLib.TestClientInterface as TCI
-
-from TestExecutorLib.TestExecutorLib import *
-import TestExecutorLib.TestPropertiesLib as TestProperties
-import TestExecutorLib.TestOperatorsLib as TestOperators
-import TestExecutorLib.TestValidatorsLib as TestValidators
-import TestExecutorLib.TestExecutorLib as TestExecutorLib
-import TestExecutorLib.TestTemplatesLib as TestTemplates
-import TestExecutorLib.TestAdapterLib as TestAdapter
-import TestExecutorLib.TestManipulatorsLib as TestManipulators
-import TestExecutorLib.TestReportingLib as TestReporting
-
-SutAdapter = TestAdapter
-import TestExecutorLib.TestLibraryLib as TestLibrary
-SutLibrary = TestLibrary
-
-import TestInteropLib as TestInteroperability
-"""
-
-CODE_PROBES = """
-	__PROBES_ACTIVE__ = []
-	__PROBES_RUNNING__ = []
-	__PROBES_STARTED__ = []
-
-	def get_active_probes__():
-		for pr in  __PROBES__:
-			if pr['active'] == 'True':
-				__PROBES_ACTIVE__.append(pr)
-
-	def prepare_probes__(component='TESTSUITE'):
-		for pr in __PROBES_ACTIVE__:
-			if pr['active'] == 'True':
-				ret = TCI.instance().cmd( data = {'cmd': CMD_GET_PROBE, 'name': pr['name'], 'task-id': task_id})
-				if ret is None:
-					raise Exception('Server Error> prepare probes: no response')
-				elif ret['body']['cmd']!= CMD_GET_PROBE:
-					raise Exception('[prepare_probes__] cmd error')
-				if ret['body']['res']:
-					__PROBES_RUNNING__.append(pr)
-					if component=='TESTSUITE':
-						TLX.instance().log_testsuite_trace(message = "probe %s: alive" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-					elif component=='TESTUNIT':
-						TLX.instance().log_testunit_trace(message = "probe %s: alive" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-					elif component=='TESTABSTRACT':
-						TLX.instance().log_testabstract_trace(message = "probe %s: alive" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-					elif component=='TESTPLAN':
-						TLX.instance().log_testplan_trace(message = "probe %s: alive" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-					else:
-						TLX.instance().log_testglobal_trace(message = "probe %s: alive" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-				else:
-					if component=='TESTSUITE':
-						TLX.instance().log_testsuite_warning(message = "probe %s: unknown" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-					elif component=='TESTUNIT':
-						TLX.instance().log_testunit_warning(message = "probe %s: unknown" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-					elif component=='TESTABSTRACT':
-						TLX.instance().log_testabstract_warning(message = "probe %s: unknown" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-					elif component=='TESTPLAN':
-						TLX.instance().log_testplan_warning(message = "probe %s: unknown" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-					else:
-						TLX.instance().log_testglobal_warning(message = "probe %s: unknown" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-	
-	def start_probe__(component='TESTSUITE'):
-		for pr in __PROBES_RUNNING__:
-			if component=='TESTSUITE':
-				TLX.instance().log_testsuite_trace(message = "probe %s: starting..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-			elif component=='TESTUNIT':
-				TLX.instance().log_testunit_trace(message = "probe %s: starting..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-			elif component=='TESTABSTRACT':
-				TLX.instance().log_testabstract_trace(message = "probe %s: starting..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-			elif component=='TESTPLAN':
-				TLX.instance().log_testplan_trace(message = "probe %s: starting..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-			else:
-				TLX.instance().log_testglobal_trace(message = "probe %s: starting..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-
-			ret = TCI.instance().cmd( data = {'cmd': CMD_START_PROBE, 'name': pr['name'], 'replay-id': replay_id, 'args': pr['args'], 'result-path': test_result_path, 'task-id': task_id } )
-			if ret is None:
-				raise Exception('Server Error>start probe: no response')
-			elif ret['body']['cmd']!= CMD_START_PROBE:
-				raise Exception('[start_probe__] system error: cmd')
-
-			elif ret['body']['res']['callid'] is None:
-				if component=='TESTSUITE':
-					TLX.instance().log_testsuite_error( message = "unable to start probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTUNIT':
-					TLX.instance().log_testunit_error( message = "unable to start probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTABSTRACT':
-					TLX.instance().log_testabstract_error( message = "unable to start probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTPLAN':
-					TLX.instance().log_testplan_error( message = "unable to start probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				else:
-					TLX.instance().log_testglobal_error( message = "unable to start probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-
-			elif ret['body']['res']['callid'] == -1 :
-				if component=='TESTSUITE':
-					TLX.instance().log_testsuite_error( message = "unable to start probe: %s, arguments missing" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTUNIT':
-					TLX.instance().log_testunit_error( message = "unable to start probe: %s, arguments missing" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTABSTRACT':
-					TLX.instance().log_testabstract_error( message = "unable to start probe: %s, arguments missing" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTPLAN':
-					TLX.instance().log_testplan_error( message = "unable to start probe: %s, arguments missing" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				else:
-					TLX.instance().log_testglobal_error( message = "unable to start probe: %s, arguments missing" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-
-			elif ret['body']['res']['callid'] == -10:
-				if component=='TESTSUITE':
-					TLX.instance().log_testsuite_error( message = "system error, unable to start: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTUNIT':
-					TLX.instance().log_testunit_error( message = "system error, unable to start: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTABSTRACT':
-					TLX.instance().log_testabstract_error( message = "system error, unable to start: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTPLAN':
-					TLX.instance().log_testplan_error( message = "system error, unable to start: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				else:
-					TLX.instance().log_testglobal_error( message = "system error, unable to start: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-
-			else:
-				__PROBES_STARTED__.append( (pr, ret['body']['res']['callid']) )
-				if component=='TESTSUITE':
-					TLX.instance().log_testsuite_trace( message = "probe %s: started" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-					TLX.instance().log_testsuite_trace( message = "probe %s: running..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTUNIT':
-					TLX.instance().log_testunit_trace( message = "probe %s: started" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-					TLX.instance().log_testunit_trace( message = "probe %s: running..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTABSTRACT':
-					TLX.instance().log_testabstract_trace( message = "probe %s: started" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-					TLX.instance().log_testabstract_trace( message = "probe %s: running..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				elif component=='TESTPLAN':
-					TLX.instance().log_testplan_trace( message = "probe %s: started" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-					TLX.instance().log_testplan_trace( message = "probe %s: running..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-				else:
-					TLX.instance().log_testglobal_trace( message = "probe %s: started" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-					TLX.instance().log_testglobal_trace( message = "probe %s: running..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER )
-
-	def stop_probe__(component='TESTSUITE'):
-		for pr, callid in __PROBES_STARTED__:
-			if component=='TESTSUITE':
-				TLX.instance().log_testsuite_trace(message = "probe %s: stopping..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-			elif component=='TESTUNIT':
-				TLX.instance().log_testunit_trace(message = "probe %s: stopping..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-			elif component=='TESTABSTRACT':
-				TLX.instance().log_testabstract_trace(message = "probe %s: stopping..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-			elif component=='TESTPLAN':
-				TLX.instance().log_testplan_trace(message = "probe %s: stopping..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-			else:
-				TLX.instance().log_testglobal_trace(message = "probe %s: stopping..." % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-
-			ret = TCI.instance().cmd( data = {'cmd': CMD_STOP_PROBE, 'name': pr['name'], 'callid': callid, 'replay-id': replay_id, 'result-path': test_result_path, 'task-id': task_id })
-			if ret is None:
-				raise Exception('Server Error> stop probe: no response')
-			if ret['body']['cmd']!= CMD_STOP_PROBE:
-				raise Exception('[stop_probe__] system error: cmd')
-
-			elif ret['body']['res']['callid'] is None:
-				if component=='TESTSUITE':
-					TLX.instance().log_testsuite_error( message = "unable to stop the probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-				elif component=='TESTUNIT':
-					TLX.instance().log_testunit_error( message = "unable to stop the probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-				elif component=='TESTABSTRACT':
-					TLX.instance().log_testabstract_error( message = "unable to stop the probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-				elif component=='TESTPLAN':
-					TLX.instance().log_testplan_error( message = "unable to stop the probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-				else:
-					TLX.instance().log_testglobal_error( message = "unable to stop the probe: %s" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-			else:
-				if component=='TESTSUITE':
-					TLX.instance().log_testsuite_trace(message = "probe %s: stopped" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-				elif component=='TESTUNIT':
-					TLX.instance().log_testunit_trace(message = "probe %s: stopped" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-				elif component=='TESTABSTRACT':
-					TLX.instance().log_testabstract_trace(message = "probe %s: stopped" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-				elif component=='TESTPLAN':
-					TLX.instance().log_testplan_trace(message = "probe %s: stopped" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-				else:
-					TLX.instance().log_testglobal_trace(message = "probe %s: stopped" % pr['name'], component = component, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-
-"""
-
-TEST_SUMMARY = """
-
-	inputs_str = []
-	for i in inputs():
-		if i['type'] in ['snapshot-image', 'local-file', 'local-image', 'dataset' ]:
-			inputs_str.append( '\\t* %s (%s) = ...binary...' % (i['name'], i['type']) )
-		else:
-			try:
-				val_tmp = str(i['value'])
-			except Exception:
-				val_tmp = i['value'].encode('utf8')
-			inputs_str.append( '\\t* %s (%s) = %s' % ( str(i['name']), str(i['type']), val_tmp ))
-
-	outputs_str = []
-	for o in outputs():
-		if o['type'] in ['snapshot-image', 'local-file', 'local-image', 'dataset' ]:
-			outputs_str.append( '\\t* %s (%s) = ...binary...' % (o['name'], o['type']) )
-		else:
-			try:
-				val_tmp = str(o['value'])
-			except Exception:
-				val_tmp = o['value'].encode('utf8')
-			outputs_str.append( '\\t* %s (%s) = %s' % (str(o['name']), str(o['type']), val_tmp))
-
-	agents_str = []
-	for a in agents():
-		try:
-			val_tmp = str(a['value'])
-		except Exception:
-			val_tmp = a['value'].encode('utf8')
-		agents_str.append( '\\t* %s (%s) = %s' % (str(a['name']), str(a['type']), val_tmp))
-
-	ts_summary = [ 'Description' ]
-	ts_summary.append( '\\tAuthor: \\t%s' % description('author') )
-	ts_summary.append( '\\tCreation: \\t%s' % description('creation date') )
-	ts_summary.append( '\\tRun at: \\t%s' % time.strftime( "%d/%m/%Y %H:%M:%S", time.localtime(scriptstart_time) ) )
-	ts_summary.append( '\\tPurpose: \\t%s' % description('summary') )
-	ts_summary.append( '\\tSUT Adapters: \\t%s' % description('adapters') )
-	ts_summary.append( '\\tSUT Libraries: \\t%s' % description('libraries') )
-	ts_summary.append( '\\tInputs: \\t\\n%s' % '\\n'.join(inputs_str) )
-	ts_summary.append( '\\tOutputs: \\t\\n%s' % '\\n'.join(outputs_str) )
-	ts_summary.append( '\\tAgents: \\t\\n%s' % '\\n'.join(agents_str) )
-    
-	sum_dict = []
-	sum_dict.append( ('run at', time.strftime( "%d/%m/%Y %H:%M:%S", time.localtime(scriptstart_time) )) )
-	sum_dict.append( ('run by', user_) )
-	sum_dict.append( ( 'test name', test_name) )
-	sum_dict.append( ( 'test path', test_location) )
-	sum_dict.append( ( 'project name', projectname_) )
-	sum_dict.append( ('adapters', description('adapters')) )
-	sum_dict.append( ('libraries',  description('libraries')) )
-	tsMgr.setDescription(sum_dict)
-"""
-
-TEST_SUMMARY_TG = """
-	TLX.instance().log_testglobal_internal(message = '\\n'.join(ts_summary), component = 'TESTGLOBAL', bold=False, italic=True, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-"""
-
-TEST_SUMMARY_TP = """
-	TLX.instance().log_testplan_internal(message = '\\n'.join(ts_summary), component = 'TESTPLAN', bold=False, italic=True, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-"""
-
-TEST_SUMMARY_TS = """
-	TLX.instance().log_testsuite_internal(message = '\\n'.join(ts_summary), component = 'TESTSUITE', bold=False, italic=True, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-"""
-
-TEST_SUMMARY_TU = """
-	TLX.instance().log_testunit_internal(message = '\\n'.join(ts_summary), component = 'TESTUNIT', bold=False, italic=True, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-"""
-
-TEST_SUMMARY_TA = """
-	TLX.instance().log_testabstract_internal(message = '\\n'.join(ts_summary), component = 'TESTABSTRACT', bold=False, italic=True, fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
-"""
-
-INPUT_CACHE = """
-	def cache(key):
-		return Cache().get(name=key)
-	TestProperties.cache = cache
-"""
-
-INPUT_CUSTOM = """
-	def custom(line):
-		cache = re.findall("\[!CACHE:[\w-]+(?:\:[\w-]+)*\:\]", line)
-		new_line = line
-
-		for c in cache:
-			cache_args = c.split(":")[1:-1]
-			v = Cache().get(name=cache_args[0])
-			cache_args = cache_args[1:]
-			while len(cache_args):
-				if isinstance(v, dict):
-					v = v.get(cache_args[0])
-				cache_args = cache_args[1:]
-			new_line = new_line.replace(c, "%s" % v, 1)
-
-		inputs = re.findall("\[!INPUT:[\w-]+(?:\:[\w-]+)*\:\]", new_line)
-		for c in inputs:
-			input_args = c.split(":")[1:-1]
-			v = input(input_args[0])
-			i = 1
-			while isinstance(v, dict):
-				v = v[input_args[i]]
-				i=i+1   
-			new_line = new_line.replace(c, "%s" % v, 1)
-            
-		captures = re.findall("\[!CAPTURE:[\w-]+(?:\:.*?)?\:\]", new_line)
-		for c in captures:
-			sub = c[2:-2]
-			captures_args = sub.split(":", 2)[1:]
-			if len(captures_args) == 2:
-				new_line = new_line.replace(c, "(?P<%s>%s)" % (captures_args[0], captures_args[1]), 1)
-			else:
-				new_line = new_line.replace(c, "(?P<%s>.*)" % captures_args[0], 1)
-		return new_line
-	TestProperties.custom = custom
-"""
-
-def getLocalAdapters ( path ):
-    """
-    Get all adapters available in path directory
-    Deprecated
-
-    @param path:
-    @type path:
-
-    @return:
-    @rtype: list
-    """
-    adapters = os.listdir(path)
-    ret = []
-
-    for adp in adapters:
-        if adp.endswith('.py'): # remove extension py
-            modul = adp[:-3]
-            ret.append(modul)
-        else:
-            if os.path.isdir( "%s/%s/" % (path,adp) ):
-                ret.append(adp) # directory
-    return ret
-
-def loadImages(parameters, user=''):
-    """
-    """
-    missingImages = [ ]
-    for pr in parameters:
-        if pr['type'] == 'remote-image':
-            if pr['value'].startswith('undefined:/'):
-                dataEncoded = pr['value'].split('undefined:/')[1]
-                if dataEncoded:
-                    pr['value'] =  base64.b64decode(dataEncoded)
-                else:
-                    pr['value'] = ''
-            elif pr['value'].startswith('local-tests:/'):
-                dataEncoded = pr['value'].split('local-tests:/')[1]
-                if dataEncoded:
-                    pr['value'] =  base64.b64decode(dataEncoded)
-                else:
-                    pr['value'] = ''
-            elif pr['value'].startswith('remote-tests('):
-                try:
-                    fileName = pr['value'].split('):/', 1)[1]
-                    projectName = pr['value'].split('remote-tests(', 1)[1].split('):/', 1)[0]
-                except Exception as e:
-                    missingImages.append( pr['value'] )
-                    pr['value'] = ''
-                else:
-                    projectId = 0
-                    allPrjs = ProjectsManager.instance().getProjects(user=user, b64=False)
-                    for p in allPrjs:
-                        if p['name'] == projectName:
-                            projectId = p['project_id']
-                            break
-
-                    absPath = "%s/%s/%s" % (RepoTests.instance().testsPath, projectId, fileName) 
-                    try:
-                        f = open(absPath, 'rb')
-                        pr['value'] = f.read()
-                        f.close()
-                    except Exception as e:
-                        missingImages.append( ''.join( [fileName] ) )
-            else:
-                pass
-    return missingImages
-
-def loadDataset(parameters, inputs=True, user=''):
-    """
-    """
-    missingDataset = [ ]
-    for pr in parameters:
-        if pr['type'] == 'dataset':
-            if pr['value'].startswith('undefined:/'):
-                dataEncoded = pr['value'].split('undefined:/')[1]
-                if dataEncoded:
-                    dataDecoded =  base64.b64decode(dataEncoded)
-                    doc = TestData.DataModel()
-                    res = doc.load(rawData=dataDecoded)
-                    if not res: pr['value'] = ''
-                    else: 
-                        if inputs:
-                            parametersBis = doc.properties['properties']['inputs-parameters']['parameter']
-                        else:
-                            parametersBis = doc.properties['properties']['outputs-parameters']['parameter']
-                        for p in parametersBis:
-                            doc.testdata = doc.testdata.replace('__%s__' % p['name'], p['value'])
-                        pr['value'] = unicode(doc.testdata).encode('utf-8')
-                else:
-                    pr['value'] = ''
-            elif pr['value'].startswith('local-tests:/'):
-                dataEncoded = pr['value'].split('local-tests:/')[1]
-                if dataEncoded:
-                    dataDecoded =  base64.b64decode(dataEncoded)
-                    doc = TestData.DataModel()
-                    res = doc.load(rawData=dataDecoded)
-                    if not res: pr['value'] = ''
-                    else: 
-                        if inputs:
-                            parametersBis = doc.properties['properties']['inputs-parameters']['parameter']
-                        else:
-                            parametersBis = doc.properties['properties']['outputs-parameters']['parameter']
-                        for p in parametersBis:
-                            doc.testdata = doc.testdata.replace('__%s__' % p['name'], p['value'])
-                        pr['value'] = unicode(doc.testdata).encode('utf-8')
-                else:
-                    pr['value'] = ''
-            elif pr['value'].startswith('remote-tests('):
-                try:
-                    fileName = pr['value'].split('):/', 1)[1]
-                    projectName = pr['value'].split('remote-tests(', 1)[1].split('):/', 1)[0]
-                except Exception as e:
-                    missingDataset.append( pr['value'] )
-                    pr['value'] = ''
-                else:
-                    projectId = 0
-                    allPrjs = ProjectsManager.instance().getProjects(user=user, b64=False)
-                    for p in allPrjs:
-                        if p['name'] == projectName:
-                            projectId = p['project_id']
-                            break
-                    doc = TestData.DataModel()
-                    res = doc.load( absPath = "%s/%s/%s" % (RepoTests.instance().testsPath, projectId, fileName) )
-                    if not res:		
-                        missingDataset.append( ''.join( [fileName] ) )
-                        pr['value'] = ''
-                    else:
-                        if inputs:
-                            parametersBis = doc.properties['properties']['inputs-parameters']['parameter']
-                        else:
-                            parametersBis = doc.properties['properties']['outputs-parameters']['parameter']
-                        for p in parametersBis:
-                            doc.testdata = doc.testdata.replace('__%s__' % p['name'], p['value'])
-                        pr['value'] = unicode(doc.testdata).encode('utf-8')
-            else:
-                pass
-    return missingDataset
-
-def createTestDesign(   dataTest, userName, testName, trPath, logFilename, 
-                        withoutProbes, defaultLibrary='', defaultAdapter='', userId=0,
-                        projectId=0, parametersShared=[], stepByStep=False,
-                        breakpoint=False, testId=0, runningAgents=[], runningProbes=[],
-                        testLocation='', taskUuid='' ):
-    """
-    Creates and returns the test executable for design only
-
-    @param dataTest:
-    @type dataTest:
-
-    @return:
-    @rtype: string
-    """
-    if dataTest["test-extension"] == "tgx":
-        return createTestDesignForTg( dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary,
-                                    defaultAdapter, userId, projectId, parametersShared, stepByStep, breakpoint, testId,
-                                    runningAgents, runningProbes, testLocation, taskUuid)
-    elif dataTest["test-extension"] == "tpx":
-        return createTestDesignForTp( dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary,
-                                    defaultAdapter, userId, projectId, parametersShared, stepByStep, breakpoint, testId,
-                                    runningAgents, runningProbes, testLocation, taskUuid)
-    elif dataTest["test-extension"] == "tux":
-        return createTestDesignForTu( dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary, 
-                                    defaultAdapter, userId, projectId, parametersShared, stepByStep, breakpoint, testId,
-                                    runningAgents, runningProbes, testLocation, taskUuid)
-    elif dataTest["test-extension"] == "tax":
-        return createTestDesignForTa( dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary, 
-                                    defaultAdapter, userId, projectId, parametersShared, stepByStep, breakpoint, testId,
-                                    runningAgents, runningProbes, testLocation, taskUuid)
-    else:
-        return createTestDesignForTs( dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary, 
-                                    defaultAdapter, userId, projectId, parametersShared, stepByStep, breakpoint, testId,
-                                    runningAgents, runningProbes, testLocation, taskUuid)
-
-def createTestDesignForTg(dataTest, userName, testName, trPath, 
-                          logFilename, withoutProbes, defaultLibrary='', defaultAdapter='', userId=0,
-                          projectId=0, parametersShared=[], stepByStep=False, 
-                          breakpoint=False, testId=0, runningAgents=[], runningProbes=[],
-                          testLocation='', taskUuid=''  ):
-    """
-    """
-    properties = dataTest['test-properties']
-    parameters = properties['inputs-parameters']['parameter']
-    parametersOut = properties['outputs-parameters']['parameter']
-    agents = properties['agents']['agent']
-    descriptions = properties['descriptions']['description']
-    probes = properties['probes']['probe']
-
-    SutLibraries = defaultLibrary
-    SutAdapters = defaultAdapter
-    for d in descriptions:
-        if d['key'] == 'libraries':
-            SutLibraries = d['value']
-        if d['key'] == 'adapters':
-            SutAdapters = d['value']
-
-    if not len(SutLibraries):
-        SutLibraries = RepoLibraries.instance().getDefault()
-    if not len(SutAdapters):
-        SutAdapters = RepoAdapters.instance().getDefault()
-        
-    SutLibrariesGeneric = RepoLibraries.instance().getGeneric()
-    SutAdaptersGeneric = RepoAdapters.instance().getGeneric()
-    
-    testglobal = dataTest['test-execution']
-    
-    # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
-
-    # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
-
-    projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
-    
-    # te construction
-    te = []
-    # import python libraries
-    te.append( IMPORT_PY_LIBS )
-
-    # import static arguments
-    te.append( getStaticArgs(envTmp=True) )
-    
-    te.append( """taskuuid_ = '%s'\n""" % taskUuid )
-    te.append( """user_ = '%s'\n""" % userName )
-    te.append( """userid_ = '%s'\n""" % userId )
-    te.append( """projectid_ = '%s'\n""" % projectId )
-    te.append( """projectname_ = '%s'\n""" % projectName )
-    te.append( """test_name = '%s'\n""" % testName )
-    te.append( """test_location = '%s'\n""" % testLocation )
-    te.append( """test_result_path = '%s'\n""" % trPath )
-    te.append( """log_filename = '%s'\n""" % logFilename )
-    te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
-    te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
-    te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1]
-# test_id = sys.argv[2]
-# replay_id = sys.argv[3]
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
-
-    te.append(IMPORT_INTRO)
-    
-    # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
-
-    te.append("""
-ParametersHandler = TestProperties.TestPlanParameters()
-scriptstart_time = time.time()
-
-RETURN_CODE_OK = 0
-RETURN_CODE_TE_ERROR = 13
-
-return_code = RETURN_CODE_OK
-
-TDS.initialize(path = result_path)
-
-TLX.initialize(task_uuid=taskuuid_, path = result_path, name = log_filename, 
-                user_ = user_, testname_ = test_name, id_ = test_id, 
-                replay_id_ = replay_id, task_id_ = task_id, userid_=userid_)
-                
-TestExecutorLib.dontExecute()
-tsMgr = TestExecutorLib.getTsMgr()
-tcMgr = TestExecutorLib.getTcMgr()
-""")
-    te.append("""
-tsMgr.initialize(path=result_path, testname=test_name, replayId=replay_id, userId=userid_, projectId=projectid_, 
-                stepByStep=%s, breakpoint=%s, testId=%s, relativePath=test_result_path, 
-                testpath=test_location, userName=user_, projectName=projectname_)""" % (stepByStep, breakpoint, testId) )
-    te.append("""
-tsMgr.newTp(name=test_name)
-tsMgr.setMainDescriptions(descriptions=%s)
-
-try:
-""" % descriptions)
-    te.append( """	ParametersHandler.addParameters( parametersId=TLX.instance().mainScriptId, parameters=%s)\n""" % parameters )
-    te.append( """	ParametersHandler.addParametersOut( parametersId=TLX.instance().mainScriptId, parameters=%s)\n""" % parametersOut )
-    te.append( """	ParametersHandler.addAgents( agentsId=TLX.instance().mainScriptId, agents=%s)\n""" % agents )
-    te.append( """	ParametersHandler.addDescriptions( descriptionsId=TLX.instance().mainScriptId, descriptions=%s)\n""" % descriptions )
-    te.append( """	ParametersHandler.addParametersShared( parameters=%s)\n""" % parametersShared )
-    te.append( """	ParametersHandler.addRunningAgents( agents=%s)\n""" % runningAgents )
-    te.append( """	ParametersHandler.addRunningProbes( probes=%s)\n""" % runningProbes )
-    te.append( """	__PROBES__ = %s""" % probes )
-    te.append( """
-
-	def shared(project, name, subname=''):
-		return ParametersHandler.shared(project=project, name=name, subname=subname)
-	def input(name):
-		return ParametersHandler.parameter(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def output(name):
-		return ParametersHandler.parameterOut(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def setInput(name, value):
-		return ParametersHandler.setParameter(name=name, value=value, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def setOutput(name, value):
-		return ParametersHandler.setParameterOut(name=name, value=value, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def agent(name):
-		return ParametersHandler.agent(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def running(name):
-		return ParametersHandler.running(name=name)
-	def excel(data, worksheet, row=None, column=None):
-		return ParametersHandler.excel(data=data, worksheet=worksheet, row=row, column=column)
-        
-	get = parameter = input # backward compatibility
-	def inputs():
-		return ParametersHandler.inputs(tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def outputs():
-		return ParametersHandler.outputs(tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def agents():
-		return ParametersHandler.agents(tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def descriptions():
-		return ParametersHandler.descriptions(tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-
-	def description(name):
-		return ParametersHandler.description(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-""")
-
-    te.append(INPUT_CUSTOM)
-    te.append(INPUT_CACHE)
-    
-    te.append("""
-	TestLibrary.setVersionGeneric('%s') 
-	TestAdapter.setVersionGeneric('%s')   
-""" %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    if SutLibrariesGeneric:
-        te.append("""
-
-	# !! generic local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-        te.append("""
-		raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        te.append(""")
-""")
-
-    if SutAdaptersGeneric:
-        te.append("""
-	# !! generic local adapters injection
-	try:
-		from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-        te.append("""
-		raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        te.append(""")	
-""")
-
-    te.append("""
-
-	# !! local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibraries
-		SutLibraries.Default = SutLibraries""" % SutLibraries )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-    te.append("""
-		raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    te.append(""")
-""")
-    te.append("""
-	# !! local adapters injection
-	try:
-		from SutAdapters import %s as SutAdapters
-		SutAdapters.Default = SutAdapters""" % SutAdapters )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-    te.append("""
-		raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    te.append(""")	
-""")
-    te.append("""
-	if TestAdapter.isDeprecated():
-		raise Exception('SUT adapter %s is deprecated')
-""" % SutAdapters )
-    te.append("""
-	if TestLibrary.isDeprecated():
-		raise Exception('SUT library %s is deprecated')
-""" % SutLibraries )
-    if SutLibrariesGeneric:
-        te.append("""
-	try:
-		SutLibraries.Generic = SutLibrariesGeneric
-	except Exception as e:
-		pass
-""" )
-
-    if SutAdaptersGeneric:
-        te.append("""
-	try:
-		SutAdapters.Generic = SutAdaptersGeneric
-	except Exception as e:
-		pass
-""" )
-
-    te.append( TEST_SUMMARY )
-
-    if not len(testglobal):
-        te.append("""
-	pass
-""")
-    for ts in testglobal:
-        isTs=True
-        isTa=True
-        
-        if sys.version_info > (3,): # python3 support
-            ts["alias"] = ts["alias"].decode("utf8")
-            
-        if 'extension' in ts:
-            if ts['extension'] == RepoManager.TEST_UNIT_EXT:
-                isTs=False
-            if ts['extension'] == RepoManager.TEST_ABSTRACT_EXT:
-                isTs=False
-                isTa=True
-        if ts['enable'] == TS_ENABLED:
-            ts['depth'] = 1 # bypass depath
-            te.append(Common.indent("""
-	try:
-""", nbTab = ts['depth'] -1 ))
-            # prepare datasets
-            missingDatasetTs = loadDataset(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
-            missingDatasetTsOut = loadDataset(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
-
-            # prepare images
-            missingImagesTs = loadImages(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
-            missingImagesTsOut = loadImages(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
-
-            if isTs:
-                te.append(Common.indent("""
-tsMgr.newTs(name="%s", isEnabled=%s, testPath="%s", testProject="%s", nameAlias="%s")
-if %s:""" % (ts['path'], ts['enable'], ts["testpath"], ts["testproject"], ts["alias"], ts['enable']) , nbTab = ts['depth'] + 1 ) )
-            elif isTa:
-                te.append(Common.indent("""
-tsMgr.newTa(name="%s", isEnabled=%s, testPath="%s", testProject="%s", nameAlias="%s")
-if %s:""" % (ts['path'], ts['enable'], ts["testpath"], ts["testproject"], ts["alias"], ts['enable']) , nbTab = ts['depth'] + 1 ) )
-            else:
-                te.append(Common.indent("""
-tsMgr.newTu(name="%s", isEnabled=%s, testPath="%s", testProject="%s", nameAlias="%s")
-if %s:""" % (ts['path'], ts['enable'], ts["testpath"], ts["testproject"], ts["alias"], ts['enable']) , nbTab = ts['depth'] + 1 ) )
-            te.append(Common.indent("""
-
-TLX.instance().setUniqueId("%s", tsId = "%s")
-	""" % ( ts['path'], ts['id'] ), nbTab = ts['depth'] + 2 ) )
-
-            te.append("\n")
-            te.append("\n")
-            te.append("\n")
-            te.append("\n")
-
-            te.append( Common.indent( """ParametersHandler.addParameters(parametersId=TLX.instance().scriptId, parameters = %s)""" %
-                        ts['properties']['inputs-parameters']['parameter'], nbTab = ts['depth'] + 2 ))
-            te.append("\n")
-            te.append( Common.indent( """ParametersHandler.addParametersOut(parametersId=TLX.instance().scriptId, parameters = %s)""" %
-                        ts['properties']['outputs-parameters']['parameter'], nbTab = ts['depth'] + 2 ))
-            te.append("\n")
-            te.append( Common.indent( """ParametersHandler.addDescriptions(descriptionsId=TLX.instance().scriptId, descriptions = %s)""" %
-                        ts['properties']['descriptions']['description'], nbTab = ts['depth'] + 2 ))
-            te.append("\n")
-            te.append( Common.indent( """ParametersHandler.addAgents(agentsId=TLX.instance().scriptId, agents = %s)""" %
-                        ts['properties']['agents']['agent'], nbTab = ts['depth'] + 2 ))
-            te.append("\n")
-            if isTs:
-                te.append(Common.indent(ts['test-definition'], nbTab = ts['depth'] + 2 ))
-            else:
-                te.append(Common.indent("class TESTCASE(TestCase):", nbTab = ts['depth'] + 2 ))
-                te.append("\n")
-                te.append(Common.indent(ts['test-definition'], nbTab = ts['depth'] + 3 ))
-            te.append("\n")
-            if isTs:
-                te.append(Common.indent(ts['test-execution'], nbTab = ts['depth'] + 2 ))
-            else:
-                te.append(Common.indent("TESTCASE(suffix=None, testName='%s' % description('name')).execute()", nbTab = ts['depth'] + 2 ))
-            te.append(Common.indent("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )
-		return_code = RETURN_CODE_TE_ERROR""", nbTab = ts['depth'] - 1) )
-    te.append("""
-except Exception as e:
-	sys.stderr.write( '%s\\n' % str(e) )
-	return_code = RETURN_CODE_TE_ERROR
-
-TLX.instance().setMainId()
-
-tsMgr.saveDesigns()
-tsMgr.saveDesignsXml()
-
-TLX.finalize()
-sys.exit(return_code)
-""")
-    return unicode(''.join(te)).encode('utf-8')
-
-def createTestDesignForTp(dataTest, userName, testName, trPath, 
-                          logFilename, withoutProbes, defaultLibrary='', defaultAdapter='', userId=0,
-                          projectId=0, parametersShared=[], stepByStep=False, 
-                          breakpoint=False, testId=0, runningAgents=[], runningProbes=[],
-                            testLocation='' , taskUuid='' ):
-    """
-    """
-    properties = dataTest['test-properties']
-    parameters = properties['inputs-parameters']['parameter']
-    parametersOut = properties['outputs-parameters']['parameter']
-    agents = properties['agents']['agent']
-    descriptions = properties['descriptions']['description']
-    probes = properties['probes']['probe']
-
-    SutLibraries = defaultLibrary
-    SutAdapters = defaultAdapter
-    for d in descriptions:
-        if d['key'] == 'libraries':
-            SutLibraries = d['value']
-        if d['key'] == 'adapters':
-            SutAdapters = d['value']
-
-    if not len(SutLibraries):
-        SutLibraries = RepoLibraries.instance().getDefault()
-    if not len(SutAdapters):
-        SutAdapters = RepoAdapters.instance().getDefault()
-        
-    SutLibrariesGeneric = RepoLibraries.instance().getGeneric()
-    SutAdaptersGeneric = RepoAdapters.instance().getGeneric()
-    
-    # testplan = dataTest['testplan']
-    testplan = dataTest['test-execution']
-    
-    # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
-
-    # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
-
-    projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
-    
-    # te construction
-    te = []
-    # import python libraries
-    te.append( IMPORT_PY_LIBS )
-
-    # import static arguments
-    te.append( getStaticArgs(envTmp=True) )
-    
-    te.append( """taskuuid_ = '%s'\n""" % taskUuid )
-    te.append( """user_ = '%s'\n""" % userName )
-    te.append( """userid_ = '%s'\n""" % userId )
-    te.append( """projectid_ = '%s'\n""" % projectId )
-    te.append( """projectname_ = '%s'\n""" % projectName )
-    te.append( """test_name = '%s'\n""" % testName )
-    te.append( """test_location = '%s'\n""" % testLocation )
-    te.append( """test_result_path = '%s'\n""" % trPath )
-    te.append( """log_filename = '%s'\n""" % logFilename )
-    te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
-    te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
-    te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1]
-# test_id = sys.argv[2]
-# replay_id = sys.argv[3]
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
-
-    te.append(IMPORT_INTRO)
-    
-    # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
-
-    te.append("""
-ParametersHandler = TestProperties.TestPlanParameters()
-scriptstart_time = time.time()
-
-RETURN_CODE_OK = 0
-RETURN_CODE_TE_ERROR = 13
-
-return_code = RETURN_CODE_OK
-
-TDS.initialize(path = result_path)
-
-TLX.initialize(task_uuid=taskuuid_, path = result_path, name = log_filename, 
-                user_ = user_, testname_ = test_name, id_ = test_id, 
-                replay_id_ = replay_id, task_id_ = task_id, userid_=userid_)
-
-TestExecutorLib.dontExecute()
-tsMgr = TestExecutorLib.getTsMgr()
-tcMgr = TestExecutorLib.getTcMgr()
-""")
-    te.append("""
-tsMgr.initialize(path=result_path, testname=test_name, replayId=replay_id, userId=userid_, projectId=projectid_, 
-                stepByStep=%s, breakpoint=%s, testId=%s, relativePath=test_result_path, 
-                testpath=test_location, userName=user_, projectName=projectname_)""" % (stepByStep, breakpoint, testId) )
-    te.append("""
-tsMgr.newTp(name=test_name)
-
-tsMgr.setMainDescriptions(descriptions=%s)
-
-try:
-""" % descriptions)
-    te.append( """	ParametersHandler.addParameters( parametersId=TLX.instance().mainScriptId, parameters=%s)\n""" % parameters )
-    te.append( """	ParametersHandler.addParametersOut( parametersId=TLX.instance().mainScriptId, parameters=%s)\n""" % parametersOut )
-    te.append( """	ParametersHandler.addAgents( agentsId=TLX.instance().mainScriptId, agents=%s)\n""" % agents )
-    te.append( """	ParametersHandler.addDescriptions( descriptionsId=TLX.instance().mainScriptId, descriptions=%s)\n""" % descriptions )
-    te.append( """	ParametersHandler.addParametersShared( parameters=%s)\n""" % parametersShared )
-    te.append( """	ParametersHandler.addRunningAgents( agents=%s)\n""" % runningAgents )
-    te.append( """	ParametersHandler.addRunningProbes( probes=%s)\n""" % runningProbes )
-    te.append( """	__PROBES__ = %s""" % probes )
-    te.append( """
-
-	def shared(project, name, subname=''):
-		return ParametersHandler.shared(project=project, name=name, subname=subname)
-	def input(name):
-		return ParametersHandler.parameter(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def output(name):
-		return ParametersHandler.parameterOut(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def setInput(name, value):
-		return ParametersHandler.setParameter(name=name, value=value, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def setOutput(name, value):
-		return ParametersHandler.setParameterOut(name=name, value=value, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def agent(name):
-		return ParametersHandler.agent(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def running(name):
-		return ParametersHandler.running(name=name)
-	def excel(data, worksheet, row=None, column=None):
-		return ParametersHandler.excel(data=data, worksheet=worksheet, row=row, column=column)
-        
-	get = parameter = input # backward compatibility
-	def inputs():
-		return ParametersHandler.inputs(tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def outputs():
-		return ParametersHandler.outputs(tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def agents():
-		return ParametersHandler.agents(tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-	def descriptions():
-		return ParametersHandler.descriptions(tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-
-	def description(name):
-		return ParametersHandler.description(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
-""")
-
-    te.append(INPUT_CUSTOM)
-    te.append(INPUT_CACHE)
-
-    te.append("""
-	TestLibrary.setVersionGeneric('%s') 
-	TestAdapter.setVersionGeneric('%s')   
-""" %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    if SutLibrariesGeneric:
-        te.append("""
-
-	# !! generic local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-        te.append("""
-		raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        te.append(""")
-""")
-
-    if SutAdaptersGeneric:
-        te.append("""
-	# !! generic local adapters injection
-	try:
-		from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-        te.append("""
-		raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        te.append(""")	
-""")
-
-    te.append("""
-
-	# !! local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibraries
-		SutLibraries.Default = SutLibraries""" % SutLibraries )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-    te.append("""
-		raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    te.append(""")
-""")
-    te.append("""
-	# !! local adapters injection
-	try:
-		from SutAdapters import %s as SutAdapters
-		SutAdapters.Default = SutAdapters""" % SutAdapters )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-    te.append("""
-		raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    te.append(""")	
-""")
-    te.append("""
-	if TestAdapter.isDeprecated():
-		raise Exception('SUT adapter %s is deprecated')
-""" % SutAdapters )
-    te.append("""
-	if TestLibrary.isDeprecated():
-		raise Exception('SUT library %s is deprecated')
-""" % SutLibraries )
-    if SutLibrariesGeneric:
-        te.append("""
-	try:
-		SutLibraries.Generic = SutLibrariesGeneric
-	except Exception as e:
-		pass
-""" )
-
-    if SutAdaptersGeneric:
-        te.append("""
-	try:
-		SutAdapters.Generic = SutAdaptersGeneric
-	except Exception as e:
-		pass
-""" )
-
-    te.append( TEST_SUMMARY )
-
-    if not len(testplan):
-        te.append("""
-	pass
-""")
-    for ts in testplan:
-        isTs=True
-        isTa = False
-        
-        if sys.version_info > (3,): # python3 support
-            ts["alias"] = ts["alias"].decode("utf8")
-
-        if 'extension' in ts:
-            if ts['extension'] == RepoManager.TEST_UNIT_EXT:
-                isTs=False
-            if ts['extension'] == RepoManager.TEST_ABSTRACT_EXT:
-                isTs=False
-                isTa=True
-        if ts['enable'] == TS_ENABLED:
-            ts['depth'] = 1 # bypass depath
-            te.append(Common.indent("""
-	try:
-""", nbTab = ts['depth'] -1 ))
-            # prepare datasets
-            missingDatasetTs = loadDataset(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
-            missingDatasetTsOut = loadDataset(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
-
-            # prepare images
-            missingImagesTs = loadImages(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
-            missingImagesTsOut = loadImages(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
-
-            if isTs:
-                te.append(Common.indent("""
-tsMgr.newTs(name="%s", isEnabled=%s, testPath="%s", testProject="%s", nameAlias="%s")
-if %s:""" % (ts['path'], ts['enable'], ts["testpath"], ts["testproject"], ts["alias"], ts['enable']) , nbTab = ts['depth'] + 1 ) )
-            elif isTa:
-                te.append(Common.indent("""
-tsMgr.newTa(name="%s", isEnabled=%s, testPath="%s", testProject="%s", nameAlias="%s")
-if %s:""" % (ts['path'], ts['enable'], ts["testpath"], ts["testproject"], ts["alias"], ts['enable']) , nbTab = ts['depth'] + 1 ) )
-            else:
-                te.append(Common.indent("""
-tsMgr.newTu(name="%s", isEnabled=%s, testPath="%s", testProject="%s", nameAlias="%s")
-if %s:""" % (ts['path'], ts['enable'], ts["testpath"], ts["testproject"], ts["alias"], ts['enable']) , nbTab = ts['depth'] + 1 ) )
-            te.append(Common.indent("""
-
-TLX.instance().setUniqueId("%s", tsId = "%s")
-	""" % ( ts['path'], ts['id'] ), nbTab = ts['depth'] + 2 ) )
-
-            te.append("\n")
-            te.append("\n")
-            te.append("\n")
-            te.append("\n")
-
-            te.append( Common.indent( """ParametersHandler.addParameters(parametersId=TLX.instance().scriptId, parameters = %s)""" %
-                        ts['properties']['inputs-parameters']['parameter'], nbTab = ts['depth'] + 2 ))
-            te.append("\n")
-            te.append( Common.indent( """ParametersHandler.addParametersOut(parametersId=TLX.instance().scriptId, parameters = %s)""" %
-                        ts['properties']['outputs-parameters']['parameter'], nbTab = ts['depth'] + 2 ))
-            te.append("\n")
-            te.append( Common.indent( """ParametersHandler.addDescriptions(descriptionsId=TLX.instance().scriptId, descriptions = %s)""" %
-                        ts['properties']['descriptions']['description'], nbTab = ts['depth'] + 2 ))
-            te.append("\n")
-            te.append( Common.indent( """ParametersHandler.addAgents(agentsId=TLX.instance().scriptId, agents = %s)""" %
-                        ts['properties']['agents']['agent'], nbTab = ts['depth'] + 2 ))
-            te.append("\n")
-            if isTs:
-                te.append(Common.indent(ts['test-definition'], nbTab = ts['depth'] + 2 ))
-            else:
-                te.append(Common.indent("class TESTCASE(TestCase):", nbTab = ts['depth'] + 2 ))
-                te.append("\n")
-                te.append(Common.indent(ts['test-definition'], nbTab = ts['depth'] + 3 ))
-            te.append("\n")
-            if isTs:
-                te.append(Common.indent(ts['test-execution'], nbTab = ts['depth'] + 2 ))
-            else:
-                te.append(Common.indent("TESTCASE(suffix=None, testName='%s' % description('name')).execute()", nbTab = ts['depth'] + 2 ))
-            te.append(Common.indent("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )
-		return_code = RETURN_CODE_TE_ERROR""", nbTab = ts['depth'] - 1) )
-    te.append("""
-except Exception as e:
-	sys.stderr.write( '%s\\n' % str(e) )
-	return_code = RETURN_CODE_TE_ERROR
-
-TLX.instance().setMainId()
-
-tsMgr.saveDesigns()
-tsMgr.saveDesignsXml()
-
-TLX.finalize()
-sys.exit(return_code)
-""")
-    return unicode(''.join(te)).encode('utf-8')
-
-def createTestDesignForTs(dataTest, userName, testName, trPath, logFilename, 
-                          withoutProbes, defaultLibrary='', defaultAdapter='', userId=0,
-                            projectId=0, parametersShared=[], stepByStep=False, 
-                            breakpoint=False, testId=0, runningAgents=[], runningProbes=[],
-                            testLocation='', taskUuid=''  ):
-    """
-    """
-    properties = dataTest['test-properties']
-    parameters = properties['inputs-parameters']['parameter']
-    parametersOut = properties['outputs-parameters']['parameter']
-    agents = properties['agents']['agent']
-    descriptions = properties['descriptions']['description']
-    probes = properties['probes']['probe']
-
-    SutLibraries = defaultLibrary
-    SutAdapters = defaultAdapter
-    for d in descriptions:
-        if d['key'] == 'libraries':
-            SutLibraries = d['value']
-        if d['key'] == 'adapters':
-            SutAdapters = d['value']
-
-    if not len(SutLibraries):
-        SutLibraries = RepoLibraries.instance().getDefault()
-    if not len(SutAdapters):
-        SutAdapters = RepoAdapters.instance().getDefault()
-        
-    SutLibrariesGeneric = RepoLibraries.instance().getGeneric()
-    SutAdaptersGeneric = RepoAdapters.instance().getGeneric()
-
-    srcTest = dataTest['test-definition']
-    srcExec = dataTest['test-execution']
-
-    # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
-
-    # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
-
-    projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
-    
-    # te construction
-    te = []
-    # import python libraries
-    te.append( IMPORT_PY_LIBS )
-
-    # import static arguments
-    te.append( getStaticArgs(envTmp=True) )
-    
-    te.append( """taskuuid_ = '%s'\n""" % taskUuid )
-    te.append( """user_ = '%s'\n""" % userName )
-    te.append( """userid_ = '%s'\n""" % userId )
-    te.append( """projectid_ = '%s'\n""" % projectId )
-    te.append( """projectname_ = '%s'\n""" % projectName )
-    te.append( """test_name = '%s'\n""" % testName )
-    te.append( """test_location = '%s'\n""" % testLocation )
-    te.append( """test_result_path = '%s'\n""" % trPath )
-    te.append( """log_filename = '%s'\n""" % logFilename )
-    te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
-    te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
-    te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1] # task server id
-# test_id = sys.argv[2] # tab id of the test result in the gui
-# replay_id = sys.argv[3]
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
-
-    te.append(IMPORT_INTRO)
-    
-    # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
-
-    te.append("""
-TestProperties.initialize(parameters=%s, descriptions=%s, parametersOut=%s, agents=%s, parametersShared=%s, runningAgents=%s, runningProbes=%s)""" % (parameters, descriptions, parametersOut, agents, parametersShared, runningAgents, runningProbes) )
-
-    te.append("""
-
-scriptstart_time = time.time()
-RETURN_CODE_OK = 0
-RETURN_CODE_TE_ERROR = 13
-return_code = RETURN_CODE_OK
-
-TDS.initialize(path = result_path)
-
-TLX.initialize(task_uuid=taskuuid_, path = result_path, name = log_filename, user_ = user_, testname_ = test_name, id_ = test_id,
-	replay_id_ = replay_id, task_id_ = task_id, userid_ = userid_)
-
-TestExecutorLib.dontExecute()
-tsMgr = TestExecutorLib.getTsMgr()
-tcMgr = TestExecutorLib.getTcMgr()
-""")
-    te.append("""
-tsMgr.initialize(path=result_path, testname=test_name, replayId=replay_id, userId=userid_, projectId=projectid_, 
-                stepByStep=%s, breakpoint=%s, testId=%s, relativePath=test_result_path, 
-                testpath=test_location, userName=user_, projectName=projectname_)""" % (stepByStep, breakpoint, testId) )
-    te.append("""
-tsMgr.newTs(name=test_name, isEnabled=True, testPath=test_location, testProject=projectname_)
-
-tsMgr.setMainDescriptions(descriptions=TestProperties.Parameters().descriptions())
-
-try:
-""")
-    te.append("""	
-
-	def shared(project, name, subname=''):
-		return TestProperties.Parameters().shared(project=project, name=name, subname=subname)
-	def input(name):
-		return TestProperties.Parameters().input(name=name)
-	def output(name):
-		return TestProperties.Parameters().output(name=name)
-	def setInput(name, value):
-		return TestProperties.Parameters().setInput(name=name, value=value)
-	def setOutput(name, value):
-		return TestProperties.Parameters().setOutput(name=name, value=value)
-	def agent(name):
-		return TestProperties.Parameters().agent(name=name)
-	def running(name):
-		return TestProperties.Parameters().running(name=name) 
-	def inputs():
-		return TestProperties.Parameters().inputs()
-	def outputs():
-		return TestProperties.Parameters().outputs()
-	def agents():
-		return TestProperties.Parameters().agents()
-	def descriptions():
-		return TestProperties.Parameters().descriptions()
-	def excel(data, worksheet, row=None, column=None):
-		return TestProperties.Parameters().excel(data=data, worksheet=worksheet, row=row, column=column)
-	get = parameter = input # backward compatibility
-	def description(name):
-		return TestProperties.Descriptions().get(name=name)
-""")
-
-    te.append(INPUT_CUSTOM)
-    te.append(INPUT_CACHE)
-
-    te.append("""
-	TestLibrary.setVersionGeneric('%s') 
-	TestAdapter.setVersionGeneric('%s')   
-""" %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    if SutLibrariesGeneric:
-        te.append("""
-
-	# !! generic local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-        te.append("""
-		raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        te.append(""")
-""")
-
-    if SutAdaptersGeneric:
-        te.append("""
-	# !! generic local adapters injection
-	try:
-		from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-        te.append("""
-		raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        te.append(""")	
-""")
-
-    te.append("""
-
-	# !! local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibraries
-		SutLibraries.Default = SutLibraries""" % SutLibraries )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-    te.append("""
-		raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    te.append(""")
-""")
-    te.append("""
-	# !! local adapters injection
-	try:
-		from SutAdapters import %s as SutAdapters
-		SutAdapters.Default = SutAdapters""" % SutAdapters )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-    te.append("""
-		raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    te.append(""")	
-""")
-    te.append("""
-	if TestAdapter.isDeprecated():
-		raise Exception('SUT adapter %s is deprecated')
-""" % SutAdapters )
-    te.append("""
-	if TestLibrary.isDeprecated():
-		raise Exception('SUT library %s is deprecated')
-""" % SutLibraries )
-    if SutLibrariesGeneric:
-        te.append("""
-	try:
-		SutLibraries.Generic = SutLibrariesGeneric
-	except Exception as e:
-		pass
-""" )
-
-    if SutAdaptersGeneric:
-        te.append("""
-	try:
-		SutAdapters.Generic = SutAdaptersGeneric
-	except Exception as e:
-		pass
-""" )
-
-    te.append( TEST_SUMMARY ) 
-    te.append("""
-	# !! test injection
-""")
-    te.append(Common.indent(srcTest))
-    te.append("\n")
-    te.append("""
-	# !! test exec injection
-""")
-    te.append(Common.indent(srcExec))
-    te.append("""
-except Exception as e:
-	sys.stderr.write( '%s\\n' % str(e) )
-	return_code = RETURN_CODE_TE_ERROR
-
-tsMgr.saveDesigns()
-tsMgr.saveDesignsXml()
-
-TLX.finalize()
-sys.exit(return_code)
-""")
-    return unicode(''.join(te)).encode('utf-8')
-
-def createTestDesignForTu(dataTest, userName, testName, trPath, logFilename, 
-                          withoutProbes, defaultLibrary='', defaultAdapter='', userId=0,
-                            projectId=0, parametersShared=[], stepByStep=False, 
-                            breakpoint=False, testId=0, runningAgents=[], runningProbes=[],
-                            testLocation='', taskUuid=''  ):
-    """
-    """
-    properties = dataTest['test-properties']
-    parameters = properties['inputs-parameters']['parameter']
-    parametersOut = properties['outputs-parameters']['parameter']
-    agents = properties['agents']['agent']
-    descriptions = properties['descriptions']['description']
-    probes = properties['probes']['probe']
-
-    SutLibraries = defaultLibrary
-    SutAdapters = defaultAdapter
-    for d in descriptions:
-        if d['key'] == 'libraries':
-            SutLibraries = d['value']
-        if d['key'] == 'adapters':
-            SutAdapters = d['value']
-
-    if not len(SutLibraries):
-        SutLibraries = RepoLibraries.instance().getDefault()
-    if not len(SutAdapters):
-        SutAdapters = RepoAdapters.instance().getDefault()
-        
-    SutLibrariesGeneric = RepoLibraries.instance().getGeneric()
-    SutAdaptersGeneric = RepoAdapters.instance().getGeneric()
-    
-    # if 'src-test' in dataTest:
-        # srcTest = dataTest['src-test']
-
-    srcTest = dataTest['test-definition']
-    
-    # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
-
-    # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
-
-    projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
-    
-    # te construction
-    te = []
-    # import python libraries
-    te.append( IMPORT_PY_LIBS )
-
-    # import static arguments
-    te.append( getStaticArgs(envTmp=True) )
-    
-    te.append( """taskuuid_ = '%s'\n""" % taskUuid )
-    te.append( """user_ = '%s'\n""" % userName )
-    te.append( """userid_ = '%s'\n""" % userId )
-    te.append( """projectid_ = '%s'\n""" % projectId )
-    te.append( """projectname_ = '%s'\n""" % projectName )
-    te.append( """test_name = '%s'\n""" % testName )
-    te.append( """test_location = '%s'\n""" % testLocation )
-    te.append( """test_result_path = '%s'\n""" % trPath )
-    te.append( """log_filename = '%s'\n""" % logFilename )
-    te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
-    te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
-    te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1] # task server id
-# test_id = sys.argv[2] # tab id of the test result in the gui
-# replay_id = sys.argv[3]
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
-    
-    te.append(IMPORT_INTRO)
-    
-    # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
-
-    te.append("""
-TestProperties.initialize(parameters=%s, descriptions=%s, parametersOut=%s, agents=%s, parametersShared=%s, runningAgents=%s, runningProbes=%s)""" % (parameters, descriptions, parametersOut, agents, parametersShared, runningAgents, runningProbes) )
-
-    te.append("""
-
-RETURN_CODE_OK = 0
-RETURN_CODE_TE_ERROR = 13
-scriptstart_time = time.time()
-return_code = RETURN_CODE_OK
-
-TDS.initialize(path = result_path)
-
-TLX.initialize(task_uuid=taskuuid_, path = result_path, name = log_filename, user_ = user_, testname_ = test_name, id_ = test_id,
-	replay_id_ = replay_id, task_id_ = task_id, userid_ = userid_)
-
-TestExecutorLib.dontExecute()
-tsMgr = TestExecutorLib.getTsMgr()
-tcMgr = TestExecutorLib.getTcMgr()
-""")
-    te.append("""
-tsMgr.initialize(path=result_path, testname=test_name, replayId=replay_id, userId=userid_, projectId=projectid_, 
-                stepByStep=%s, breakpoint=%s, testId=%s, relativePath=test_result_path, 
-                testpath=test_location, userName=user_, projectName=projectname_)""" % (stepByStep, breakpoint, testId) )
-    te.append("""
-tsMgr.newTu(name=test_name, isEnabled=True, testPath=test_location, testProject=projectname_)
-
-tsMgr.setMainDescriptions(descriptions=TestProperties.Parameters().descriptions())
-
-try:
-""")
-    te.append("""	
-
-	def shared(project, name, subname=''):
-		return TestProperties.Parameters().shared(project=project, name=name, subname=subname)
-	def input(name):
-		return TestProperties.Parameters().input(name=name)
-	def output(name):
-		return TestProperties.Parameters().output(name=name)
-	def setInput(name, value):
-		return TestProperties.Parameters().setInput(name=name, value=value)
-	def setOutput(name, value):
-		return TestProperties.Parameters().setOutput(name=name, value=value)
-	def agent(name):
-		return TestProperties.Parameters().agent(name=name)
-	def running(name):
-		return TestProperties.Parameters().running(name=name) 
-	def inputs():
-		return TestProperties.Parameters().inputs()
-	def outputs():
-		return TestProperties.Parameters().outputs()
-	def agents():
-		return TestProperties.Parameters().agents()
-	def descriptions():
-		return TestProperties.Parameters().descriptions()
-	def excel(data, worksheet, row=None, column=None):
-		return TestProperties.Parameters().excel(data=data, worksheet=worksheet, row=row, column=column)
-	get = parameter = input # backward compatibility
-	def description(name):
-		return TestProperties.Descriptions().get(name=name)
-""")
-
-    te.append(INPUT_CUSTOM)
-    te.append(INPUT_CACHE)
-
-    te.append("""
-	TestLibrary.setVersionGeneric('%s') 
-	TestAdapter.setVersionGeneric('%s')   
-""" %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    if SutLibrariesGeneric:
-        te.append("""
-
-	# !! generic local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-        te.append("""
-		raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        te.append(""")
-""")
-
-    if SutAdaptersGeneric:
-        te.append("""
-	# !! generic local adapters injection
-	try:
-		from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-        te.append("""
-		raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        te.append(""")	
-""")
-
-    te.append("""
-
-	# !! local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibraries
-		SutLibraries.Default = SutLibraries""" % SutLibraries )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-    te.append("""
-		raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    te.append(""")
-""")
-    te.append("""
-	# !! local adapters injection
-	try:
-		from SutAdapters import %s as SutAdapters
-		SutAdapters.Default = SutAdapters""" % SutAdapters )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-    te.append("""
-		raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    te.append(""")	
-""")
-    te.append("""
-	if TestAdapter.isDeprecated():
-		raise Exception('SUT adapter %s is deprecated')
-""" % SutAdapters )
-    te.append("""
-	if TestLibrary.isDeprecated():
-		raise Exception('SUT library %s is deprecated')
-""" % SutLibraries )
-    if SutLibrariesGeneric:
-        te.append("""
-	try:
-		SutLibraries.Generic = SutLibrariesGeneric
-	except Exception as e:
-		pass
-""" )
-
-    if SutAdaptersGeneric:
-        te.append("""
-	try:
-		SutAdapters.Generic = SutAdaptersGeneric
-	except Exception as e:
-		pass
-""" )
-
-    te.append( TEST_SUMMARY ) 
-    te.append("""
-	# !! test injection
-	class TESTCASE(TestCase):
-""")
-    te.append(Common.indent(srcTest, nbTab=2))
-    te.append("\n")
-    te.append(Common.indent("TESTCASE(suffix=None, testName='%s' % description('name') ).execute()"  ))
-    te.append("""
-except Exception as e:
-	sys.stderr.write( '%s\\n' % str(e) )
-	return_code = RETURN_CODE_TE_ERROR
-
-tsMgr.saveDesigns()
-tsMgr.saveDesignsXml()
-
-TLX.finalize()
-sys.exit(return_code)
-""")
-    return unicode(''.join(te)).encode('utf-8')
-
-def createTestDesignForTa(dataTest, userName, testName, trPath, 
-                          logFilename, withoutProbes, defaultLibrary='', defaultAdapter='', userId=0,
-                          projectId=0, parametersShared=[], stepByStep=False, 
-                          breakpoint=False, testId=0, runningAgents=[], runningProbes=[],
-                            testLocation='', taskUuid=''  ):
-    """
-    """
-    properties = dataTest['test-properties']
-    parameters = properties['inputs-parameters']['parameter']
-    parametersOut = properties['outputs-parameters']['parameter']
-    agents = properties['agents']['agent']
-    descriptions = properties['descriptions']['description']
-    probes = properties['probes']['probe']
-
-    SutLibraries = defaultLibrary
-    SutAdapters = defaultAdapter
-    for d in descriptions:
-        if d['key'] == 'libraries':
-            SutLibraries = d['value']
-        if d['key'] == 'adapters':
-            SutAdapters = d['value']
-
-    if not len(SutLibraries):
-        SutLibraries = RepoLibraries.instance().getDefault()
-    if not len(SutAdapters):
-        SutAdapters = RepoAdapters.instance().getDefault()
-        
-    SutLibrariesGeneric = RepoLibraries.instance().getGeneric()
-    SutAdaptersGeneric = RepoAdapters.instance().getGeneric()
-
-    srcTest = dataTest['test-definition']
-    
-    # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
-
-    # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
-
-    projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
-    
-    # te construction
-    te = []
-    # import python libraries
-    te.append( IMPORT_PY_LIBS )
-
-    # import static arguments
-    te.append( getStaticArgs(envTmp=True) )
-    
-    te.append( """taskuuid_ = '%s'\n""" % taskUuid )
-    te.append( """user_ = '%s'\n""" % userName )
-    te.append( """userid_ = '%s'\n""" % userId )
-    te.append( """projectid_ = '%s'\n""" % projectId )
-    te.append( """projectname_ = '%s'\n""" % projectName )
-    te.append( """test_name = '%s'\n""" % testName )
-    te.append( """test_location = '%s'\n""" % testLocation )
-    te.append( """test_result_path = '%s'\n""" % trPath )
-    te.append( """log_filename = '%s'\n""" % logFilename )
-    te.append( """tests_path = '%s/%s/'\n""" % (RepoTests.instance().testsPath,projectId) )
-    te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
-    te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
-    # te.append("""
-
-# task_id = sys.argv[1] # task server id
-# test_id = sys.argv[2] # tab id of the test result in the gui
-# replay_id = sys.argv[3]
-# result_path = '%s/%s' % (tests_result_path, test_result_path)
-# sys.path.insert(0, root )
-# sys.stdout = sys.stderr = open( '%s/test.out' % result_path ,'a', 0) 
-
-# import TestExecutorLib.TestRepositoriesLib as TestRepositories
-# TestRepositories.setTestsPath(path=tests_path)
-# TestRepositories.setAdpsPath(path=adapters_path)
-# TestRepositories.setLibsPath(path=libraries_path)
-# """)
-
-    te.append(IMPORT_INTRO)
-    
-    # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
-
-    te.append("""
-TestProperties.initialize(parameters=%s, descriptions=%s, parametersOut=%s, agents=%s, parametersShared=%s, runningAgents=%s, runningProbes=%s)""" % (parameters, descriptions, parametersOut, agents, parametersShared, runningAgents, runningProbes) )
-
-    te.append("""
-
-RETURN_CODE_OK = 0
-RETURN_CODE_TE_ERROR = 13
-scriptstart_time = time.time()
-return_code = RETURN_CODE_OK
-
-TDS.initialize(path = result_path)
-
-TLX.initialize(task_uuid=taskuuid_, path = result_path, name = log_filename, user_ = user_, testname_ = test_name, id_ = test_id,
-	replay_id_ = replay_id, task_id_ = task_id, userid_ = userid_)
-
-TestExecutorLib.dontExecute()
-tsMgr = TestExecutorLib.getTsMgr()
-tcMgr = TestExecutorLib.getTcMgr()
-""")
-    te.append("""
-tsMgr.initialize(path=result_path, testname=test_name, replayId=replay_id, userId=userid_, projectId=projectid_, 
-                stepByStep=%s, breakpoint=%s, testId=%s, relativePath=test_result_path, 
-                testpath=test_location, userName=user_, projectName=projectname_)""" % (stepByStep, breakpoint, testId) )
-    te.append("""
-tsMgr.newTa(name=test_name, isEnabled=True, testPath=test_location, testProject=projectname_)
-
-tsMgr.setMainDescriptions(descriptions=TestProperties.Parameters().descriptions())
-
-try:
-""")
-    te.append("""	
-
-	def shared(project, name, subname=''):
-		return TestProperties.Parameters().shared(project=project, name=name, subname=subname)
-	def input(name):
-		return TestProperties.Parameters().input(name=name)
-	def output(name):
-		return TestProperties.Parameters().output(name=name)
-	def setInput(name, value):
-		return TestProperties.Parameters().setInput(name=name, value=value)
-	def setOutput(name, value):
-		return TestProperties.Parameters().setOutput(name=name, value=value)
-	def agent(name):
-		return TestProperties.Parameters().agent(name=name)
-	def running(name):
-		return TestProperties.Parameters().running(name=name) 
-	def inputs():
-		return TestProperties.Parameters().inputs()
-	def outputs():
-		return TestProperties.Parameters().outputs()
-	def agents():
-		return TestProperties.Parameters().agents()
-	def descriptions():
-		return TestProperties.Parameters().descriptions()
-	def excel(data, worksheet, row=None, column=None):
-		return TestProperties.Parameters().excel(data=data, worksheet=worksheet, row=row, column=column)
-	get = parameter = input # backward compatibility
-	def description(name):
-		return TestProperties.Descriptions().get(name=name)
-	
-""")
-
-    te.append(INPUT_CUSTOM)
-    te.append(INPUT_CACHE)
-
-    te.append("""
-	TestLibrary.setVersionGeneric('%s') 
-	TestAdapter.setVersionGeneric('%s')   
-""" %(SutLibrariesGeneric, SutAdaptersGeneric))
-
-    if SutLibrariesGeneric:
-        te.append("""
-
-	# !! generic local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibrariesGeneric""" % SutLibrariesGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-        te.append("""
-		raise Exception('Generic SUT libraries %s is not applicable'""" % SutLibrariesGeneric )
-        te.append(""")
-""")
-
-    if SutAdaptersGeneric:
-        te.append("""
-	# !! generic local adapters injection
-	try:
-		from SutAdapters import %s as SutAdaptersGeneric""" % SutAdaptersGeneric )
-        te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-        te.append("""
-		raise Exception('Generic SUT adapter %s is not applicable'""" % SutAdaptersGeneric )
-        te.append(""")	
-""")
-
-    te.append("""
-
-	# !! local libraries adapters injection
-	try:
-		from SutLibraries import %s as SutLibraries
-		SutLibraries.Default = SutLibraries""" % SutLibraries )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")
-    te.append("""
-		raise Exception('SUT libraries %s is not applicable'""" % SutLibraries )
-    te.append(""")
-""")
-    te.append("""
-	# !! local adapters injection
-	try:
-		from SutAdapters import %s as SutAdapters
-		SutAdapters.Default = SutAdapters""" % SutAdapters )
-    te.append("""
-	except Exception as e:
-		sys.stderr.write( '%s\\n' % str(e) )""")	
-    te.append("""
-		raise Exception('SUT adapter %s is not applicable'""" % SutAdapters )
-    te.append(""")	
-""")
-    te.append("""
-	if TestAdapter.isDeprecated():
-		raise Exception('SUT adapter %s is deprecated')
-""" % SutAdapters )
-    te.append("""
-	if TestLibrary.isDeprecated():
-		raise Exception('SUT library %s is deprecated')
-""" % SutLibraries )
-    if SutLibrariesGeneric:
-        te.append("""
-	try:
-		SutLibraries.Generic = SutLibrariesGeneric
-	except Exception as e:
-		pass
-""" )
-
-    if SutAdaptersGeneric:
-        te.append("""
-	try:
-		SutAdapters.Generic = SutAdaptersGeneric
-	except Exception as e:
-		pass
-""" )
-
-    te.append( TEST_SUMMARY ) 
-    te.append("""
-	# !! test injection
-	class TESTCASE(TestCase):
-""")
-    te.append(Common.indent(srcTest, nbTab=2))
-    te.append("\n")
-    te.append(Common.indent("TESTCASE(suffix=None, testName='%s' % description('name') ).execute()"  ))
-    te.append("""
-except Exception as e:
-	sys.stderr.write( '%s\\n' % str(e) )
-	return_code = RETURN_CODE_TE_ERROR
-
-tsMgr.saveDesigns()
-tsMgr.saveDesignsXml()
-
-TLX.finalize()
-sys.exit(return_code)
-""")
-    return unicode(''.join(te)).encode('utf-8')
-
-def createTestExecutable( dataTest, userName, testName, trPath, logFilename, withoutProbes, 
-                          defaultLibrary='', defaultAdapter='', userId=0,
-                          projectId=0, subTEs=1, parametersShared=[], stepByStep=False, 
-                          breakpoint=False, testId=0, runningAgents=[], runningProbes=[],
-                          channelId=False, testLocation='', taskUuid=''):
+def createTestExecutable( dataTest, 
+                          userName, 
+                          testName, 
+                          trPath, 
+                          logFilename, 
+                          withoutProbes, 
+                          defaultLibrary='', 
+                          defaultAdapter='', 
+                          userId=0,
+                          projectId=0, 
+                          subTEs=1, 
+                          parametersShared=[], 
+                          stepByStep=False, 
+                          breakpoint=False, 
+                          testId=0, 
+                          runningAgents=[], 
+                          runningProbes=[],
+                          channelId=False, 
+                          testLocation='', 
+                          taskUuid=''):
     """
     Creates and returns the test executable: testplan or testsuite
 
@@ -2108,10 +168,26 @@ def createTestExecutable( dataTest, userName, testName, trPath, logFilename, wit
 #	> log_testsuite_stopped
 # > log_script_stopped
 
-def createTestGlobal ( dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary='', 
-                        defaultAdapter='', userId=0, projectId=0, subTEs=1, 
-                        parametersShared=[], stepByStep=False, breakpoint=False, testId=0,
-                        runningAgents=[], runningProbes=[], channelId=False, testLocation='', taskUuid=''):
+def createTestGlobal ( dataTest, 
+                       userName, 
+                       testName, 
+                       trPath, 
+                       logFilename, 
+                       withoutProbes, 
+                       defaultLibrary='', 
+                       defaultAdapter='', 
+                       userId=0, 
+                       projectId=0, 
+                       subTEs=1, 
+                       parametersShared=[], 
+                       stepByStep=False, 
+                       breakpoint=False, 
+                       testId=0,
+                       runningAgents=[], 
+                       runningProbes=[], 
+                       channelId=False, 
+                       testLocation='', 
+                       taskUuid=''):
     """
     Creates and returns a test global executable 
 
@@ -2149,20 +225,20 @@ def createTestGlobal ( dataTest, userName, testName, trPath, logFilename, withou
     projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
     
     # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
+    missingDataset = TestModelCommon.loadDataset(parameters=parameters, user=userName)
+    missingDatasetOut = TestModelCommon.loadDataset(parameters=parametersOut, inputs=False, user=userName)
 
     # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
+    missingImages = TestModelCommon.loadImages(parameters=parameters, user=userName)
+    missingImagesOut = TestModelCommon.loadImages(parameters=parametersOut, user=userName)
 
     # te construction
     te = []
     # import python libraries
-    te.append( IMPORT_PY_LIBS )
+    te.append( TestModelCommon.IMPORT_PY_LIBS )
 
     # import static arguments
-    te.append( getStaticArgs() )
+    te.append( TestModelCommon.getStaticArgs() )
     te.append( """taskuuid_ = '%s'\n""" % taskUuid )
     te.append( """channelid_ = %s\n""" % channelId )
     te.append( """user_ = '%s'\n""" % userName )
@@ -2177,10 +253,10 @@ def createTestGlobal ( dataTest, userName, testName, trPath, logFilename, withou
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
 
-    te.append(IMPORT_INTRO)
+    te.append(TestModelCommon.IMPORT_INTRO)
     
     # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
+    te.append(TestModelCommon.IMPORT_TE_LIBS)
 
     te.append("""
 TestAdapter.setMainPath(sutPath=root)
@@ -2253,7 +329,7 @@ TLX.instance().log_testglobal_info(message = 'BEGIN', component = 'TESTGLOBAL', 
 
 try:
 """)
-    te.append( CODE_PROBES ) 
+    te.append( TestModelCommon.CODE_PROBES ) 
     te.append( """	__PROBES__ = %s""" % probes )
     te.append( """
 
@@ -2287,8 +363,8 @@ try:
 	def description(name):
 		return ParametersHandler.description(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
 """)
-    te.append( TEST_SUMMARY )
-    te.append( TEST_SUMMARY_TG ) 
+    te.append( TestModelCommon.TEST_SUMMARY )
+    te.append( TestModelCommon.TEST_SUMMARY_TG ) 
     for ds in missingDataset:
         te.append("""
 	TLX.instance().log_testglobal_warning(message = 'Dataset %s is missing in inputs parameters.', component = 'TESTGLOBAL', fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
@@ -2370,7 +446,7 @@ else:
              ts["testpath"], ts["testproject"], 
              ts['id'], ts['testname'], ts['alias']), nbTab = ts['depth'] ) )
         
-        if ts['enable'] != TS_ENABLED:
+        if ts['enable'] != TestModelCommon.TS_ENABLED:
             ts['depth'] = 1 # bypass depath
             parentId = "%s-0" % ts['parent']
             if 'tpid' in ts: parentId = "%s-0-%s" % (ts['tpid'], ts['parent'])
@@ -2389,7 +465,7 @@ tsMgr.newTa(name="%s", isEnabled=0, nameAlias="%s", startedAt=time.strftime( "%%
                 te.append(Common.indent("""
 tsMgr.newTu(name="%s", isEnabled=0, nameAlias="%s", startedAt=time.strftime( "%%d/%%m/%%Y %%H:%%M:%%S", time.localtime(time.time()) ))""" % (ts['path'], ts['alias']) , nbTab = ts['depth'] ) )
 
-        if ts['enable'] == TS_ENABLED:
+        if ts['enable'] == TestModelCommon.TS_ENABLED:
             ts['depth'] = 1 # bypass depath
             if isTs:
                 te.append(Common.indent("""
@@ -2407,12 +483,12 @@ tsMgr.newTu(name="%s", isEnabled=0, nameAlias="%s", startedAt=time.strftime( "%%
 	try:
 """, nbTab = ts['depth'] -1 ))
             # prepare datasets
-            missingDatasetTs = loadDataset(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
-            missingDatasetTsOut = loadDataset(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
+            missingDatasetTs = TestModelCommon.loadDataset(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
+            missingDatasetTsOut = TestModelCommon.loadDataset(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
 
             # prepare images
-            missingImagesTs = loadImages(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
-            missingImagesTsOut = loadImages(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
+            missingImagesTs = TestModelCommon.loadImages(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
+            missingImagesTsOut = TestModelCommon.loadImages(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
 
             parentId = "%s-0" % ts['parent']
             if 'tpid' in ts:
@@ -2709,10 +785,26 @@ sys.exit(return_code)
 """)
     return unicode(''.join(te)).encode('utf-8')
 
-def createTestPlan ( dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary='',
-                    defaultAdapter='', userId=0, projectId=0, subTEs=1, parametersShared=[], stepByStep=False,
-                    breakpoint=False, testId=0, runningAgents=[], runningProbes=[], channelId=False, 
-                    testLocation='', taskUuid='' ):
+def createTestPlan ( dataTest, 
+                     userName, 
+                     testName, 
+                     trPath, 
+                     logFilename, 
+                     withoutProbes, 
+                     defaultLibrary='',
+                     defaultAdapter='', 
+                     userId=0, 
+                     projectId=0, 
+                     subTEs=1, 
+                     parametersShared=[], 
+                     stepByStep=False,
+                     breakpoint=False, 
+                     testId=0, 
+                     runningAgents=[], 
+                     runningProbes=[], 
+                     channelId=False, 
+                     testLocation='', 
+                     taskUuid='' ):
     """
     Creates and returns a test suite executable 
 
@@ -2750,20 +842,20 @@ def createTestPlan ( dataTest, userName, testName, trPath, logFilename, withoutP
     projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
     
     # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
+    missingDataset = TestModelCommon.loadDataset(parameters=parameters, user=userName)
+    missingDatasetOut = TestModelCommon.loadDataset(parameters=parametersOut, inputs=False, user=userName)
 
     # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
+    missingImages = TestModelCommon.loadImages(parameters=parameters, user=userName)
+    missingImagesOut = TestModelCommon.loadImages(parameters=parametersOut, user=userName)
 
     # te construction
     te = []
     # import python libraries
-    te.append( IMPORT_PY_LIBS )
+    te.append( TestModelCommon.IMPORT_PY_LIBS )
 
     # import static arguments
-    te.append( getStaticArgs() )
+    te.append( TestModelCommon.getStaticArgs() )
     te.append( """taskuuid_ = '%s'\n""" % taskUuid )
     te.append( """channelid_ = %s\n""" % channelId )
     te.append( """user_ = '%s'\n""" % userName )
@@ -2778,10 +870,10 @@ def createTestPlan ( dataTest, userName, testName, trPath, logFilename, withoutP
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
 
-    te.append(IMPORT_INTRO)
+    te.append(TestModelCommon.IMPORT_INTRO)
     
     # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
+    te.append(TestModelCommon.IMPORT_TE_LIBS)
 
     te.append("""
 TestAdapter.setMainPath(sutPath=root)
@@ -2853,7 +945,7 @@ TLX.instance().log_testplan_info(message = 'BEGIN', component = 'TESTPLAN', from
 
 try:
 """)
-    te.append( CODE_PROBES ) 
+    te.append( TestModelCommon.CODE_PROBES ) 
     te.append( """	__PROBES__ = %s""" % probes )
     te.append( """
 
@@ -2888,8 +980,8 @@ try:
 		return ParametersHandler.description(name=name, tpId=TLX.instance().mainScriptId, tsId=TLX.instance().scriptId)
 """)
 
-    te.append( TEST_SUMMARY )
-    te.append( TEST_SUMMARY_TP ) 
+    te.append( TestModelCommon.TEST_SUMMARY )
+    te.append( TestModelCommon.TEST_SUMMARY_TP ) 
     for ds in missingDataset:
         te.append("""
 	TLX.instance().log_testplan_warning(message = 'Dataset %s is missing in inputs parameters.', component = 'TESTPLAN', fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
@@ -2941,7 +1033,7 @@ try:
                 isTs=False
                 isTa=True
                 
-        if ts['enable'] != TS_ENABLED:
+        if ts['enable'] != TestModelCommon.TS_ENABLED:
             ts['depth'] = 1 # bypass depath
             if isTs:
                 te.append(Common.indent("""
@@ -2953,7 +1045,7 @@ tsMgr.newTa(name="%s", isEnabled=0, nameAlias="%s", startedAt=time.strftime( "%%
                 te.append(Common.indent("""
 tsMgr.newTu(name="%s", isEnabled=0, nameAlias="%s", startedAt=time.strftime( "%%d/%%m/%%Y %%H:%%M:%%S", time.localtime(time.time()) ))""" % (ts['path'], ts['alias']) , nbTab = ts['depth'] ) )
 
-        if ts['enable'] == TS_ENABLED:
+        if ts['enable'] == TestModelCommon.TS_ENABLED:
             ts['depth'] = 1 # bypass depath
             if isTs:
                 te.append(Common.indent("""
@@ -2971,12 +1063,12 @@ tsMgr.newTu(name="%s", isEnabled=0, nameAlias="%s", startedAt=time.strftime( "%%
 	try:
 """, nbTab = ts['depth'] -1 ))
             # prepare datasets
-            missingDatasetTs = loadDataset(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
-            missingDatasetTsOut = loadDataset(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
+            missingDatasetTs = TestModelCommon.loadDataset(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
+            missingDatasetTsOut = TestModelCommon.loadDataset(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
 
             # prepare images
-            missingImagesTs = loadImages(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
-            missingImagesTsOut = loadImages(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
+            missingImagesTs = TestModelCommon.loadImages(parameters=ts['properties']['inputs-parameters']['parameter'], user=userName)
+            missingImagesTsOut = TestModelCommon.loadImages(parameters=ts['properties']['outputs-parameters']['parameter'], user=userName)
             
             # new in v17
             notCond = ""
@@ -3259,10 +1351,26 @@ sys.exit(return_code)
 """)
     return unicode(''.join(te)).encode('utf-8')
 
-def createTestSuite (	dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary='',
-                        defaultAdapter='', userId=0, projectId=0, subTEs=1, parametersShared=[], stepByStep=False,
-                        breakpoint=False, testId=0, runningAgents=[], runningProbes=[], channelId=False, 
-                        testLocation='', taskUuid='' ):
+def createTestSuite (	dataTest, 
+                        userName, 
+                        testName, 
+                        trPath, 
+                        logFilename, 
+                        withoutProbes, 
+                        defaultLibrary='',
+                        defaultAdapter='', 
+                        userId=0, 
+                        projectId=0, 
+                        subTEs=1, 
+                        parametersShared=[], 
+                        stepByStep=False,
+                        breakpoint=False, 
+                        testId=0, 
+                        runningAgents=[], 
+                        runningProbes=[], 
+                        channelId=False, 
+                        testLocation='', 
+                        taskUuid='' ):
     """
     Creates and returns a test suite executable 
 
@@ -3301,20 +1409,20 @@ def createTestSuite (	dataTest, userName, testName, trPath, logFilename, without
     projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
     
     # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
+    missingDataset = TestModelCommon.loadDataset(parameters=parameters, user=userName)
+    missingDatasetOut = TestModelCommon.loadDataset(parameters=parametersOut, inputs=False, user=userName)
 
     # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
+    missingImages = TestModelCommon.loadImages(parameters=parameters, user=userName)
+    missingImagesOut = TestModelCommon.loadImages(parameters=parametersOut, user=userName)
 
     # te construction
     te = []
     # import python libraries
-    te.append( IMPORT_PY_LIBS )
+    te.append( TestModelCommon.IMPORT_PY_LIBS )
 
     # import static arguments
-    te.append( getStaticArgs() )
+    te.append( TestModelCommon.getStaticArgs() )
     te.append( """taskuuid_ = '%s'\n""" % taskUuid )
     te.append( """channelid_ = %s\n""" % channelId )
     te.append( """user_ = '%s'\n""" % userName )
@@ -3329,10 +1437,10 @@ def createTestSuite (	dataTest, userName, testName, trPath, logFilename, without
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
 
-    te.append(IMPORT_INTRO)
+    te.append(TestModelCommon.IMPORT_INTRO)
     
     # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
+    te.append(TestModelCommon.IMPORT_TE_LIBS)
 
     te.append("""
 TestAdapter.setMainPath(sutPath=root)
@@ -3398,7 +1506,7 @@ TLX.instance().log_testsuite_started()
 TLX.instance().log_testsuite_info(message = 'BEGIN', component = 'TESTSUITE', fromlevel=LEVEL_TE, tolevel=LEVEL_USER, flagEnd=False, flagBegin=True)
 try:
 """)
-    te.append( CODE_PROBES ) 
+    te.append( TestModelCommon.CODE_PROBES ) 
     te.append("""	__PROBES__ = %s""" % probes )
     te.append("""	
 
@@ -3432,8 +1540,8 @@ try:
 		return TestProperties.Descriptions().get(name=name)
 	
 """)
-    te.append( TEST_SUMMARY ) 
-    te.append( TEST_SUMMARY_TS ) 
+    te.append( TestModelCommon.TEST_SUMMARY ) 
+    te.append( TestModelCommon.TEST_SUMMARY_TS ) 
     for ds in missingDataset:
         te.append("""	TLX.instance().log_testsuite_warning(message = 'Dataset missing %s on inputs parameters', component = 'TESTSUITE', fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
 """ % ds)
@@ -3558,10 +1666,26 @@ sys.exit(return_code)
 """)
     return unicode(''.join(te)).encode('utf-8')
 
-def createTestUnit (	dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary='',
-                        defaultAdapter='', userId=0, projectId=0, subTEs=1, parametersShared=[], stepByStep=False, 
-                        breakpoint=False, testId=0, runningAgents=[], runningProbes=[], channelId=False, 
-                        testLocation='', taskUuid=''):
+def createTestUnit (	dataTest, 
+                        userName, 
+                        testName, 
+                        trPath, 
+                        logFilename, 
+                        withoutProbes, 
+                        defaultLibrary='',
+                        defaultAdapter='', 
+                        userId=0, 
+                        projectId=0, 
+                        subTEs=1, 
+                        parametersShared=[],
+                        stepByStep=False, 
+                        breakpoint=False, 
+                        testId=0, 
+                        runningAgents=[], 
+                        runningProbes=[], 
+                        channelId=False, 
+                        testLocation='', 
+                        taskUuid=''):
     """
     Creates and returns a test suite executable 
 
@@ -3599,20 +1723,20 @@ def createTestUnit (	dataTest, userName, testName, trPath, logFilename, withoutP
     projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
     
     # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
+    missingDataset = TestModelCommon.loadDataset(parameters=parameters, user=userName)
+    missingDatasetOut = TestModelCommon.loadDataset(parameters=parametersOut, inputs=False, user=userName)
 
     # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
+    missingImages = TestModelCommon.loadImages(parameters=parameters, user=userName)
+    missingImagesOut = TestModelCommon.loadImages(parameters=parametersOut, user=userName)
 
     # te construction
     te = []
     # import python libraries
-    te.append( IMPORT_PY_LIBS )
+    te.append( TestModelCommon.IMPORT_PY_LIBS )
 
     # import static arguments
-    te.append( getStaticArgs() )
+    te.append( TestModelCommon.getStaticArgs() )
     te.append( """taskuuid_ = '%s'\n""" % taskUuid )
     te.append( """channelid_ = %s\n""" % channelId )
     te.append( """user_ = '%s'\n""" % userName )
@@ -3627,10 +1751,10 @@ def createTestUnit (	dataTest, userName, testName, trPath, logFilename, withoutP
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
 
-    te.append(IMPORT_INTRO)
+    te.append(TestModelCommon.IMPORT_INTRO)
     
     # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
+    te.append(TestModelCommon.IMPORT_TE_LIBS)
 
     te.append("""
 TestAdapter.setMainPath(sutPath=root)
@@ -3695,7 +1819,7 @@ TLX.instance().log_testunit_started()
 TLX.instance().log_testunit_info(message = 'BEGIN', component = 'TESTUNIT', fromlevel=LEVEL_TE, tolevel=LEVEL_USER, flagEnd=False, flagBegin=True)
 try:
 """)
-    te.append( CODE_PROBES ) 
+    te.append( TestModelCommon.CODE_PROBES ) 
     te.append("""	__PROBES__ = %s""" % probes )
     te.append("""	
 
@@ -3729,8 +1853,8 @@ try:
 		return TestProperties.Descriptions().get(name=name)
 
 """)
-    te.append( TEST_SUMMARY ) 
-    te.append( TEST_SUMMARY_TU ) 
+    te.append( TestModelCommon.TEST_SUMMARY ) 
+    te.append( TestModelCommon.TEST_SUMMARY_TA ) 
     for ds in missingDataset:
         te.append("""	TLX.instance().log_testunit_warning(message = 'Dataset missing %s on inputs parameters', component = 'TESTUNIT', fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
 """ % ds)
@@ -3848,10 +1972,26 @@ sys.exit(return_code)
 """)
     return unicode(''.join(te)).encode('utf-8')
 
-def createTestAbstract (	dataTest, userName, testName, trPath, logFilename, withoutProbes, defaultLibrary='',
-                        defaultAdapter='', userId=0, projectId=0, subTEs=1, parametersShared=[], stepByStep=False, 
-                        breakpoint=False, testId=0, runningAgents=[], runningProbes=[], channelId=False, 
-                        testLocation='', taskUuid=''):
+def createTestAbstract (	dataTest, 
+                            userName, 
+                            testName, 
+                            trPath, 
+                            logFilename, 
+                            withoutProbes, 
+                            defaultLibrary='',
+                            defaultAdapter='', 
+                            userId=0, 
+                            projectId=0, 
+                            subTEs=1, 
+                            parametersShared=[], 
+                            stepByStep=False, 
+                            breakpoint=False, 
+                            testId=0, 
+                            runningAgents=[], 
+                            runningProbes=[], 
+                            channelId=False, 
+                            testLocation='', 
+                            taskUuid=''):
     """
     Creates and returns a test abstract executable 
 
@@ -3889,20 +2029,20 @@ def createTestAbstract (	dataTest, userName, testName, trPath, logFilename, with
     projectName = ProjectsManager.instance().getProjectName(prjId=projectId)
     
     # prepare datasets
-    missingDataset = loadDataset(parameters=parameters, user=userName)
-    missingDatasetOut = loadDataset(parameters=parametersOut, inputs=False, user=userName)
+    missingDataset = TestModelCommon.loadDataset(parameters=parameters, user=userName)
+    missingDatasetOut = TestModelCommon.loadDataset(parameters=parametersOut, inputs=False, user=userName)
 
     # prepare images
-    missingImages = loadImages(parameters=parameters, user=userName)
-    missingImagesOut = loadImages(parameters=parametersOut, user=userName)
+    missingImages = TestModelCommon.loadImages(parameters=parameters, user=userName)
+    missingImagesOut = TestModelCommon.loadImages(parameters=parametersOut, user=userName)
 
     # te construction
     te = []
     # import python libraries
-    te.append( IMPORT_PY_LIBS )
+    te.append( TestModelCommon.IMPORT_PY_LIBS )
 
     # import static arguments
-    te.append( getStaticArgs() )
+    te.append( TestModelCommon.getStaticArgs() )
     
     te.append( """taskuuid_ = '%s'\n""" % taskUuid )
     te.append( """channelid_ = %s\n""" % channelId )
@@ -3918,10 +2058,10 @@ def createTestAbstract (	dataTest, userName, testName, trPath, logFilename, with
     te.append( """adapters_path = '%s/'\n""" % (RepoAdapters.instance().testsPath) )
     te.append( """libraries_path = '%s/'\n""" % (RepoLibraries.instance().testsPath) )
 
-    te.append(IMPORT_INTRO)
+    te.append(TestModelCommon.IMPORT_INTRO)
     
     # import test executor libraries
-    te.append(IMPORT_TE_LIBS)
+    te.append(TestModelCommon.IMPORT_TE_LIBS)
 
     te.append("""
 TestAdapter.setMainPath(sutPath=root)
@@ -3986,7 +2126,7 @@ TLX.instance().log_testabstract_started()
 TLX.instance().log_testabstract_info(message = 'BEGIN', component = 'TESTABSTRACT', fromlevel=LEVEL_TE, tolevel=LEVEL_USER, flagEnd=False, flagBegin=True)
 try:
 """)
-    te.append( CODE_PROBES ) 
+    te.append( TestModelCommon.CODE_PROBES ) 
     te.append("""	__PROBES__ = %s""" % probes )
     te.append("""	
 
@@ -4020,8 +2160,8 @@ try:
 		return TestProperties.Descriptions().get(name=name)
 	
 """)
-    te.append( TEST_SUMMARY ) 
-    te.append( TEST_SUMMARY_TA ) 
+    te.append( TestModelCommon.TEST_SUMMARY ) 
+    te.append( TestModelCommon.TEST_SUMMARY_TA ) 
     for ds in missingDataset:
         te.append("""	TLX.instance().log_testabstract_warning(message = 'Dataset missing %s on inputs parameters', component = 'TESTABSTRACT', fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
 """ % ds)

@@ -1093,38 +1093,6 @@ class Context(Logger.ClassLogger):
             self.error( "unable to parse eth en" % e )
             return None
         return eth
-
-    # def __parseDict(self, d):
-        # """
-        # """
-        # ret = {}
-        # for k,v in d.items():
-            # if isinstance(v, unicode):
-                # ret[k.encode("utf8")] = v.encode("utf8")
-            # elif isinstance(v, dict):
-                # ret[k.encode("utf8")] = self.__parseDict(d=v)
-            # elif isinstance(v, list):
-                # ret[k.encode("utf8")] = self.__parseList(d=v)
-            # else:
-                # ret[k.encode("utf8")] = v
-                
-        # return ret
-        
-    # def __parseList(self, d):
-        # """
-        # """
-        # ret = []
-        # for itm in d:
-            # if isinstance(itm, unicode):
-                # ret.append( itm.encode("utf8") )
-            # elif isinstance(itm, dict):
-                # ret.append( self.__parseDict(d=itm) )
-            # elif isinstance(itm, list):
-                # ret.append( self.__parseList(d=itm) )
-            # else:
-                # ret.append(itm)
-                
-        # return ret
         
     def getTestEnvironment(self, user, b64=False):
         """
@@ -1150,47 +1118,7 @@ class Context(Logger.ClassLogger):
                                       'project_name': prj['name'], 
                                       'test_environment': env_filtered } 
                                   )
-            
-            # if int( Settings.get( 'MySql', 'test-environment-encrypted' ) ):
-                # sql = 'SELECT name, AES_DECRYPT(value, "%s") as value FROM `%s-test-environment` WHERE project_id="%s";' % (
-                                    # Settings.get( 'MySql', 'test-environment-password' ),
-                                    # Settings.get( 'MySql', 'table-prefix'), 
-                                    # prj['project_id'] 
-                        # )
-            # else:
-                # sql = 'SELECT * FROM `%s-test-environment` WHERE project_id="%s";' % ( Settings.get( 'MySql', 'table-prefix'), 
-                                                                                       # prj['project_id'] )
-            # ret, rows = DbManager.instance().querySQL( query=sql, columnName=True )
-            # if not ret:
-                # self.error( 'unable to get test environment for user %s: %s' % (user, str(ret)) )
-            # else:
-                # envDecoded = []
-                # for env in rows:
-                    # try:
-                        # env_json = json.loads(env['value'])
-                        
-                        # if sys.version_info > (3,):
-                            # pass
-                        # else:
-                            # convert unicode to str encoded in utf8
-                            # if sys.version_info > (2,6,):
-                                # if isinstance(env_json, unicode):
-                                    # env_json = env_json.encode("utf8")
-                                # elif isinstance(env_json, dict):
-                                    # env_json = self.__parseDict(d=env_json)
-                                # elif isinstance(env_json, list):
-                                    # env_json = self.__parseList(d=env_json)
-                                # else:
-                                    # env_json = env_json
-                                
-                    # except Exception as e:
-                        # self.error( "Unable to encode in json: %s" % str(e) )
-                    # else:
-                        # envDecoded.append( {'name': env['name'], 'value': env_json } )
-                # testEnvironment.append( {'project_id': prj['project_id'], 'project_name': prj['name'], 'test_environment': envDecoded } )
-        
-        # self.trace( "Test environment retrieved for Login=%s" % (user) )
-
+           
         return testEnvironment
 
     def refreshTestEnvironment(self):
