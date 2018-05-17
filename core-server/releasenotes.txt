@@ -31,6 +31,7 @@
 		27. (major) web server: update to use the rest api on test variables part
 		28. (major) new cache memory for test variables, sql queries decreased
 		29. (minor) code splitted in testmodel file to be more readable
+		30. (medium) update adapters/Libs version for multiple entities (pull request #18)
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only

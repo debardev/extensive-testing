@@ -1035,9 +1035,9 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
                                                 icon=QIcon(":/server-config.png") )
         self.rnAction = QtHelper.createAction(self, self.tr("&Release Notes"), self.releaseNotes, 
                                                 icon=QIcon(":/releasenotes.png") )
-        self.aboutAction = QtHelper.createAction(self, self.tr("&About"), self.about,  icon=QIcon(":/about.png"), 
+        self.aboutAction = QtHelper.createAction(self, self.tr("&About"), self.aboutPage,  icon=QIcon(":/about.png"), 
                                                 shortcut = Settings.instance().readValue( key = 'KeyboardShorcuts/about' ) )
-        self.aboutQtAction = QtHelper.createAction(self, self.tr("Qt"), qApp.aboutQt)
+        # self.aboutQtAction = QtHelper.createAction(self, self.tr("Qt"), qApp.aboutQt)
         self.openTestResultAction = QtHelper.createAction(self, self.tr("Open Test Result"), 
                                                 self.openTestResult)
         self.openAllRecentFilesAction = QtHelper.createAction(self, self.tr("Open All Recent Files"), 
@@ -3110,7 +3110,7 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
             WWorkspace.WDocumentViewer.instance().closeTabAction.setEnabled(False)
             WWorkspace.WDocumentViewer.instance().closeAllTabAction.setEnabled(False)
 
-    def about(self):
+    def aboutPage(self):
         """
         Display About Menu
         """
@@ -3481,24 +3481,6 @@ if __name__ == '__main__':
     # performance measurement only for debug mode
     starttime = time.time()
 
-    # executable = sys.argv[0]
-    # print( executable )
-    # print( QLibraryInfo.location(QLibraryInfo.PrefixPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.DocumentationPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.HeadersPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.LibrariesPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.LibraryExecutablesPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.BinariesPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.PluginsPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.ImportsPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.Qml2ImportsPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.ArchDataPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.DataPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.TranslationsPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.ExamplesPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.TestsPath) )
-    # print( QLibraryInfo.location(QLibraryInfo.SettingsPath) )
-    
     # Construct the main app
     if sys.platform == "win32":
         app = QApplication(sys.argv)

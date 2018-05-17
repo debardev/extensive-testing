@@ -251,6 +251,7 @@ class _WebServices(WSGI):
         ('/tests/check/syntax/tpg',                     RestTesterFunctions.TestsCheckSyntaxTpg()),
         ('/tests/create/design',                        RestTesterFunctions.TestsCreateDesign()),
         ('/tests/create/design/tpg',                    RestTesterFunctions.TestsCreateDesignTpg()),
+        ('/tests/update/adapter-library',               RestTesterFunctions.TestsUpdateAdapterLibrary()),
         
         # variables
         ('/variables/listing',                          RestTesterFunctions.VariablesListing()),

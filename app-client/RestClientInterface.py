@@ -283,6 +283,8 @@ CMD_TR_BACKUP_REMOVE_ALL        =   "/results/backup/remove/all"
 CMD_TR_BACKUP_DOWNLOAD          =   "/results/backup/download"
 CMD_TR_STATISTICS               =   "/results/statistics"
 
+CMD_TESTS_UPDATE_V_ADAPTER_LIBRARY = "/tests/update/adapter-library"
+
 def calling_rest(func):
     """
     Decorator for rest call
@@ -364,6 +366,8 @@ class RestClientInterface(QObject, Logger.ClassLogger):
     FileLibrariesUploadError = pyqtSignal(str, str, str, bool, bool)
     GetFileRepo = pyqtSignal(str, str, str, str, int, int, int, int, bool)
     AddTestTab = pyqtSignal(object)
+    # New in v19, contributions from dbr13
+    UpdateAdapterLibraryVForTestEntities = pyqtSignal(dict)
     def __init__(self, parent, clientVersion):
         """
         Constructor
@@ -600,6 +604,8 @@ class RestClientInterface(QObject, Logger.ClassLogger):
                 self.onTestScheduled(details=response) 
             elif response['cmd'] == CMD_TESTS_SCHEDULE_TPG:
                 self.onTestScheduled(details=response) 
+            elif response['cmd'] == CMD_TESTS_UPDATE_V_ADAPTER_LIBRARY:
+                self.onUpdateAdapterLibraryVForTestEntities(details=response)
                 
             elif response['cmd'] == CMD_TASKS_WAITING:
                 self.onWaitingTasks(details=response) 
@@ -1941,6 +1947,21 @@ class RestClientInterface(QObject, Logger.ClassLogger):
               
         self.makeRequest( uri=CMD_TESTS_FILE_OPEN, request=HTTP_POST, _json=_json )
     
+    @calling_rest
+    def updateAdapterLibraryVForTestEntities(self, projectId, pathFolder,
+                                             adapterVersion, libraryVersion):
+        """
+        Update Adapters/Libraries version for multiple test entities
+        New in v19, contribution from dbr13
+        """
+        _json = {'project-id': projectId, 
+                 'folder-path': pathFolder,
+                 'adapter-version': adapterVersion, 
+                 'library-version': libraryVersion}
+        self.makeRequest(uri=CMD_TESTS_UPDATE_V_ADAPTER_LIBRARY, 
+                         request=HTTP_POST, 
+                         _json=_json)
+        
     @calling_rest
     def openFileAdapters(self, filePath, ignoreLock=False, readOnly=False):
         """
@@ -3571,7 +3592,14 @@ class RestClientInterface(QObject, Logger.ClassLogger):
                                                 details["file-extension"],
                                                 details["overwrite"],
                                                 details["close-after"])
-            
+        
+
+    def onUpdateAdapterLibraryVForTestEntities(self, details):
+        """
+        """
+        self.trace('on update adapters and libtraries')
+        self.UpdateAdapterLibraryVForTestEntities.emit(details)
+        
     def onAdaptersFileUnlocked(self, details):
         """
         Called on response

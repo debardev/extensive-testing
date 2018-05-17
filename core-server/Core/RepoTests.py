@@ -1064,6 +1064,71 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         return ret
         
     # dbr13 >>
+    def updateAdaptersLibrariesVForTestEnteties(self, folder_path, adapter_version,
+                                                library_version, project_id, user_login):
+        """
+        Update adapter or library package version
+        """
+        _, _, listing, _ = self.getListingFilesV2(path="%s/%s/%s" % (self.testsPath, str(project_id), folder_path),
+                                                  project=project_id, supportSnapshot=True)
+        tests_tree_update_locations = self.getTestsForUpdate(listing=listing, 
+                                                             extFileName='all')
+        files_paths = self.get_files_paths(tests_tree=tests_tree_update_locations, 
+                                           file_path='/%s/' % folder_path)
+        # updated_files = []
+        for file_path in files_paths:
+            if file_path.endswith(RepoManager.TEST_PLAN_EXT):
+                doc = TestPlan.DataModel()
+                ext_file_name = RepoManager.TEST_PLAN_EXT
+            elif file_path.endswith(RepoManager.TEST_GLOBAL_EXT):
+                doc = TestPlan.DataModel(isGlobal=True)
+                ext_file_name = RepoManager.TEST_GLOBAL_EXT
+            elif file_path.endswith(RepoManager.TEST_ABSTRACT_EXT):
+                doc = TestAbstract.DataModel()
+                ext_file_name = RepoManager.TEST_ABSTRACT_EXT
+            elif file_path.endswith(RepoManager.TEST_UNIT_EXT):
+                doc = TestUnit.DataModel()
+                ext_file_name = RepoManager.TEST_UNIT_EXT
+            elif file_path.endswith(RepoManager.TEST_SUITE_EXT):
+                doc = TestSuite.DataModel()
+                ext_file_name = RepoManager.TEST_SUITE_EXT
+
+            else:
+                return "Bad file extension: %s" % file_path
+            absPath = '%s%s%s' % (self.testsPath, project_id, file_path)
+            res = doc.load(absPath=absPath)
+            if res:
+                des_list = doc.properties['properties']['descriptions']['description']
+                for des in des_list:
+                    if des['key'] == 'libraries' and library_version != 'None':
+                        des['value'] = library_version
+                    elif des['key'] == 'adapters' and adapter_version != 'None':
+                        des['value'] = adapter_version
+                # updated_files.append(absPath)
+            else:
+                return 'error_updated', absPath
+
+            file_content = doc.getRaw()
+            f_path_list = file_path.split('/')
+            path_file = '/'.join(f_path_list[:-1])
+            name_file = f_path_list[-1][:-4]
+            putFileReturn = self.uploadFile(pathFile=path_file, 
+                                            nameFile=name_file,
+                                            extFile=ext_file_name,
+                                            contentFile=file_content, 
+                                            login=user_login, 
+                                            project=project_id,
+                                            overwriteFile=True, 
+                                            createFolders=False, 
+                                            lockMode=True,
+                                            binaryMode=True, 
+                                            closeAfter=False)
+            success, _, _, _, _, _, _, _, _ = putFileReturn
+            if success == self.context.CODE_ERROR:
+                return 'error_uploaded', '%s/%s.%s' % (path_file, name_file, ext_file_name)
+        return self.context.CODE_OK, 'OK'
+        
+    # dbr13 >>
     def updateLinkedScriptPath(self, project, mainPath, oldFilename, extFilename,
                                newProject, newPath, newFilename, newExt, user_login, 
                                file_referer_path='', file_referer_projectid=0):
@@ -1174,9 +1239,15 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
         extDict = {
             RepoManager.TEST_ABSTRACT_EXT: [RepoManager.TEST_GLOBAL_EXT, RepoManager.TEST_PLAN_EXT],
             RepoManager.TEST_UNIT_EXT: [RepoManager.TEST_GLOBAL_EXT, RepoManager.TEST_PLAN_EXT],
+            RepoManager.TEST_PLAN_EXT: [RepoManager.TEST_GLOBAL_EXT],
             RepoManager.TEST_SUITE_EXT: [RepoManager.TEST_GLOBAL_EXT, RepoManager.TEST_PLAN_EXT],
-            RepoManager.TEST_PLAN_EXT: [RepoManager.TEST_GLOBAL_EXT]
+            'all': [ RepoManager.TEST_GLOBAL_EXT, 
+                     RepoManager.TEST_PLAN_EXT, 
+                     RepoManager.TEST_SUITE_EXT,
+                     RepoManager.TEST_UNIT_EXT, 
+                     RepoManager.TEST_ABSTRACT_EXT ]
         }
+
 
         for test in listing:
             if test['type'] == 'file':

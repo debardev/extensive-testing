@@ -13,6 +13,7 @@
 		9. (medium) test abstract: update to support extra and generic adapters/libraries
 		10. (minor) default template for adapter and library updated
 		11. (minor) new feature to add security banner on login popup
+		12. (medium) update adapters/Libs version for multiple entities (pull request #18)
 	Issues Fixed
 		1. (medium) fix regression: unable to zoom in/out in test editor
 		2. (medium) automation assistant: unable to generate testsuite with sikulix and selenium in the same test issue #9
