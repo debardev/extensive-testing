@@ -1,6 +1,23 @@
-- Jean-Luc Pascal (support excel writting mode in library)<br />
-- Blaise Cador (security recommendations)<br />
-- Emmanuel Monsoro (extensivetesting logo, graphical abstract engine, documentations, ssh console adapter)<br />
-- Thibault Lecoq (bugs announcement)<br />
-- Denys Bortovets (new scripts to build mac version, ansible adapter and agent, update test links feature)<br />
-- Jordane Fillatre (kafka adapter and agent)
+<ul>
+    <li>Blaise Cador - security recommendations</li>
+    <li>Denys Bortovets
+        <ul>
+            <li>new scripts to build mac version</li>
+            <li>ansible adapter and agent</li>
+            <li>update test links feature</li>
+            <li>new feature update adapters/libs version for multiple entities</li>
+            <li>find test usage feature</li>
+        </ul>
+    </li>
+    <li>Emmanuel Monsoro
+        <ul>
+            <li>extensivetesting and automation logo</li>
+            <li>graphical abstract engine</li>
+            <li>documentations</li>
+            <li>ssh console adapter</li>
+        </ul>
+    </li>
+    <li>Jean-Luc Pascal - support excel writting mode in library</li>
+    <li>Jordane Fillatre - kafka adapter and agent</li>
+    <li>Thibault Lecoq - bugs announcement</li>
+</ul>

@@ -2488,7 +2488,7 @@ class Window(QDialog):
         about.append( "<hr />")
 
         contrib = self.readFileRessources(filename=":/CONTRIBUTORS")
-        about.append( "%s:<br /><i>%s</i>" % (self.tr("Contributors"), contrib))
+        about.append( "%s:<i>%s</i>" % (self.tr("Contributors"), contrib))
         
         about.append( "<hr />")
         

@@ -297,6 +297,17 @@ class Repository(RemoteRepository.Repository):
                                     forSaveAs=saveAsOnly, 
                                     forRuns=False)
         
+    def find_usage(self, project_id, file_path):
+        """
+        @param project_id:
+        @type project_id
+        
+        @param file_path:
+        @type file_path
+        """
+        RCI.instance().findTestFileUsage(projectId=project_id, 
+                                         filePath=file_path)
+        
     def renameFile (self, mainPath, oldFileName, newFileName, extFile, 
                     project=0, update_location=False):
         """

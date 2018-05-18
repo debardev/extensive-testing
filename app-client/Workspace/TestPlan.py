@@ -1017,7 +1017,20 @@ class WTestPlan(Document.WDocument):
             self.ifOkAction.setEnabled(False)
             self.ifKoAction.setEnabled(False)
         self.defaultActions()
-
+        
+    # dbr13 >>>
+    def showFileUsageLine(self, line_id):
+        """
+        """
+        if line_id:
+            for item in self.items:
+                if item.text(COL_ID) == line_id:
+                    item.setSelected(True)
+                    self.loadProperties(item, COL_ENABLE)
+                else:
+                    item.setSelected(False)
+    # dbr13 <<<
+    
     def updateIfOk(self):
         """
         """

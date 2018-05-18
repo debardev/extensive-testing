@@ -2074,6 +2074,9 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         RCI.instance().RefreshAdaptersRepo.connect( self.onRefreshAdaptersRepo ) 
         RCI.instance().RefreshLibrariesRepo.connect( self.onRefreshLibrariesRepo ) 
         
+        # new in v19
+        RCI.instance().FindTestFileUsage.connect( self.onFindTestFileUsage )
+        
     def onTextNbReplaced(self, counter):
         """
         On number of occurrenced replaced from editor
@@ -3138,7 +3141,7 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         about.append( "<hr />" )
 
         contrib = self.readFileRessources(filename=":/CONTRIBUTORS")
-        about.append( "%s:<br /><i>%s</i>" % (self.tr("Contributors"), contrib))
+        about.append( "%s: <i>%s</i>" % (self.tr("Contributors"), contrib))
         
         about.append( "<hr />" )
         lic = self.readFileRessources(filename=":/TERMS")
@@ -3465,6 +3468,14 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         On statistics Resetted
         """
         WServerExplorer.Counters.instance().resetCounters()
+        
+    def onFindTestFileUsage(self, result_list, file_path, file_projectid):
+        """
+        """
+        usage_test_tree = Repositories.instance().remote().initFindTestFileUsageWTree(result_list=result_list, 
+                                                                                      file_path=file_path, 
+                                                                                      file_projectid=file_projectid)
+        usage_test_tree.exec_()
         
 def showMessageSplashscreen(msg, sleep=0):
     """

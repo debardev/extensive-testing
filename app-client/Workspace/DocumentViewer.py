@@ -1551,7 +1551,8 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         self.newTab( path = path, filename = _filename, 
                      extension = extension, repoDest=UCI.REPO_UNDEFINED)
 
-    def openRemoteTestFile(self, filePath, fileName, fileExtension, fileContent, projectId, isLocked, lockedBy):
+    def openRemoteTestFile(self, filePath, fileName, fileExtension, fileContent, 
+                           projectId, isLocked, lockedBy, subtest_id):
         """
         """
         content = base64.b64decode(fileContent)
@@ -1594,7 +1595,8 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         if newTab:
             self.newTab( path = filePath, filename = fileName, extension = fileExtension, 
                         remoteFile=True, contentFile=content,  repoDest=UCI.REPO_TESTS, newAdp=False, 
-                        newLib=False, project=projectId, isReadOnly=isReadOnly, isLocked=isLocked)
+                        newLib=False, project=projectId, isReadOnly=isReadOnly, isLocked=isLocked,
+                        subtest_id=subtest_id)
                         
     def openRemoteAdapterFile(self, filePath, fileName, fileExtension, fileContent, isLocked, lockedBy):
         """
@@ -3227,7 +3229,8 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
 
     def newTab(self, path = None, filename = None, extension = None, remoteFile=False, contentFile=None, 
                     repoDest=None, newAdp=False, newLib=False, project=0, testDef=None, testExec=None,
-                    testInputs=None, testOutputs=None, testAgents=None, isReadOnly=False, isLocked=False):
+                    testInputs=None, testOutputs=None, testAgents=None, isReadOnly=False, isLocked=False,
+                    subtest_id=""):
         """
         Called to open a document
 
@@ -3288,6 +3291,13 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                         repoType=repoDest, project=cur_prj_id)
         if tabId is not None:
             self.tab.setCurrentIndex(tabId)
+            
+            # dbr13 >>> Find usage
+            if extension in [TestPlan.TYPE, TestPlan.TYPE_GLOBAL]:
+                doc = self.getCurrentDocument()
+                doc.showFileUsageLine(line_id=subtest_id)
+            # dbr13 <<<
+            
         else:
             __error__ = False
             if extension == TestAbstract.TYPE:
@@ -3326,7 +3336,6 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                     self.setCloseButton(tabId=tabId, doc=doc)
  
             elif extension == TestUnit.TYPE:
-                # self.findWidget.show()
                 doc = TestUnit.WTestUnit(self, path, filename, extension, self.nonameIdTs, 
                                             remoteFile, repoDest, project, isLocked)
                 if filename is None:
@@ -3738,6 +3747,11 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                 self.updateActions( wdocument=doc )
                 self.findWidget.setEnabled(True)
                 self.DocumentOpened.emit(doc)
+                
+                # dbr13 >>>> Find Usage functionality
+                if extension in [TestPlan.TYPE, TestPlan.TYPE_GLOBAL]:
+                    doc.showFileUsageLine(line_id=subtest_id)
+                # dbr13 <<<
                 
     def addToRecent(self, filepath, repodest, project=''):
         """

@@ -41,14 +41,16 @@ try:
     from PyQt4.QtGui import (QDialog, QPushButton, QLabel, QFont, QComboBox, QVBoxLayout, QHBoxLayout, 
                             QTreeWidget, QFrame, QHeaderView, QAbstractItemView, QLineEdit, QMessageBox, 
                             QTreeWidgetItem, QDialogButtonBox, QDrag, QTreeView, QFormLayout, QStyle, 
-                            QPixmap, QWidget, QIcon, QMenu, QToolBar, QInputDialog, QCheckBox)
+                            QPixmap, QWidget, QIcon, QMenu, QToolBar, QInputDialog, QCheckBox,
+                            QDesktopWidget)
     from PyQt4.QtCore import (pyqtSignal, Qt, QRect, QMimeData, QSize, QObject, QEvent)
 except ImportError:
     from PyQt5.QtGui import (QFont, QDrag, QPixmap, QIcon)
     from PyQt5.QtWidgets import (QDialog, QPushButton, QLabel, QComboBox, QVBoxLayout,
                                 QHBoxLayout, QTreeWidget, QFrame, QHeaderView, QAbstractItemView, 
                                 QLineEdit, QMessageBox, QTreeWidgetItem, QDialogButtonBox, QCheckBox,
-                                QTreeView, QFormLayout, QStyle, QWidget, QMenu, QToolBar, QInputDialog)
+                                QTreeView, QFormLayout, QStyle, QWidget, QMenu, QToolBar, 
+                                QInputDialog, QDesktopWidget)
     from PyQt5.QtCore import (pyqtSignal, Qt, QRect, QMimeData, QSize, QObject, QEvent)
     USE_PYQT5 = True
     
@@ -1078,6 +1080,107 @@ class DuplicateDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
 
 
 # dbr13 >>>
+
+class FindTestFileUsageWTree(QtHelper.EnhancedQDialog, Logger.ClassLogger):
+    """
+    Display files tree using current test file
+    """
+    def __init__(self, result_list, file_path, file_projectid, parent=None):
+        """
+        @param response: onFindTestFileUsage
+        @type response: dict
+
+        @param parent:
+        @type parent
+        """
+        super(FindTestFileUsageWTree, self).__init__(parent)
+        self.usage_list = result_list
+        self.usage_file_path = file_path
+        self.usage_pr_id = file_projectid
+        
+        self.createWidgets()
+        self.createConnections()
+        self.createTree()
+
+    def center(self):
+        """
+        Center the dialog
+        """
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+    def createWidgets(self):
+        """
+        create dialog
+        """
+        self.test_usage_tree = QTreeWidget(self)
+        self.test_usage_tree.move(25, 25)
+        self.test_usage_tree.setHeaderHidden(True)
+
+        mainLayout = QVBoxLayout()
+        mainLayout.addWidget(self.test_usage_tree)
+
+        self.setLayout(mainLayout)
+        self.setWindowTitle(self.tr("Find Usage Tree"))
+        # self.resize(1280, 720)
+        # self.setWindowIcon(QIcon(":/find-usage@1x.png"))
+
+        self.resize(700, 700)
+        
+    def createConnections(self):
+        """
+        Create connections
+        """
+        self.test_usage_tree.itemDoubleClicked.connect(self.on_item_double_clicked)
+
+    def on_item_double_clicked(self):
+        """
+        """
+        item = self.test_usage_tree.currentItem()
+        if item.type == 'usage_line':
+            RCI.instance().openFileTests(projectId=int(item.project_id), 
+                                         filePath=item.path, 
+                                         extra={'subtest_id': "%s" % item.id})
+
+    def createTree(self):
+        """
+        This is not what I want.
+        """
+        for usage in self.usage_list:
+            if usage['content']:
+                
+                # create the project item
+                item_pr = QTreeWidgetItem([usage['name']])
+                item_pr.path = None
+                item_pr.project_id = usage['project_id']
+                item_pr.prject_name = usage['name']
+                item_pr.type = 'project'
+                item_pr.setIcon(0, QIcon(":/folders.png"))
+
+                # create the result
+                for file in usage['content']:
+                    item_file = QTreeWidgetItem([file['file_path']])
+                    item_file.path = file['file_path']
+                    item_file.type = 'file'
+                    item_file.ext = item_file.path.rsplit('.')[-1]
+                    item_file.setIcon(0, QIcon(":/%s48.png" % item_file.ext))
+                    item_pr.addChild(item_file)
+                    if usage['content']:
+                        for line_id in file['lines_id']:
+                            item_line_id = QTreeWidgetItem(['%s: %s' % (line_id, self.usage_file_path)])
+                            item_line_id.path = item_file.path
+                            item_line_id.project_id = item_pr.project_id
+                            item_line_id.type = 'usage_line'
+                            item_line_id.id = line_id
+                            item_line_id.ext = self.usage_file_path.rsplit('.')[-1]
+                            item_line_id.setIcon(0, QIcon(":/%s48.png" % item_line_id.ext))
+                            item_file.addChild(item_line_id)
+
+                self.test_usage_tree.addTopLevelItem(item_pr)
+                item_pr.setExpanded(True)
+                
 class UpdateAdapterLibraryDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
     """
     Update used Adapter and Library in the test file
@@ -1672,6 +1775,7 @@ class Repository(QWidget, Logger.ClassLogger):
         self.dockToolbarRemote.addSeparator()
         # dbr13 >>>
         self.dockToolbarRemote.addAction(self.updateAdapterLibraryAction)
+        self.dockToolbarRemote.addAction(self.findUsageAction)
         self.dockToolbarRemote.addSeparator()
         # dbr13 <<<
         self.dockToolbarRemote.setIconSize(QSize(16, 16))
@@ -1781,6 +1885,10 @@ class Repository(QWidget, Logger.ClassLogger):
                                                                 self.__update_adapter_library,
                                                                 icon=QIcon(":/update-adapter.png"),
                                                                 tip=self.tr('Update Adapters/Library'))
+        self.findUsageAction = QtHelper.createAction(self, self.tr("&Find Usage..."),
+                                                     self.__find_usage,
+                                                     icon=QIcon(":/find-usage@1x.png"),
+                                                     tip=self.tr('Find test file usage'))
         # dbr13 <<<
         
         self.duplicateDirAction = QtHelper.createAction(self, 
@@ -1942,6 +2050,7 @@ class Repository(QWidget, Logger.ClassLogger):
 
         # dbr13 >>>
         self.updateAdapterLibraryAction.setEnabled(False)
+        self.findUsageAction.setEnabled(False)
         # dbr13 <<<
         
         self.moreDefaultActions()
@@ -1979,6 +2088,10 @@ class Repository(QWidget, Logger.ClassLogger):
                 self.menu.addAction( self.openPropertiesAction )
                 self.menu.addSeparator()
                 self.menu.addAction( self.snapshotAction )
+                # dbr13 >>>
+                self.menu.addSeparator()
+                self.menu.addAction(self.findUsageAction)
+                # dbr13 <<<
                 
             if item.type() == QTreeWidgetItem.UserType+100: # file snapshot
                 self.menu.addAction( self.snapshotDeleteAction )
@@ -2805,6 +2918,38 @@ class Repository(QWidget, Logger.ClassLogger):
                                                                     pathFolder=path_folder,
                                                                     adapterVersion=adapter_version,
                                                                     libraryVersion=library_version)
+    def __find_usage(self):
+        """
+        Find file usage
+        """
+        project = self.getCurrentProject()
+        project_id = self.getProjectId(project)
+        path_file = self.itemCurrent.getPath(withFileName=True, 
+                                             withFolderName=False)
+        self.find_usage(project_id=project_id, 
+                        file_path=path_file)
+
+    def find_usage(self, project_id, file_path):
+        """
+
+        @param project_id:
+        @type project_id
+
+        @param file_path:
+        @type file_path
+        """
+        raise NotReimplemented("find_usage")
+
+    def initFindTestFileUsageWTree(self, result_list, file_path, file_projectid):
+        """
+        Init Find Usage Treewidget
+        :param response:
+        :return:
+        """
+        usage_tree = FindTestFileUsageWTree(result_list=result_list, 
+                                            file_path=file_path, 
+                                            file_projectid=file_projectid)
+        return usage_tree                                                         
     # dbr13 <<<
 
 
@@ -3110,6 +3255,13 @@ class Repository(QWidget, Logger.ClassLogger):
                     
                 # dbr13 >>>
                 self.updateAdapterLibraryAction.setEnabled(False)
+                
+                if self.itemCurrent.fileExtension.lower() in [ EXTENSION_TUX, EXTENSION_TAX, 
+                                                               EXTENSION_TPX, EXTENSION_TSX]:
+                    self.findUsageAction.setEnabled(True)
+                else:
+                    self.findUsageAction.setEnabled(False)
+                    
                 # dbr13 <<<
                 
             elif self.itemCurrent.type() == QTreeWidgetItem.UserType+100: # file snapshot

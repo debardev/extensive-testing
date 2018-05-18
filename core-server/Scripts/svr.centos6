@@ -30,8 +30,8 @@
 . /etc/rc.d/init.d/functions
 
 RETVAL=0
-name="Extensive Testing"
-prog="run"
+name="Extensive Automation"
+prog="extensiveautomation"
 APP_PATH=
 DB_NAME=
 BIN=$APP_PATH/current/$prog
@@ -39,14 +39,14 @@ USER_EXEC="root"
 
 start_server()
 {
-	echo -n $"Starting $name"
+	echo -n $"Starting $name server"
 	daemon --user=$USER_EXEC $BIN start && success || failure
 	echo	
 }
 
 stop_server()
 {
-	echo -n $"Stopping $name"
+	echo -n $"Stopping $name server"
 	$BIN stop && success || failure
 	if [ -n "`pidfileofproc $BIN`" ] ; then
 	    killproc $BIN
