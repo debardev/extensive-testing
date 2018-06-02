@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# This file is part of the extensive testing project
-# Copyright (c) 2010-2017 Denis Machard
+# This file is part of the extensive automation project
+# Copyright (c) 2010-2018 Denis Machard
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 # MA 02110-1301 USA
 #
 # Gfi Informatique, Inc., hereby disclaims all copyright interest in the
-# extensive testing project written by Denis Machard
+# extensive automation project written by Denis Machard
 # 
 # Author: Denis Machard
 # Contact: d.machard@gmail.com

@@ -2,7 +2,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,7 @@ fi
 # minimum space left to install the product, 1GB
 MIN_SPACE_LEFT=1048576
 
-APP_NAME="ExtensiveTesting"
+APP_NAME="ExtensiveAutomation"
 APP_PATH="$(pwd)"
 LOG_FILE="$APP_PATH/install.log"
 PKG_PATH="$APP_PATH/PKG/"
@@ -64,9 +64,9 @@ PRODUCT_SVC_NAME="$(echo $APP_NAME | sed 's/.*/\L&/')"
 
 if [ "$SILENT" == "custom" -o "$SILENT" == "install" ]; then
 	echo "======================================================"
-	echo "=  - Installation of the $APP_NAME product -  ="
-	echo "=                    Denis Machard                   ="
-	echo "=               www.extensivetesting.org             ="
+	echo "=     - Installation of the $APP_NAME product -      ="
+	echo "=                   Denis Machard                    ="
+	echo "=              www.extensiveautomation.org           ="
 	echo "======================================================"
 fi
 
@@ -152,6 +152,7 @@ BCRYPT="bcrypt-3.1.4"
 PARAMIKO="paramiko-2.4.1"
 JSONPATH="jsonpath-ng-1.4.3"
 WRAPT="wrapt-1.10.11"
+PYAML="pyaml-17.12.1"
 ANSIBLE="ansible-2.5.0"
 NODEJS="node-v6.11.0-linux-x64"
 URLLIB3="urllib3-1.22"
@@ -1104,7 +1105,14 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
         $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
         cd .. 1>> "$LOG_FILE" 2>&1
         rm -rf $APP_PATH/$PYKAFKA/ 1>> "$LOG_FILE" 2>&1
-        
+
+    echo -ne "* Installing pyaml                 \r"
+    $TAR_BIN xvf $PKG_PATH/$PYAML.tar.gz  1>> "$LOG_FILE" 2>&1
+    cd $APP_PATH/$PYAML/
+    $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+    cd .. 1>> "$LOG_FILE" 2>&1
+    rm -rf $APP_PATH/$PYAML/ 1>> "$LOG_FILE" 2>&1
+
     echo -ne "* Installing nodejs                \r"
     $TAR_BIN --strip-components 1 -xzvf $NODEJS* -C /usr/local 1>> "$LOG_FILE" 2>&1
     

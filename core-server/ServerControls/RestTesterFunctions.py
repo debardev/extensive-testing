@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+automation#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
@@ -6903,21 +6903,31 @@ class TestsFileOpen(Handler):
             _actId = self.request.data.get("action-id")
             _destId = self.request.data.get("destination-id")
 
-            # some new params in v19
-            
+            # new in v19, news extras parameters used only by the qt client
+            # these parameters are introduced by the pull request from dbr13 contribution user.
+       
             # update location is true when the test location in testplan/testglobal is updated
+            # the old test location is also provided to search it in other files and update it
             extra_update_location = self.request.data.get('extra', {}).get('update_location', False)
             
             # the old test location from testplan/testglobal 
+            # these parameters are used when the update_location is True
             extra_filename = self.request.data.get('extra', {}).get('file_name', '')
             extra_ext = self.request.data.get('extra', {}).get('file_ext', '')
             extra_projectid = self.request.data.get('extra', {}).get('project_id', 0)
             extra_path = self.request.data.get('extra', {}).get('file_path', '')
             
             # referer to the origin file (testplan or testglobal) which ask to open the file
+            # the path and the project id if the file is provided
+            # the refresh referer indicates or not if the referer file must be updated or not
             extra_file_referer_path = self.request.data.get('extra', {}).get('file_referer_path', '')
             extra_file_referer_projectid = self.request.data.get('extra', {}).get('file_referer_projectid', 0)
             extra_file_referer_refresh = self.request.data.get('extra', {}).get('file_referer_refresh', False)
+            
+            # provide a specific sub test id in a testplan or testglobal
+            # this parameter is used from find test usage function
+            extra_subtest_id = self.request.data.get('extra', {}).get('subtest_id', '')
+            
         except EmptyValue as e:
             raise HTTP_400("%s" % e)
         except Exception as e:
@@ -6955,7 +6965,8 @@ class TestsFileOpen(Handler):
                      "custom-param": _customParam,
                      "action-id": _actId,
                      "destination-id": _destId,
-                     "referer-refresh": extra_file_referer_refresh}
+                     "referer-refresh": extra_file_referer_refresh,
+                     "subtest-id": str(extra_subtest_id) }
                      
         # dbr13 >>> when we set checkbox in the Update->Location
         if extra_update_location:
@@ -7264,6 +7275,87 @@ class TestsFileUnlock(Handler):
                  "project-id": projectId }
 
 # dbr13 >>>
+class TestsFindFileUsage(Handler):
+    """
+    /tests/find/file-usage
+    """
+    @_to_yaml
+    def post(self):
+        """
+        tags:
+          - tests
+        summary:  Finding script usages included in test plans and globals
+        description: ''
+        operationId: testsFindFileUsage
+        consumes:
+          - application/json
+        produces:
+          - application/json
+        parameters:
+          - name: Cookie
+            in: header
+            description: session_id=NjQyOTVmOWNlMDgyNGQ2MjlkNzAzNDdjNTQ3ODU5MmU5M
+            required: true
+            type: string
+          - name: body
+            in: body
+            required: true
+            schema:
+              required: [ project-id, file-path ]
+              properties:
+                project-id:
+                  type: integer
+                file-path:
+                  type: string
+        responses:
+          '200':
+            schema :
+              properties:
+                cmd:
+                  type: string
+                folder-content:
+                  type: dict
+            examples:
+              application/json: |
+                {
+                  "cmd": "/tests/find/file-usage",
+                  "folder-content": {}
+                }
+          '400':
+            description: Bad request provided
+          '403':
+            description: Access denied to this project
+          '500':
+            description: Server error
+        """
+        user_profile = _get_user(request=self.request)
+
+        try:
+            projectId = self.request.data.get("project-id")
+            if projectId is None: raise EmptyValue("Please specify a project id")
+            filePath = self.request.data.get("file-path")
+            if filePath is None: raise EmptyValue("Please specify a source filepath")
+        except EmptyValue as e:
+            raise HTTP_400("%s" % e)
+        except Exception as e:
+            raise HTTP_400("Bad request provided (%s ?)" % e)
+
+        # checking input
+        if not isinstance(projectId, int):
+            raise HTTP_400("Bad project id provided in request, int expected")
+
+        _check_project_permissions(user_login=user_profile['login'], project_id=projectId)
+
+        response = RepoTests.instance().getTestFileUsage(file_path=filePath,
+                                                         project_id=projectId,
+                                                         user_login=user_profile['login'])
+        return {
+            'cmd': self.request.path,
+            'response': response,
+            "usage-file-path": filePath,
+            "usage-project-id": projectId
+        }
+        
 class TestsUpdateAdapterLibrary(Handler):
     """
     tests/update/adapter-library

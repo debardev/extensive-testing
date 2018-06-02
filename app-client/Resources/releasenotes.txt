@@ -15,6 +15,7 @@
 		11. (minor) new feature to add security banner on login popup
 		12. (medium) update adapters/Libs version for multiple entities (pull request #18)
 		13. (medium) integration of the find test usage feature (pull request #18)
+		14. (major) new product name with extensive automation (TBC!!!)
 	Issues Fixed
 		1. (medium) fix regression: unable to zoom in/out in test editor
 		2. (medium) automation assistant: unable to generate testsuite with sikulix and selenium in the same test issue #9

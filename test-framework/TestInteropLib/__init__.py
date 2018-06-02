@@ -3,7 +3,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@ try:
     from Jira import Jira
     from QualityCenter import QualityCenter
     from Git import Git
-    from ExtensiveTesting import ExtensiveTesting
+    from ExtensiveAutomation import ExtensiveAutomation
     from VSphere import VSphere
     from Nexus import Nexus
     from Email import Email
@@ -37,7 +37,7 @@ except ImportError: # python3 support
     from TestInteropLib.Jira import Jira
     from TestInteropLib.QualityCenter import QualityCenter
     from TestInteropLib.Git import Git
-    from TestInteropLib.ExtensiveTesting import ExtensiveTesting
+    from TestInteropLib.ExtensiveAutomation import ExtensiveAutomation
     from TestInteropLib.Nexus import Nexus
     from TestInteropLib.Email import Email
     from TestInteropLib.Jenkins import Jenkins

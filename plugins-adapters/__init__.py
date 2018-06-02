@@ -3,7 +3,7 @@
 
 # ------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,7 @@ What's new
 	4. (minor) ssl/tcp/http: new ciphers client side argument 
 	5. (medium) telnet: support new options 36 to 39
 	6. (medium) New ansible adapter with agent mode support (pull request #8)
+	7. (medium) New kafka adapter with agent mode support too (pull request #15)
 Issues fixed
 	1. (minor) fix bad option code in telnet
 """

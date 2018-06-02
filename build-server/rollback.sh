@@ -2,7 +2,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,7 @@ fi
 
 # init somes variables
 PREVIOUS_APP_NAME="ExtensiveTesting"
-APP_NAME="ExtensiveTesting"
+APP_NAME="ExtensiveAutomation"
 APP_PATH="$(pwd)"
 LOG_FILE="$APP_PATH/install.log"
 PKG_PATH="$APP_PATH/PKG/"
@@ -63,11 +63,11 @@ PRODUCT_VERSION="$(cat "$APP_SRC_PATH"/VERSION)"
 PRODUCT_SVC_NAME="$(echo $APP_NAME | sed 's/.*/\L&/')"
 
 
-echo "=================================================="
-echo "=  - Rollback of the $APP_NAME product -  ="
-echo "=                 Denis Machard                  ="
-echo "=            www.extensivetesting.org            ="
-echo "=================================================="
+echo "======================================================"
+echo "=        - Rollback of the $APP_NAME product -       ="
+echo "=                 Denis Machard                      ="
+echo "=            www.extensiveautomation.org             ="
+echo "======================================================"
 
 
 # import default config

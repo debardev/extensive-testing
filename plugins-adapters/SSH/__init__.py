@@ -3,7 +3,7 @@
 
 # ------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,6 @@ try:
 	from templates import *
 except ImportError: # python3 support
 	from .client import *
-#	from .cli import * # deprecated
 	from .console import *
 	from .terminal import *
 	from .templates import *

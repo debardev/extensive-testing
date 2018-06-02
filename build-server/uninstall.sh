@@ -2,7 +2,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -51,7 +51,7 @@ else
 	FORCE_UNINSTALL=1
 fi 
 
-APP_NAME="ExtensiveTesting"
+APP_NAME="ExtensiveAutomation"
 APP_PATH="$(pwd)"
 PKG_PATH="$APP_PATH/PKG/"
 LOG_FILE="$APP_PATH/install.log"
@@ -63,11 +63,11 @@ fi
 PRODUCT_VERSION="$(cat $APP_SRC_PATH/VERSION)"
 PRODUCT_SVC_NAME="$(echo $APP_NAME | sed 's/.*/\L&/')"
 
-echo "==================================================="
-echo "=  - Uninstall of the $APP_NAME product -  ="
-echo "=                 Denis Machard                   ="
-echo "=            www.extensivetesting.org             ="
-echo "==================================================="
+echo "======================================================="
+echo "=         - Uninstall of the $APP_NAME product -      ="
+echo "=                 Denis Machard                       ="
+echo "=            www.extensiveautomation.org              ="
+echo "======================================================="
 
 source $APP_PATH/default.cfg
 INSTALL_PATH="$INSTALL"

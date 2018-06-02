@@ -3,7 +3,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -252,6 +252,7 @@ class _WebServices(WSGI):
         ('/tests/create/design',                        RestTesterFunctions.TestsCreateDesign()),
         ('/tests/create/design/tpg',                    RestTesterFunctions.TestsCreateDesignTpg()),
         ('/tests/update/adapter-library',               RestTesterFunctions.TestsUpdateAdapterLibrary()),
+        ('/tests/find/file-usage',                      RestTesterFunctions.TestsFindFileUsage()),
         
         # variables
         ('/variables/listing',                          RestTesterFunctions.VariablesListing()),

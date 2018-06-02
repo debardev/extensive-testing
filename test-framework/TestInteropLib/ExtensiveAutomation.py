@@ -3,7 +3,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -33,14 +33,14 @@ import requests
 import json
 import hashlib
 
-class ExtensiveTesting(TestInteropLib.InteropPlugin):
+class ExtensiveAutomation(TestInteropLib.InteropPlugin):
     """
-    ExtensiveTesting plugin
+    ExtensiveAutomation plugin
     """
     @doc_public
     def __init__(self, parent, url, login, password, verifySsl=False, proxies={} ):
         """
-        ExtensiveTesting interop
+        ExtensiveAutomation interop
         
         @param parent: testcase parent
         @type parent: testcase
@@ -73,7 +73,7 @@ class ExtensiveTesting(TestInteropLib.InteropPlugin):
     @doc_public
     def login(self):
         """
-        Login to extensivetesting
+        Login to extensiveautomation
 
         @return: True on success, False otherwise
         @rtype: boolean
@@ -90,7 +90,7 @@ class ExtensiveTesting(TestInteropLib.InteropPlugin):
         url = "%s/%s" % (self.__url, uri)
 
         # log message
-        content = {'extensivetesting-url': url, 'username':"%s" % self.__login, 'cmd': 'login' }
+        content = {'extensiveautomation-url': url, 'username':"%s" % self.__login, 'cmd': 'login' }
         tpl = self.template(name=self.__class__.__name__.upper(), content=content )
         self.logRequest(msg="login", details=tpl )
         
@@ -124,7 +124,7 @@ class ExtensiveTesting(TestInteropLib.InteropPlugin):
     @doc_public    
     def logout(self):
         """
-        Logout from extensivetesting
+        Logout from extensiveautomation
         
         @return: True on success, False otherwise
         @rtype: boolean
@@ -138,7 +138,7 @@ class ExtensiveTesting(TestInteropLib.InteropPlugin):
         url = "%s/%s" % (self.__url, uri)
 
         # log message
-        content = {'extensivetesting-url': url, 'cmd': 'logout', 'jsessionid': self.__jsessionid }
+        content = {'extensiveautomation-url': url, 'cmd': 'logout', 'jsessionid': self.__jsessionid }
         tpl = self.template(name=self.__class__.__name__.upper(), content=content )
         self.logRequest(msg="logout", details=tpl )
         

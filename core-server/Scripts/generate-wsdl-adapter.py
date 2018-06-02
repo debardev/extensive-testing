@@ -3,7 +3,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -37,7 +37,7 @@ TPL_INIT = """#!/usr/bin/env python
 
 # ------------------------------------------------------------------
 # Copyright (c) 2010-2015 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -67,7 +67,7 @@ TPL_LIB = """#!/usr/bin/env python
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2015
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -584,25 +584,7 @@ def get_type(sd, type_name):
                 else:
                     pass
     return ret
-    
-# def getDateValue(self, _strValue, _strFormat, _oDefaultValue):
-    # if _strValue is None or _strValue == "None":
-        # oReturnValue = _oDefaultValue
-    # else:
-        # oReturnValue = DateTime(datetime.datetime.strptime(_strValue, _strFormat))
-    # return oReturnValue
-        
-# def get_type(sd, type_name):
-    # """
-    # """
-    # for t in sd.types:
-        # typeName = t[1].resolve().name
-        # print(typeName)
-        # if type_name == typeName:
-            # test = client.factory.create(t[1].resolve().name)
-            # print(type_name)
-            # print( test.__keylist__ )
-    
+
 def construct_adapter(adaptersName, complexList, wsdlFile, overwrite=False):
     """
     Construct the adapter

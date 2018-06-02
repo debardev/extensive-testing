@@ -2,7 +2,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,16 +30,16 @@
 #        AUTHOR:  Denis Machard
 #====================================================================
 
-PKG_NAME="ExtensiveTesting"
+PKG_NAME="ExtensiveAutomation"
 PRODUCT_SVC_NAME="$(echo $PKG_NAME | sed 's/.*/\L&/')"
 APP_PATH="$(pwd)"
 APP_SRC_PATH="$(pwd)/$PKG_NAME/"
 LOG_FILE="$APP_PATH/install.log"
 
 echo "========================================"
-echo "=  Build the $PKG_NAME product  ="
+echo "=      Build the $PKG_NAME product     ="
 echo "=           Denis Machard              ="
-echo "=      www.extensivetesting.org        ="
+echo "=      www.extensiveautomation.org     ="
 echo "========================================"
 
 

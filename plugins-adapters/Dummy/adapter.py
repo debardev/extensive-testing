@@ -3,7 +3,7 @@
 
 # ------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -92,7 +92,8 @@ class Adapter(TestAdapterLib.Adapter):
 		@type msg:	string
 		"""
 		if not isinstance(msg, str):
-			raise TestAdapterLib.ValueException(TestAdapterLib.caller(), "msg argument is not a string (%s)" % type(msg) )
+			msg_err =  "msg argument is not a string (%s)" % type(msg) 
+			raise TestAdapterLib.ValueException(TestAdapterLib.caller(), msg_err)
 		
 		# log a message during the execution
 		self.info( msg )

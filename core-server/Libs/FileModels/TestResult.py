@@ -3,7 +3,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -222,10 +222,6 @@ class DataModel(Logger.ClassLogger):
             
         # convert xml to python objects    
         try:
-            # if sys.version_info > (3,): # python3 support
-                # ret = self.codecX2D.parseXml( xml = decompressed_data, huge_tree=True  )
-            # else:
-            
             ret = self.codecX2D.parseXml( xml = decompressed_data, huge_tree=True  )
             del decompressed_data
             del read_data
@@ -272,7 +268,4 @@ class DataModel(Logger.ClassLogger):
             self.error( "prepare test result properties error: %s" % str(e) )
             return False
             
-        # self.trace("%s" % self.properties)
-        # self.trace("%s" % self.testheader)
-        # self.trace("%s" % self.testresult)
         return True

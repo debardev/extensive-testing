@@ -3,7 +3,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2018 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -257,8 +257,9 @@ class Template(object):
         else:
             raise TestTemplatesException("ERR_TPL_019: bad data on prepare: %s" % type(data) )
         layerRest.addAsPy( data )
-        return  layerRest   
+        return  layerRest
 
+        
 class TemplateLayer(object):
     @doc_public
     def __init__(self, name):
@@ -302,6 +303,17 @@ class TemplateLayer(object):
         """
         self.__datapy__ = obj
 
+    def getSize(self):
+        """
+        """
+        s = 1
+        for k,v in self.__data__.items():
+            if isinstance(v, TemplateLayer):
+                s += v.getSize()
+            else:
+                s += 1
+        return s
+        
     def getAsPy(self):
         """
         """
@@ -323,7 +335,6 @@ class TemplateLayer(object):
         @param raw: raw template layer
         @type raw: string
         """
-        #self.__data__['%%raw-layer%%'] = base64.b64encode(raw)
         self.__data__['%%raw-layer%%'] = raw
     @doc_public
     def getRaw(self):
@@ -684,11 +695,14 @@ class TemplateMessage(object):
         except Exception as e:
             raise TestTemplatesException("ERR_TPL_005: remove layer failed: layer unknown")
 
-    def getSize(self):
+    def getSize(self): 
         """
-        todo
+        return the size of the template
         """
-        pass
+        s = 0
+        for l in self.__tpl__:
+            s += l.getSize()
+        return s
         
 def tpl2str(expected):
     """

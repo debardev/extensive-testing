@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 # Copyright (c) 2010-2018 Denis Machard
 #
 # This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #
 # Author: Denis Machard
 # Contact: d.machard@gmail.com
-# Website: www.extensivetesting.org
+# Website: www.extensiveautomation.org
 # -------------------------------------------------------------------
 
 """
