@@ -97,12 +97,14 @@ class DataModel(GenericModel.GenericModel):
                                                         'name': 'DEBUG', 
                                                         'description': '', 
                                                         'value' : 'False', 
-                                                        'color': '' },
+                                                        'color': '',  
+                                                        'scope': 'local' },
                                                          {'type': 'float', 
                                                          'name': 'TIMEOUT', 
                                                          'description': '', 
                                                          'value' : timeout, 
-                                                         'color': '' } ]
+                                                         'color': '',  
+                                                         'scope': 'local' } ]
                                             }
                                 }
                             }
@@ -174,6 +176,17 @@ class DataModel(GenericModel.GenericModel):
                     self.fixXML( data = properties['parameters'], key = 'parameter' )
                     if '@parameter' in properties['parameters']:
                         self.fixXML( data = properties['parameters'], key = '@parameter' )
+
+                    # BEGIN NEW in 19.0.0 : add missing scope parameters
+                    for p in properties['inputs-parameters']['parameter']:
+                        if "scope" not in p: 
+                            p["scope"] = "local"
+                            p["@scope"] = {}
+                    for p in properties['outputs-parameters']['parameter']:
+                        if "scope" not in p: 
+                            p["scope"] = "local"
+                            p["@scope"] = {}
+                    # END OF NEW
                 except Exception as e:
                     self.error( "TestConfig >  fix xml %s" % str(e) )
                 else:

@@ -73,7 +73,7 @@ class TestDataStorage:
         try:
             if validData:
                 fd = open(storagePath, 'wb')
-                fd.write( pickle.dumps(data) )
+                fd.write( cPickle.dumps(data) )
                 fd.close()
         except Exception as e:
             self.error( "[save_data] %s" % str(e) )
@@ -98,7 +98,7 @@ class TestDataStorage:
             fd = open( storagePath, "r")
             data = fd.read()
             fd.close()
-            return pickle.loads( data )
+            return cPickle.loads( data )
         except Exception as e:
             self.error( "[load_data] %s" % str(e) )
             return None

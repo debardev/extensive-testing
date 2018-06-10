@@ -761,12 +761,15 @@ class RepoTests(RepoManager.RepoManager, Logger.ClassLogger):
                         # end of fix
                         
                         if fileExt == RepoManager.TEST_SUITE_EXT:
-                            ts.update( { 'test-definition': doc.testdef, 'test-execution': doc.testexec, 
+                            ts.update( { 'test-definition': doc.testdef, 
+                                         'test-execution': doc.testexec, 
                                          'path': filenameTs, 'tpid': tpid } )
                         elif fileExt == RepoManager.TEST_ABSTRACT_EXT:
-                            ts.update( { 'test-definition': doc.testdef, 'path': filenameTs, 'tpid': tpid } )
+                            ts.update( { 'test-definition': doc.testdef, 
+                                         'path': filenameTs, 'tpid': tpid } )
                         else:
-                            ts.update( { 'test-definition': doc.testdef, 'path': filenameTs, 'tpid': tpid } )
+                            ts.update( { 'test-definition': doc.testdef, 
+                                         'path': filenameTs, 'tpid': tpid } )
                 
                         # backward compatibility
                         self.__fixAliasTp(ts=ts)

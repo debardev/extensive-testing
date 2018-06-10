@@ -22,8 +22,8 @@
 # -------------------------------------------------------------------
 
 import wrapt
-import json
 import sys
+import copy
 
 @wrapt.decorator
 def doc_public(wrapped, instance, args, kwargs):
@@ -36,6 +36,7 @@ def doc_public(wrapped, instance, args, kwargs):
 import base64
 import xlrd
 import binascii
+import json
 
 __DESCRIPTION__ = """The library provides some functions to access to the properties of the test."""
 
@@ -492,6 +493,9 @@ def decodeParameter(parameter, sharedParameters=[]):
     if parameter['type'] == "none":
         return None
 
+    elif parameter['type'] == "python":
+        return parameter['value']
+        
     elif parameter['type'] == "shared":
         return decodeShared(parameter=parameter, sharedParameters=sharedParameters)
 
@@ -501,6 +505,14 @@ def decodeParameter(parameter, sharedParameters=[]):
         else:
             return []
             
+    elif parameter['type'] == "advanced":
+        j = {}
+        try:
+            j = json.loads(parameter['value'].encode("utf-8"))
+        except Exception as e:
+            raise TestPropertiesException( 'ERR_PRO_001: invalid advanced provided: %s' % str(e) )
+        return j
+        
     elif parameter['type'] == "json":
         j = {}
         try:
@@ -693,7 +705,9 @@ def decodeValue(parameter, value):
         raise TestPropertiesException( 'ERR_PRO_001: parameter type unknown: %s' % str(parameter['type']) )
     
 class Properties:
-    def __init__(self, parameters, descriptions, parametersOut, agents, parametersShared, runningAgents=[], runningProbes=[]):
+    def __init__(self, parameters, descriptions, parametersOut, 
+                 agents, parametersShared, 
+                 runningAgents=[], runningProbes=[]):
         """
         """
         self.__parameters = parameters
@@ -701,23 +715,95 @@ class Properties:
         self.__descriptions = descriptions
         self.__agents = agents
         self.__parametersShared = parametersShared
+        
         # new in v10.1
         self.__running_agents = runningAgents
         self.__running_probes = runningProbes
+        
+    def initAtRunTime(self, cache=None):
+        """
+        new in v19
+        """
+        try:
+            # init all atruntime parameters
+            self.__search_atruntime_type(params_all=self.__parameters)
+            self.__search_atruntime_type(params_all=self.__parametersOut)
+            
+            # init the cache
+            if cache is not None:
+                for p in self.__parameters:
+                    if p["scope"] == "cache":
+                        name_upper = p["name"].upper()
+                        if cache.get(name=name_upper) is None:
+                            cache.set(name=name_upper, data=decodeParameter(p))
+                for p in self.__parametersOut:
+                    if p["scope"] == "cache":
+                        name_upper = p["name"].upper()
+                        if cache.get(name=name_upper) is None:
+                            cache.set(name=p["name"].upper(), data=decodeParameter(p)) 
+        except Exception as e:
+            raise TestPropertiesException( 'ERR_PRO_100: bad advanced parameter provided - %s' % e )
+            
+    def __search_atruntime_type(self, params_all):
+        """
+        """
+        params = copy.deepcopy(params_all)
+        for p in params:
+            if p["type"] == "advanced":
+                params_all.extend( self.__init_atruntime_type(name=p["name"], 
+                                                             value=p["value"],
+                                                             scope=p["scope"],
+                                                             params_all=params_all) )
+        del params
+        
+    def __init_atruntime_type(self, name, value, scope, params_all):
+        """
+        """
+        new_params = [  ]
+
+        if not isinstance(value, dict):
+            j = json.loads(value.encode("utf-8"))
+        else:
+            j = value
+            
+        if isinstance(j, dict):
+            for k,v in j.items():
+                val_name = "%s_%s" % (name, k.upper())
+
+                duplicated_name=False
+                for pr in params_all:
+                    if pr['name'] == val_name:
+                        duplicated_name = True
+                        break
+                        
+                if not duplicated_name:
+                    new_params.append( {"name": val_name, "value": v, "scope": scope,
+                                        "description": "", "type": "python" } )
+                                    
+                # if isinstance(v, dict):
+                    # new_params.extend( self.__init_atruntime_type( name=val_name, value=v )  )
+                # if isinstance(v, list):
+                    # for l in v:
+                        # if isinstance(l, dict):
+                            # new_params.extend( self.__init_atruntime_type( name=val_name, value=l )  ) 
+
+        return new_params
         
     def readShared(self, shared):
         """
         @return: parameter value
         @rtype: string, list, int
         """
-        return readShared(parameter=shared , sharedParameters=self.__parametersShared)
+        return readShared(parameter=shared , 
+                          sharedParameters=self.__parametersShared)
         
     def readListShared(self, shared):
         """
         @return: parameter value
         @rtype: string, list, int
         """
-        return readListShared(parameter=shared , sharedParameters=self.__parametersShared)
+        return readListShared(parameter=shared , 
+                              sharedParameters=self.__parametersShared)
         
     def getRunningAgents(self):
         """
@@ -1009,11 +1095,83 @@ class TestPlanParameters(object):
         # new in v10.1
         self.__running_agents = []
         self.__running_probes = []
+        # new in v19
+        self.__cache = None
      
     def excel(self, data, worksheet, row=None, column=None):
         """
         """
         return decodeExcel(data, worksheet, row=row, column=column)
+        
+    def initAtRunTime(self, cache=None):
+        """
+        new in v19
+        """
+        self.__cache = cache
+        
+    def updateAtRunTime(self, param_id, params_all):
+        """
+        """
+        try:
+            # init all atruntime parameters
+            self.__search_atruntime_type(param_id=param_id, params_all=params_all)
+            
+            # init the cache
+            if self.__cache is not None:
+                for p in params_all[param_id]:
+                    if p["scope"] == "cache":
+                        name_upper = p["name"].upper()
+                        if self.__cache.get(name=name_upper) is None:
+                            self.__cache.set(name=name_upper, 
+                                             data=decodeParameter(p))
+        except Exception as e:
+            raise TestPropertiesException( 'ERR_PRO_100: bad advanced parameter provided - %s' % e )
+            
+    def __search_atruntime_type(self, param_id, params_all):
+        """
+        """
+        params = copy.deepcopy(params_all[param_id])
+        for p in params:
+            if p["type"] == "advanced":
+                params_all[param_id].extend( self.__init_atruntime_type( name=p["name"], 
+                                                                        value=p["value"],
+                                                                        scope=p["scope"],
+                                                                        param_id=param_id,
+                                                                        params_all=params_all) )
+        del params
+        
+    def __init_atruntime_type(self, name, value, scope, param_id, params_all):
+        """
+        """
+        new_params = [  ]
+
+        if not isinstance(value, dict):
+            j = json.loads(value.encode("utf-8"))
+        else:
+            j = value
+            
+        if isinstance(j, dict):
+            for k,v in j.items():
+                val_name = "%s_%s" % (name, k.upper())
+
+                duplicated_name=False
+                for pr in params_all[param_id]:
+                    if pr['name'] == val_name:
+                        duplicated_name = True
+                        break
+                        
+                if not duplicated_name:
+                    new_params.append( {"name": val_name, "value": v, "scope": scope,
+                                        "description": "", "type": "python" } )
+                                    
+                # if isinstance(v, dict):
+                    # new_params.extend( self.__init_atruntime_type( name=val_name, value=v )  )
+                # if isinstance(v, list):
+                    # for l in v:
+                        # if isinstance(l, dict):
+                            # new_params.extend( self.__init_atruntime_type( name=val_name, value=l )  ) 
+
+        return new_params
         
     def getAgents(self):
         """
@@ -1092,6 +1250,8 @@ class TestPlanParameters(object):
         @type parameters: 
         """
         self.__parameters[parametersId] = parameters
+        
+        self.updateAtRunTime(param_id=parametersId, params_all=self.__parameters)
 
     def addParametersOut(self, parametersId, parameters):
         """
@@ -1104,6 +1264,8 @@ class TestPlanParameters(object):
         @type parameters: 
         """
         self.__parametersOut[parametersId] = parameters
+        
+        self.updateAtRunTime(param_id=parametersId, params_all=self.__parametersOut)
 
     def addParametersShared(self, parameters):
         """
@@ -1384,7 +1546,6 @@ class TestPlanParameters(object):
         @type tpId: 
         """
         for pr in self.__parameters[ tpId ]:
-            #if pr['name'] == name and pr['type'] == paramType:
             if pr['name'] == name:
                 if pr['type'] == 'alias':
                     if pr['value'] == name:
@@ -1405,7 +1566,6 @@ class TestPlanParameters(object):
         @type tpId: 
         """
         for pr in self.__parametersOut[ tpId ]:
-            # if pr['name'] == name and pr['type'] == paramType:
             if pr['name'] == name:
                 if pr['type'] == 'alias':
                     if pr['value'] == name:
@@ -1462,7 +1622,6 @@ class TestPlanParameters(object):
             toUpdate = False
             for m in self.__parameters[tpId]:
                 if m['name'] == d['name']:
-                    #newParams.append( m )
                     toUpdate = True
                     break
             if not toUpdate:
@@ -1487,7 +1646,6 @@ class TestPlanParameters(object):
             toUpdate = False
             for m in self.__parameters[tpId]:
                 if m['name'] == d['name']:
-                    #newParams.append( m )
                     toUpdate = True
                     break
             if not toUpdate:
@@ -1512,7 +1670,6 @@ class TestPlanParameters(object):
             toUpdate = False
             for m in self.__parametersOut[tpId]:
                 if m['name'] == d['name']:
-                    #newParams.append( m )
                     toUpdate = True
                     break
             if not toUpdate:
@@ -1537,7 +1694,6 @@ class TestPlanParameters(object):
             toUpdate = False
             for m in self.__parametersOut[tpId]:
                 if m['name'] == d['name']:
-                    #newParams.append( m )
                     toUpdate = True
                     break
             if not toUpdate:
@@ -1585,8 +1741,10 @@ def instance():
     if TPL:
         return TPL
 
-def initialize(parameters=None, descriptions=None, parametersOut=None, agents=None, parametersShared=None, 
-                runningAgents=[], runningProbes=[]):
+def initialize(parameters=None, descriptions=None, 
+               parametersOut=None, agents=None, 
+               parametersShared=None, runningAgents=[], 
+               runningProbes=[]):
     """
     Initialize the module
 
@@ -1609,7 +1767,8 @@ def initialize(parameters=None, descriptions=None, parametersOut=None, agents=No
     if parameters is None:
         TPL = TestPlanParameters()
     else:
-        TPL = Properties(   parameters=parameters, descriptions=descriptions, parametersOut=parametersOut,
+        TPL = Properties(   parameters=parameters, descriptions=descriptions, 
+                            parametersOut=parametersOut,
                             agents=agents, parametersShared=parametersShared, 
                             runningAgents=runningAgents, runningProbes=runningProbes)
 

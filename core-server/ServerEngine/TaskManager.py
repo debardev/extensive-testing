@@ -1598,7 +1598,9 @@ class Task(Logger.ClassLogger):
                           '%s' % Settings.get( 'Tests_Framework', 'dispatch-events-current-tc' ) )
             cfgparser.set('Tests_Framework', 'expand-test-report', 
                           '%s' % Settings.get( 'Tests_Framework', 'expand-test-report' ) )
-            
+            cfgparser.set('Tests_Framework', 'ignored-testcase-visible-test-report', 
+                          '%s' % Settings.get( 'Tests_Framework', 'ignored-testcase-visible-test-report' ) )
+                          
             cfgparser.set('Csv_Tests_Results', 'header', 
                           '%s' % Settings.get( 'Csv_Tests_Results', 'header' ) )
             cfgparser.set('Csv_Tests_Results', 'separator', 

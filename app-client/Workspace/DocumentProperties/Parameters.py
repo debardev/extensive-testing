@@ -27,6 +27,7 @@ Test parameters inputs/outputs module
 
 import sys
 import os
+import json
 
 # unicode = str with python3
 if sys.version_info > (3,):
@@ -41,7 +42,7 @@ try:
                             QGridLayout, QTableView, QDrag, QAbstractItemView, QFrame, QApplication, 
                             QMenu, QFileDialog, QWidget, QToolBar, QClipboard, QRegExpValidator,
                             QSyntaxHighlighter, QTextCharFormat, QBrush, QPalette, QCheckBox,
-                            QCompleter)
+                            QCompleter, QStyleOptionButton, QStyle)
     from PyQt4.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt, QDate, QTime, QDateTime, 
                             QAbstractListModel, QRegExp, pyqtSignal, QMimeData, QByteArray, QBuffer, 
                             QIODevice, QFile, QSize)
@@ -52,9 +53,9 @@ except ImportError:
     from PyQt5.QtWidgets import (QItemDelegate, QLineEdit, QComboBox, QDialog, QDateEdit, QPlainTextEdit,
                                 QTimeEdit, QDateTimeEdit, QAbstractItemDelegate, QLabel, QHBoxLayout, 
                                 QTextEdit, QDialogButtonBox, QVBoxLayout, QMessageBox, QListView, 
-                                QListWidgetItem, QPushButton, QListWidget, QCheckBox,
+                                QListWidgetItem, QPushButton, QListWidget, QCheckBox, QStyle,
                                 QGridLayout, QTableView, QAbstractItemView, QFrame, QApplication, 
-                                QMenu, QFileDialog, QWidget, QToolBar, QCompleter)
+                                QMenu, QFileDialog, QWidget, QToolBar, QCompleter, QStyleOptionButton)
     from PyQt5.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt, QDate, QTime, QDateTime, 
                             QAbstractListModel, QRegExp, pyqtSignal, QMimeData, QByteArray, QBuffer, 
                             QIODevice, QFile, QSize, QSortFilterProxyModel)
@@ -85,15 +86,15 @@ import pickle
 import base64
 
 COL_ID              =   0
-COL_NAME            =   1
-COL_TYPE            =   2
-COL_VALUE           =   3
-COL_DESCRIPTION     =   4
+COL_CACHE           =   1
+COL_NAME            =   2
+COL_TYPE            =   3
+COL_VALUE           =   4
+COL_DESCRIPTION     =   5
 
-HEADERS             = ( 'Id', 'Name', 'Type', 'Value', 'Description' )
-TYPES_PARAM         = [ 
-                        'str', 'text', 'custom', 'pwd', 'list', 'bool', 'hex', 'json', '' ,
-                        'none', 'alias', 'shared', 'list-shared', 'cache', '',
+HEADERS             = ( 'Id', 'Cache', 'Name', 'Type', 'Value', 'Description' )
+TYPES_PARAM         = [ 'str', 'text', 'custom', 'pwd', 'list', 'bool', 'hex', 'json', '' ,
+                        'advanced', 'none', 'alias', 'shared', 'list-shared', 'cache', '',
                         'int', 'float', '',
                         'dataset', 'remote-image', 'local-image', 'snapshot-image', '',
                         'local-file', '',
@@ -194,6 +195,11 @@ class ParametersTableModel(QAbstractTableModel, Logger.ClassLogger):
         """
         if index.column() == COL_ID:
             return index.row() + 1
+        elif index.column() == COL_CACHE:
+            if self.mydata[ index.row() ]['scope'] == "local":
+                return ""
+            else:
+                return "Yes"
         elif index.column() == COL_NAME:
             return self.mydata[ index.row() ]['name']
         elif index.column() == COL_TYPE:
@@ -331,6 +337,22 @@ class ParametersTableModel(QAbstractTableModel, Logger.ClassLogger):
                 if index.column() == COL_VALUE:
                     return q("*********")
                     
+            if self.mydata[ index.row() ]['type'] in [ 'json' ]:
+                if index.column() == COL_VALUE:
+                    return q("...")
+                    
+            if self.mydata[ index.row() ]['type'] in [ 'advanced' ]:
+                if index.column() == COL_VALUE:
+                    return q("...")
+                    
+            if self.mydata[ index.row() ]['type'] in [ 'custom' ]:
+                if index.column() == COL_VALUE:
+                    return q("...")
+                    
+            if self.mydata[ index.row() ]['type'] in [ 'text' ]:
+                if index.column() == COL_VALUE:
+                    return q("...")
+                     
             if self.mydata[ index.row() ]['type'] in [ 'list' ]:
                 if index.column() == COL_VALUE:
                     try:
@@ -480,7 +502,13 @@ class ParametersTableModel(QAbstractTableModel, Logger.ClassLogger):
             if orig_ != value:
                 dataChanged = True
                 self.mydata[ index.row() ]['value'] = ''
-        
+                
+        elif index.column() == COL_CACHE:
+            orig_ = self.mydata[ index.row() ]['scope']
+            self.mydata[ index.row() ]['scope'] = value
+            if orig_ != value:
+                dataChanged = True
+                
         elif index.column() == COL_VALUE:
             orig_ = self.mydata[ index.row() ]['value']
             self.mydata[ index.row() ]['value'] = value
@@ -681,6 +709,344 @@ class NameDelegate(QItemDelegate, Logger.ClassLogger):
             
         value = QtHelper.displayToValue( q(qvalue) )
         self.setValue(index, value)
+
+class CacheDelegate(QItemDelegate, Logger.ClassLogger):
+    """
+    Value delegate item
+    """
+    def __init__ (self, parent):
+        """
+        Contructs ValueDelegate item delegate
+        
+        @param parent: 
+        @type parent:
+
+        @param items_: 
+        @type items_:
+
+        @param colVal: 
+        @type colVal:
+
+        @param colDescr: 
+        @type colDescr:
+        """
+        QItemDelegate.__init__(self, parent)
+        self.owner = parent
+
+    def getValue(self, index):
+        """
+        Return value
+
+        @param index: 
+        @type index:
+
+        @return:
+        @rtype:
+        """
+        proxyIndex = index
+        if proxyIndex.isValid():
+            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
+            return proxyIndex.model().sourceModel().getValue(sourceIndex)
+    
+    def setValue(self, index, value):
+        """
+        Set value
+
+        @param index: 
+        @type index:
+
+        @param value: 
+        @type value:
+
+        @return:
+        @rtype:
+        """
+        proxyIndex = index
+        if proxyIndex.isValid():
+            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
+            proxyIndex.model().sourceModel().setValue(sourceIndex, value)
+
+    def getValueRow(self, index):
+        """
+        Returns value by row
+
+        @param index: 
+        @type index:
+
+        @return:
+        @rtype:
+        """
+        proxyIndex = index
+        if proxyIndex.isValid():
+            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
+            return proxyIndex.model().sourceModel().getValueRow(sourceIndex)
+
+    def createEditor(self, parent, option, index):
+        """
+        Create the editor
+
+        @param parent: 
+        @type parent:
+
+        @param option: 
+        @type option:
+
+        @param index: 
+        @type index:
+
+        @return:
+        @rtype:
+        """
+        if index.column() == COL_CACHE:
+            editor = QComboBox(parent)
+            editor.activated.connect(self.onItemActivated)
+            editor.addItems ( ['', 'Yes']  )
+
+            return editor
+        return QItemDelegate.createEditor(self, parent, option, index)
+
+    def setModelData(self, editor, model, index):
+        """
+        Accessor to set the model of data
+
+        @param editor: 
+        @type editor:
+
+        @param model: 
+        @type model:
+
+        @param index: 
+        @type index:
+        """
+        qvalue = editor.currentText()
+        if qvalue == "Yes":
+            self.setValue(index, "cache")
+        else:
+            self.setValue(index, "local")
+    
+    def onItemActivated(self, index): 
+        """
+        Close editor on index changed
+        """
+        self.commitData.emit(self.sender())
+        self.closeEditor.emit(self.sender(), QAbstractItemDelegate.NoHint)
+        
+class ComboTypeDelegate(QItemDelegate, Logger.ClassLogger):
+    """
+    Combo type delegate item
+    """
+    def __init__ (self, parent, items_, col_ ):
+        """
+        Contructs ComboTypeDelegate item delegate
+        
+        @param parent: 
+        @type parent:
+
+        @param items_: 
+        @type items_:
+
+        @param col_: 
+        @type col_:
+        """
+        QItemDelegate.__init__(self, parent)
+        self.owner = parent
+        self.items_ = items_
+        self.col_ = col_
+
+    def getValue(self, index):
+        """
+        Return value
+
+        @param index: 
+        @type index:
+
+        @return:
+        @rtype:
+        """
+        proxyIndex = index
+        if proxyIndex.isValid():
+            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
+            return proxyIndex.model().sourceModel().getValue(sourceIndex)
+
+    def setValue(self, index, value):
+        """
+        Set value
+
+        @param index: 
+        @type index:
+
+        @param value: 
+        @type value:
+
+        @return:
+        @rtype:
+        """
+        proxyIndex = index
+        if proxyIndex.isValid():
+            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
+            proxyIndex.model().sourceModel().setValue(sourceIndex, value)
+
+    def createEditor(self, parent, option, index):
+        """
+        Create the editor
+
+        @param parent: 
+        @type parent:
+
+        @param option: 
+        @type option:
+
+        @param index: 
+        @type index:
+
+        @return:
+        @rtype:
+        """
+        value = self.getValue(index)
+
+        if index.column() == self.col_:
+            editor = QComboBox(parent)
+            editor.activated.connect(self.onItemActivated)
+            editor.addItem (value)
+            editor.insertSeparator(1)
+            for i in xrange(len(self.items_)):
+                if len(self.items_[i]) == 0:
+                    editor.insertSeparator(i + 2)
+                else:
+                    editor.addItem (self.items_[i])
+            return editor
+
+        return QItemDelegate.createEditor(self, parent, option, index)
+        
+    def onItemActivated(self, index): 
+        """
+        Close editor on index changed
+        """
+        self.commitData.emit(self.sender())
+        self.closeEditor.emit(self.sender(), QAbstractItemDelegate.NoHint)
+        
+    def setEditorData(self, editor, index):
+        """
+        Set the data editor
+
+        @param editor: 
+        @type editor:
+
+        @param index: 
+        @type index:
+        """
+        if index.column() == self.col_:
+            if sys.version_info > (3,): # python3 support
+                value = index.data()
+            else:
+                value = str(index.data().toString())
+            i = editor.findText(value)
+            editor.setCurrentIndex (i)
+        else:
+            QItemDelegate.setEditorData(self, editor, index)
+
+    def setModelData(self, editor, model, index):
+        """
+        Set the data model
+
+        @param editor: 
+        @type editor:
+
+        @param model: 
+        @type model:
+
+        @param index: 
+        @type index:
+        """
+        qvalue = editor.currentText()
+        value = QtHelper.displayToValue( q(qvalue) )
+        self.setValue(index, value)
+
+class DescriptionsDelegate(QItemDelegate, Logger.ClassLogger):
+    """
+    Descriptions delegate item
+    """
+    def __init__(self, parent, col_):
+        """
+        @param value: 
+        @type value:
+
+        @param value: 
+        @type value:
+        """
+        QItemDelegate.__init__(self, parent)
+        self.owner = parent
+        self.col_ = col_
+    
+    def getValue(self, index):
+        """
+        Returns value
+
+        @param index: 
+        @type index:
+
+        @return:
+        @rtype:
+        """
+        proxyIndex = index
+        if proxyIndex.isValid():
+            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
+            return proxyIndex.model().sourceModel().getValue(sourceIndex)
+
+    def getValueRow(self, index):
+        """
+        Returns value by row
+
+        @param index: 
+        @type index:
+
+        @return:
+        @rtype:
+        """
+        proxyIndex = index
+        if proxyIndex.isValid():
+            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
+            return proxyIndex.model().sourceModel().getValueRow(sourceIndex)
+
+    def setValue(self, index, value):
+        """
+        Set value
+
+        @param index: 
+        @type index:
+
+        @param value: 
+        @type value:
+
+        @return:
+        @rtype:
+        """
+        proxyIndex = index
+        if proxyIndex.isValid():
+            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
+            proxyIndex.model().sourceModel().setValue(sourceIndex, value)
+
+    def createEditor(self, parent, option, index):
+        """
+        Create the editor
+
+        @param parent: 
+        @type parent:
+
+        @param option: 
+        @type option:
+
+        @param index: 
+        @type index:
+        """
+        value = self.getValue(index)
+
+        if index.column() == self.col_:
+            editorDialog = DescriptionDialog(value)
+            if editorDialog.exec_() == QDialog.Accepted:
+                argsProbe = editorDialog.getDescr()
+                sourceIndex = self.owner.proxyModel.mapToSource( index )
+                index.model().sourceModel().setData(sourceIndex,q(argsProbe))
 
 class ValueDelegate(QItemDelegate, Logger.ClassLogger):
     """
@@ -927,6 +1293,14 @@ class ValueDelegate(QItemDelegate, Logger.ClassLogger):
                     index.model().sourceModel().setData(sourceIndex,q(paramText))
                 return None
                 
+            elif value['type'] == 'advanced':
+                editorDialog = AtRunTimeValues(value['name'], value['value'])
+                if editorDialog.exec_() == QDialog.Accepted:
+                    paramText = editorDialog.getText()
+                    sourceIndex = self.owner.proxyModel.mapToSource( index )
+                    index.model().sourceModel().setData(sourceIndex,q(paramText))
+                return None
+                
             elif value['type'] == 'custom':
                 editorDialog = CustomValues(value['value'])
                 if editorDialog.exec_() == QDialog.Accepted:
@@ -1020,223 +1394,6 @@ class ValueDelegate(QItemDelegate, Logger.ClassLogger):
         self.commitData.emit(self.sender())
         self.closeEditor.emit(self.sender(), QAbstractItemDelegate.NoHint)
         
-class ComboTypeDelegate(QItemDelegate, Logger.ClassLogger):
-    """
-    Combo type delegate item
-    """
-    def __init__ (self, parent, items_, col_ ):
-        """
-        Contructs ComboTypeDelegate item delegate
-        
-        @param parent: 
-        @type parent:
-
-        @param items_: 
-        @type items_:
-
-        @param col_: 
-        @type col_:
-        """
-        QItemDelegate.__init__(self, parent)
-        self.owner = parent
-        self.items_ = items_
-        self.col_ = col_
-
-    def getValue(self, index):
-        """
-        Return value
-
-        @param index: 
-        @type index:
-
-        @return:
-        @rtype:
-        """
-        proxyIndex = index
-        if proxyIndex.isValid():
-            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
-            return proxyIndex.model().sourceModel().getValue(sourceIndex)
-
-    def setValue(self, index, value):
-        """
-        Set value
-
-        @param index: 
-        @type index:
-
-        @param value: 
-        @type value:
-
-        @return:
-        @rtype:
-        """
-        proxyIndex = index
-        if proxyIndex.isValid():
-            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
-            proxyIndex.model().sourceModel().setValue(sourceIndex, value)
-
-    def createEditor(self, parent, option, index):
-        """
-        Create the editor
-
-        @param parent: 
-        @type parent:
-
-        @param option: 
-        @type option:
-
-        @param index: 
-        @type index:
-
-        @return:
-        @rtype:
-        """
-        value = self.getValue(index)
-
-        if index.column() == self.col_:
-            editor = QComboBox(parent)
-            editor.activated.connect(self.onItemActivated)
-            editor.addItem (value)
-            editor.insertSeparator(1)
-            for i in xrange(len(self.items_)):
-                if len(self.items_[i]) == 0:
-                    editor.insertSeparator(i + 2)
-                else:
-                    editor.addItem (self.items_[i])
-            return editor
-
-        return QItemDelegate.createEditor(self, parent, option, index)
-        
-    def onItemActivated(self, index): 
-        """
-        Close editor on index changed
-        """
-        self.commitData.emit(self.sender())
-        self.closeEditor.emit(self.sender(), QAbstractItemDelegate.NoHint)
-        
-    def setEditorData(self, editor, index):
-        """
-        Set the data editor
-
-        @param editor: 
-        @type editor:
-
-        @param index: 
-        @type index:
-        """
-        if index.column() == self.col_:
-            if sys.version_info > (3,): # python3 support
-                value = index.data()
-            else:
-                value = str(index.data().toString())
-            i = editor.findText(value)
-            editor.setCurrentIndex (i)
-        else:
-            QItemDelegate.setEditorData(self, editor, index)
-
-    def setModelData(self, editor, model, index):
-        """
-        Set the data model
-
-        @param editor: 
-        @type editor:
-
-        @param model: 
-        @type model:
-
-        @param index: 
-        @type index:
-        """
-        qvalue = editor.currentText()
-        value = QtHelper.displayToValue( q(qvalue) )
-        self.setValue(index, value)
-
-class DescriptionsDelegate(QItemDelegate, Logger.ClassLogger):
-    """
-    Descriptions delegate item
-    """
-    def __init__(self, parent, col_):
-        """
-        @param value: 
-        @type value:
-
-        @param value: 
-        @type value:
-        """
-        QItemDelegate.__init__(self, parent)
-        self.owner = parent
-        self.col_ = col_
-    
-    def getValue(self, index):
-        """
-        Returns value
-
-        @param index: 
-        @type index:
-
-        @return:
-        @rtype:
-        """
-        proxyIndex = index
-        if proxyIndex.isValid():
-            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
-            return proxyIndex.model().sourceModel().getValue(sourceIndex)
-
-    def getValueRow(self, index):
-        """
-        Returns value by row
-
-        @param index: 
-        @type index:
-
-        @return:
-        @rtype:
-        """
-        proxyIndex = index
-        if proxyIndex.isValid():
-            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
-            return proxyIndex.model().sourceModel().getValueRow(sourceIndex)
-
-    def setValue(self, index, value):
-        """
-        Set value
-
-        @param index: 
-        @type index:
-
-        @param value: 
-        @type value:
-
-        @return:
-        @rtype:
-        """
-        proxyIndex = index
-        if proxyIndex.isValid():
-            sourceIndex = self.owner.proxyModel.mapToSource( proxyIndex )
-            proxyIndex.model().sourceModel().setValue(sourceIndex, value)
-
-    def createEditor(self, parent, option, index):
-        """
-        Create the editor
-
-        @param parent: 
-        @type parent:
-
-        @param option: 
-        @type option:
-
-        @param index: 
-        @type index:
-        """
-        value = self.getValue(index)
-
-        if index.column() == self.col_:
-            editorDialog = DescriptionDialog(value)
-            if editorDialog.exec_() == QDialog.Accepted:
-                argsProbe = editorDialog.getDescr()
-                sourceIndex = self.owner.proxyModel.mapToSource( index )
-                index.model().sourceModel().setData(sourceIndex,q(argsProbe))
-
 ##################### Dialogs ######################
 class AddParameterDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
     """
@@ -1496,6 +1653,17 @@ class AddParameterDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
                 self.valueEdit = QLineEdit(self)
                 self.valueEdit.setEnabled(False)
                 
+        elif paramType == 'advanced':
+            editorDialog = AtRunTimeValues(self.nameEdit.text(), '')
+            if editorDialog.exec_() == QDialog.Accepted:
+                paramText = editorDialog.getText()
+                self.valueEdit = QLineEdit(self)
+                self.valueEdit.setText(paramText)
+                self.valueEdit.setEnabled(False)
+            else:
+                self.valueEdit = QLineEdit(self)
+                self.valueEdit.setEnabled(False)
+                       
         elif paramType == 'custom':
             editorDialog = CustomValues('')
             if editorDialog.exec_() == QDialog.Accepted:
@@ -1569,8 +1737,13 @@ class AddParameterDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
             nameUpper = unicode(self.nameEdit.text().upper())
         else:
             nameUpper = unicode(self.nameEdit.text().toUpper())
-        r = {'name': nameUpper, 'type': unicode(self.comboType.currentText()),
-                'description': unicode(self.descrEdit.toPlainText()), 'value': unicode(qvalue)}
+        r = {   
+                'name': nameUpper, 
+                'type': unicode(self.comboType.currentText()),
+                'description': unicode(self.descrEdit.toPlainText()), 
+                'value': unicode(qvalue),
+                'scope': 'local'
+            }
         return r
 
 class DescriptionDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
@@ -1679,15 +1852,7 @@ class SharedListModel(QAbstractListModel):
             return QVariant(self.listdata[index.row()]["name"])
         else:
             return QVariant()
-            
-        # if not index.isValid():
-            # return q()
 
-        # if role == Qt.DisplayRole: 
-            # return q(self.listdata[index.row()]['name'])
-            
-        # return q()
-        
 class SharedListView(QListView, Logger.ClassLogger):
     """
     Shared list view
@@ -2256,10 +2421,7 @@ class SharedParameter(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         sourceIndex = self.mainList.proxyModel.mapToSource( proxyIndexes[0] )
         selectedIndex = sourceIndex.row()
         row = self.mainList.model__.getData()[selectedIndex]
-        
-        # if isinstance(row['value'], dict):
-            # self.valueLabel.setText( "%s: ..." % row['name'] )
-        # else:
+
         self.valueLabel.setText( "%s: %s" % (row['name'], row['value']) )
         
         self.secondList.clear()
@@ -2634,7 +2796,10 @@ class JsonValues(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         
         mainLayout = QGridLayout()
 
-        self.textEdit = QtHelper.CustomEditor(self, jsonLexer=False)
+        self.textEdit = QtHelper.CustomEditor(self, 
+                                              jsonLexer=True, 
+                                              codeFolding=True)
+                                              
         self.textEdit.setText(self.dataValues)
         
         buttonLayout = QVBoxLayout()
@@ -2642,14 +2807,19 @@ class JsonValues(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         self.okButton = QPushButton( QIcon(":/ok.png"), self.tr("Ok"), self)
         self.cancelButton = QPushButton( QIcon(":/test-close-black.png"), self.tr("Cancel"), self)
 
+        self.prettyJsonButton = QPushButton(self.tr("Pretty JSON"), self)
+        
         buttonLayout.addWidget( self.okButton )
         buttonLayout.addWidget( self.cancelButton )
+        buttonLayout.addWidget( self.prettyJsonButton )
         buttonLayout.addStretch(1)
 
         mainLayout.addWidget(self.textEdit, 1, 0)
         mainLayout.addLayout(buttonLayout, 1, 1)
         self.setLayout(mainLayout)
 
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinMaxButtonsHint)
+        
         self.setWindowTitle(self.tr("Test Config > Json Values") )
        
     def createConnections (self):
@@ -2658,7 +2828,152 @@ class JsonValues(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         """
         self.okButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
+        self.prettyJsonButton.clicked.connect(self.makePrettyJson)
+        
+    def makePrettyJson(self):
+        """
+        """
+        try:
+            parsed = json.loads(self.textEdit.text())
+            pretty_json = json.dumps(parsed, indent=4, sort_keys=False)
+            
+            self.textEdit.setText(pretty_json)
+        except Exception as e:
+            pass
+            
+    def getText(self):
+        """
+        Return text
+        """
+        return self.textEdit.text()
+        
+class AtRunTimeValues(QtHelper.EnhancedQDialog, Logger.ClassLogger):
+    """
+    Text values dialog
+    """
+    def __init__(self, paramName, dataValues, parent=None):
+        """
+        Dialog to fill arguments for the list
 
+        @param dataArgs: 
+        @type dataArgs: 
+
+        @param parent: 
+        @type parent:
+        """
+        super(AtRunTimeValues, self).__init__(parent)
+        self.dataValues = dataValues
+        self.paramName = paramName
+        self.createDialog()
+        self.createConnections()
+
+        self.refreshParametersList()
+        
+    def createDialog (self):
+        """
+        Create qt dialog
+        """
+        self.setMinimumHeight(500)
+        self.setMinimumWidth(800)
+        
+        mainLayout = QGridLayout()
+
+        self.textEdit = QtHelper.CustomEditor(self, 
+                                              jsonLexer=True, 
+                                              codeFolding=True)
+                                              
+        self.textEdit.setText(self.dataValues)
+        self.textEdit.setMinimumWidth(400)
+        
+        buttonLayout = QVBoxLayout()
+
+        self.okButton = QPushButton( QIcon(":/ok.png"), self.tr("Ok"), self)
+        self.cancelButton = QPushButton( QIcon(":/test-close-black.png"), 
+                                         self.tr("Cancel"), self)
+
+        self.prettyJsonButton = QPushButton(self.tr("Pretty JSON"), self)
+
+        self.parametersList = QListWidget(self)
+        # self.parametersList.setSortingEnabled(True)
+        self.parametersList.setMaximumWidth(500)
+        
+        paramsLayout = QVBoxLayout()
+        paramsLayout.addWidget( QLabel("Additionals parameters") )
+        paramsLayout.addWidget( self.parametersList )
+           
+        buttonLayout.addWidget( self.okButton )
+        buttonLayout.addWidget( self.cancelButton )
+        buttonLayout.addWidget( self.prettyJsonButton )
+        buttonLayout.addStretch(1)
+
+        mainLayout.addWidget(self.textEdit, 0, 0)
+        mainLayout.addLayout(paramsLayout, 0, 1)
+        mainLayout.addLayout(buttonLayout, 0, 2)
+        self.setLayout(mainLayout)
+
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinMaxButtonsHint)
+        
+        self.setWindowTitle(self.tr("Test Config > At run time Values") )
+        
+        showMaximize = Settings.instance().readValue( key = 'TestProperties/atruntime-dialog-maximized' )
+        if QtHelper.str2bool(showMaximize):
+            self.showMaximized()
+            
+    def createConnections (self):
+        """
+        Create qt connections
+        """
+        self.okButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.prettyJsonButton.clicked.connect(self.makePrettyJson)
+        self.textEdit.textChanged.connect(self.refreshParametersList)
+        
+    def refreshParametersList(self):
+        """
+        """
+        self.parametersList.clear()
+        
+        self.parametersList.addItems( self.__loadList(name=self.paramName, 
+                                                      value=self.textEdit.text()) )
+    
+    def __loadList(self, name, value):
+        """
+        """
+        ret = []
+        try:
+            if not isinstance(value, dict):
+                parsed = json.loads(value)
+            else:
+                parsed = value
+                
+            if isinstance(parsed, dict):
+                for k,v in parsed.items():
+                    val_name = "%s_%s" % (name,k.upper())
+                    ret.append( val_name  )
+                    
+                    # if isinstance(v, dict):
+                        # ret.extend( self.__loadList( name=val_name, value=v )  )
+                        
+                    # if isinstance(v, list):
+                        # for l in v:
+                            # if isinstance(l, dict):
+                                # ret.extend( self.__loadList( name=val_name, value=l )  ) 
+                                
+        except Exception as e:
+            pass
+        return ret
+        
+    def makePrettyJson(self):
+        """
+        """
+        try:
+            parsed = json.loads(self.textEdit.text())
+            pretty_json = json.dumps(parsed, indent=4, sort_keys=False)
+            
+            self.textEdit.setText(pretty_json)
+        except Exception as e:
+            pass
+            
     def getText(self):
         """
         Return text
@@ -2709,6 +3024,8 @@ class TextValues(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         mainLayout.addLayout(buttonLayout, 1, 1)
         self.setLayout(mainLayout)
 
+        self.setWindowFlags(self.windowFlags() | Qt.WindowMinMaxButtonsHint)
+        
         self.setWindowTitle(self.tr("Test Config > Text Values") )
        
     def createConnections (self):
@@ -3038,6 +3355,8 @@ class ParametersTableView(QTableView, Logger.ClassLogger):
         self.setItemDelegateForColumn( COL_VALUE, ValueDelegate(self, COL_VALUE, COL_DESCRIPTION) )
         self.setItemDelegateForColumn( COL_DESCRIPTION, DescriptionsDelegate(self, COL_DESCRIPTION) )
 
+        self.setItemDelegateForColumn(COL_CACHE, CacheDelegate(self) )
+        
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -3050,6 +3369,7 @@ class ParametersTableView(QTableView, Logger.ClassLogger):
         
         # adjust default columns
         self.setColumnWidth(COL_ID, 25)
+        self.setColumnWidth(COL_CACHE, 40)
         self.setColumnWidth(COL_NAME, 60)
         self.setColumnWidth(COL_TYPE, 50)
         self.setColumnWidth(COL_VALUE, 50)

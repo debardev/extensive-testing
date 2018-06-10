@@ -13,4 +13,5 @@ It was created by
 ## Documentations
 
 For english users - http://extensiveautomation.readthedocs.io/en/latest/
+
 Pour les utilisateurs français - http://extensiveautomation.readthedocs.io/fr/latest/

@@ -209,7 +209,7 @@ try:
     te.append( """	ParametersHandler.addRunningProbes( probes=%s)\n""" % runningProbes )
     te.append( """	__PROBES__ = %s""" % probes )
     te.append( """
-
+	TestProperties.instance().initAtRunTime(cache=Cache())
 	def shared(project, name, subname=''):
 		return ParametersHandler.shared(project=project, name=name, subname=subname)
 	def input(name):
@@ -540,7 +540,7 @@ try:
     te.append( """	ParametersHandler.addRunningProbes( probes=%s)\n""" % runningProbes )
     te.append( """	__PROBES__ = %s""" % probes )
     te.append( """
-
+	TestProperties.instance().initAtRunTime(cache=Cache())
 	def shared(project, name, subname=''):
 		return ParametersHandler.shared(project=project, name=name, subname=subname)
 	def input(name):
@@ -865,7 +865,7 @@ tsMgr.setMainDescriptions(descriptions=TestProperties.Parameters().descriptions(
 try:
 """)
     te.append("""	
-
+	TestProperties.instance().initAtRunTime(cache=Cache())
 	def shared(project, name, subname=''):
 		return TestProperties.Parameters().shared(project=project, name=name, subname=subname)
 	def input(name):
@@ -1114,7 +1114,7 @@ tsMgr.setMainDescriptions(descriptions=TestProperties.Parameters().descriptions(
 try:
 """)
     te.append("""	
-
+	TestProperties.instance().initAtRunTime(cache=Cache())
 	def shared(project, name, subname=''):
 		return TestProperties.Parameters().shared(project=project, name=name, subname=subname)
 	def input(name):
@@ -1361,7 +1361,7 @@ tsMgr.setMainDescriptions(descriptions=TestProperties.Parameters().descriptions(
 try:
 """)
     te.append("""	
-
+	TestProperties.instance().initAtRunTime(cache=Cache())
 	def shared(project, name, subname=''):
 		return TestProperties.Parameters().shared(project=project, name=name, subname=subname)
 	def input(name):

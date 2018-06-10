@@ -1489,7 +1489,7 @@ class TreeWidgetRepository(QTreeWidget):
             return False
         else:
             newPath = parent.getPath(withFileName = False, withFolderName = True)
-            meta_data = data.data("application/x-%s-repo-openfile" %  self.mine_flags )
+            meta_data = data.data("application/x-%s-repo-openfile" %  self.mine_flag )
             data = pickle.loads(meta_data)
             if self.parent().projectSupport:
                 project = self.parent().getCurrentProject()

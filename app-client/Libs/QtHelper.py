@@ -34,7 +34,8 @@ try:
 							QDesktopWidget, QVBoxLayout, QSizePolicy, QMovie, QProgressBar, 
 							QPixmap, QAction, QPainter, QRadialGradient, QTransform, QFrame)
 	from PyQt4.QtCore import (Qt, pyqtSignal, QVariant, QSize, QPointF, QRect)
-	from PyQt4.Qsci import (QsciScintilla, QsciLexerPython, QsciLexerXML, QsciLexerBash)
+	from PyQt4.Qsci import (QsciScintilla, QsciLexerPython, QsciLexerXML, 
+                            QsciLexerBash, QsciLexerJSON)
 	if sys.version_info < (3,): from PyQt4.QtCore import (QString)
 except ImportError:
 	from PyQt5.QtGui import (QColor, QIcon, QMovie, QPixmap, QPainter, QRadialGradient, QTransform, QCursor)
@@ -42,7 +43,8 @@ except ImportError:
 							QPushButton, QHBoxLayout, QLabel, QDialog, QDesktopWidget, 
 							QVBoxLayout, QSizePolicy, QProgressBar, QAction, QFrame)
 	from PyQt5.QtCore import (Qt, pyqtSignal, QVariant, QSize, QPointF, QRect)
-	from PyQt5.Qsci import (QsciScintilla, QsciLexerPython, QsciLexerXML, QsciLexerBash)
+	from PyQt5.Qsci import (QsciScintilla, QsciLexerPython, QsciLexerXML, 
+                            QsciLexerBash, QsciLexerJSON)
 	IS_QT5 = True
 	
 import os
@@ -255,13 +257,14 @@ class CustomEditor(QsciScintilla):
     """
     Raw xml editor
     """
-    def __init__(self, parent, jsonLexer=False):
+    def __init__(self, parent, jsonLexer=False, codeFolding=False):
         """
         Text raw editor 
         """
         QsciScintilla.__init__(self, parent)
         
         self.jsonLexer = jsonLexer
+        self.codeFolding = codeFolding
         
         self.createConnections()
         self.createWidget()
@@ -271,7 +274,10 @@ class CustomEditor(QsciScintilla):
         Create qt widget
         """
         self.setLexer( CustomLexer() )
-
+        
+        if self.jsonLexer: self.setLexer( QsciLexerJSON() )          
+        if self.codeFolding: self.setFolding(QsciScintilla.BoxedTreeFoldStyle)
+            
     def createConnections (self):
         """
         create qt connections

@@ -296,6 +296,7 @@ tsMgr.initialize(path=result_path, testname=test_name, replayId=replay_id, userI
                 stepByStep=%s, breakpoint=%s, testId=%s, relativePath=test_result_path, 
                 testpath=test_location, userName=user_, projectName=projectname_)""" % (stepByStep, breakpoint, testId) )
     te.append( """
+TestProperties.instance().initAtRunTime(cache=Cache())
 ParametersHandler.addParameters( parametersId=TLX.instance().mainScriptId, parameters=%s)\n""" % parameters )
     te.append( """ParametersHandler.addParametersOut( parametersId=TLX.instance().mainScriptId, parameters=%s)\n""" % parametersOut )
     te.append( """ParametersHandler.addAgents( agentsId=TLX.instance().mainScriptId, agents=%s)\n""" % agents )
@@ -324,7 +325,6 @@ try:
     te.append( TestModelCommon.CODE_PROBES ) 
     te.append( """	__PROBES__ = %s""" % probes )
     te.append( """
-
 	def shared(project, name, subname=''):
 		return ParametersHandler.shared(project=project, name=name, subname=subname)
 	def input(name):
@@ -912,6 +912,7 @@ tsMgr.initialize(path=result_path, testname=test_name, replayId=replay_id, userI
                 stepByStep=%s, breakpoint=%s, testId=%s, relativePath=test_result_path, 
                 testpath=test_location, userName=user_, projectName=projectname_)""" % (stepByStep,breakpoint,testId))
     te.append( """
+TestProperties.instance().initAtRunTime(cache=Cache())
 ParametersHandler.addParameters( parametersId=TLX.instance().mainScriptId, parameters=%s)\n""" % parameters )
     te.append( """ParametersHandler.addParametersOut( parametersId=TLX.instance().mainScriptId, parameters=%s)\n""" % parametersOut )
     te.append( """ParametersHandler.addAgents( agentsId=TLX.instance().mainScriptId, agents=%s)\n""" % agents )
@@ -940,7 +941,6 @@ try:
     te.append( TestModelCommon.CODE_PROBES ) 
     te.append( """	__PROBES__ = %s""" % probes )
     te.append( """
-
 	def shared(project, name, subname=''):
 		return ParametersHandler.shared(project=project, name=name, subname=subname)
 	def input(name):
@@ -1271,7 +1271,7 @@ except Exception as e:
     
 	if not isinstance(e, ForceTerminateTestException):
 		return_code = RETURN_CODE_TE_ERROR
-		return_message = "ERR_TE_500 2: %s" % type( e )
+		return_message = "ERR_TE_600: %s" % e
 
 		TLX.instance().error(return_message)
 		TLX.instance().log_testplan_error(message=return_message, component = 'TESTPLAN', fromlevel=LEVEL_TE, tolevel=LEVEL_USER)
@@ -1501,7 +1501,7 @@ try:
     te.append( TestModelCommon.CODE_PROBES ) 
     te.append("""	__PROBES__ = %s""" % probes )
     te.append("""	
-
+	TestProperties.instance().initAtRunTime(cache=Cache())
 	def shared(project, name, subname=''):
 		return TestProperties.Parameters().shared(project=project, name=name, subname=subname)
 	def input(name):
@@ -1813,8 +1813,8 @@ try:
 """)
     te.append( TestModelCommon.CODE_PROBES ) 
     te.append("""	__PROBES__ = %s""" % probes )
-    te.append("""	
-
+    te.append("""
+	TestProperties.instance().initAtRunTime(cache=Cache())
 	def shared(project, name, subname=''):
 		return TestProperties.Parameters().shared(project=project, name=name, subname=subname)
 	def input(name):
@@ -2121,7 +2121,7 @@ try:
     te.append( TestModelCommon.CODE_PROBES ) 
     te.append("""	__PROBES__ = %s""" % probes )
     te.append("""	
-
+	TestProperties.instance().initAtRunTime(cache=Cache())
 	def shared(project, name, subname=''):
 		return TestProperties.Parameters().shared(project=project, name=name, subname=subname)
 	def input(name):

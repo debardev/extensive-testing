@@ -36,6 +36,10 @@
 		32. (medium) rest api: integration of the find test usage feature (pull request #18)
 		33. (medium) test interop: extensivetesting plugin renamed to extensiveautomation
 		34. (major) product renamed to extensive automation (TBC!!!)
+		35. (minor) new basic scenarios in snippets part
+		36. (medium) test library: new advanced test properties
+		37. (major) all file models updated to support the new "scope" attribute in test parameters
+		38. (major) test library: new feature to save in the cache all parameters with the scope equals to cache
 	Issues Fixed
 		1. (minor) fix typo error in logs messages
 		2. (medium) fix regression, unable to generate test design with test global only

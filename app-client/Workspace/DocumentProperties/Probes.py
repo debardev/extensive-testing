@@ -471,7 +471,6 @@ class ComboBoxProbesActiveDelegate(QItemDelegate, Logger.ClassLogger):
         value = QtHelper.displayToValue( q(qvalue) )
         self.setValue(index, value)
 
-
 class CheckBoxActiveDelegate(QItemDelegate, Logger.ClassLogger):
     """
     Checkbox active delegate

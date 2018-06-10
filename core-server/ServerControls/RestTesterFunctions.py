@@ -1,4 +1,4 @@
-automation#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
@@ -5722,6 +5722,7 @@ class TestsSchedule(Handler):
                     if newInp["name"] == origInp["name"]:
                         origInp["value"] = newInp["value"]
                         origInp["type"] = newInp["type"]
+                        origInp["scope"] = newInp["scope"]
         
         if _testOutputs is not None:
             for newOut in _testOutputs:
@@ -5730,6 +5731,7 @@ class TestsSchedule(Handler):
                     if newOut["name"] == origOut["name"]:
                         origOut["value"] = newOut["value"]
                         origOut["type"] = newOut["type"]
+                        origOut["scope"] = newOut["scope"]
                         
         if _testAgents is not None:
             for newAgt in _testAgents:
@@ -6147,7 +6149,8 @@ class TestsScheduleTpg(Handler):
                     if newInp["name"] == origInp["name"]:
                         origInp["value"] = newInp["value"]
                         origInp["type"] = newInp["type"]
-        
+                        origInp["scope"] = newInp["scope"]
+                        
         if _testOutputs is not None:
             for newOut in _testOutputs:
                 for origOut in testData["test-properties"]['outputs-parameters']['parameter']:
@@ -6155,6 +6158,7 @@ class TestsScheduleTpg(Handler):
                     if newOut["name"] == origOut["name"]:
                         origOut["value"] = newOut["value"]
                         origOut["type"] = newOut["type"]
+                        origOut["scope"] = newOut["scope"]
                         
         if _testAgents is not None:
             for newAgt in _testAgents:

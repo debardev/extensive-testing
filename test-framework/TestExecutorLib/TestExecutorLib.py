@@ -819,9 +819,10 @@ class TestSuitesManager(object):
                     continue
                 
                 if not ts['is-executed']:
-                    reports.append( u'<li data-type="ignored">')
-                    reports.append( u'<input type="checkbox" id="c%s" checked   class="isexpanded"/>' % index)
-                    reports.append( u'<label for="c%s"><font color="#000000">%s</font></label>' % (index, tsName) )
+                    if TestSettings.getInt( 'Tests_Framework', 'ignored-testcase-visible-test-report' ):
+                        reports.append( u'<li data-type="ignored">')
+                        reports.append( u'<input type="checkbox" id="c%s" checked   class="isexpanded"/>' % index)
+                        reports.append( u'<label for="c%s"><font color="#000000">%s</font></label>' % (index, tsName) )
                     index +=1
                     continue
 
