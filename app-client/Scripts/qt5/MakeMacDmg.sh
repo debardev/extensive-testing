@@ -27,4 +27,4 @@ python3 ../../BuildMac.py py2app
 
 
 echo "Create dmg package"
-hdiutil create ExtensiveTestingClient.dmg -srcfolder ./dist/ExtensiveTestingClient_$VERSION.app
+hdiutil create ExtensiveAutomationClient.dmg -srcfolder ./dist/ExtensiveAutomationClient_$VERSION.app

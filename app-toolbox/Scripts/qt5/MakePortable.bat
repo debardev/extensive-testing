@@ -25,7 +25,7 @@ set Path_Project=%~dp0..\..\
 set Path_Python=C:\Python36
 
 :: init tools path
-set Python=%Path_Python%\python.exe
+set Tool_Python=%Path_Python%\python.exe
 set Tool_PyInstaller=%Path_Python%\Scripts\pyinstaller.exe
 
 :: make resources

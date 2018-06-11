@@ -47,7 +47,7 @@ cd "%Path_Project%"
 
 :: build the installer
 echo Build the installer...
-"%Tool_Python%" "%Path_Project%\BuildWinInno.py" "%Path_Output%" "%Path_Project%\dist\ExtensiveTestingClient"
+"%Tool_Python%" "%Path_Project%\BuildWinInno.py" "%Path_Output%" "%Path_Project%\dist\ExtensiveTestingAutomation"
 
 :: pause before exit the prompt
 pause

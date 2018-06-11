@@ -48,6 +48,7 @@ PKG_VERSION=$(cat $APP_SRC_PATH/VERSION)
 TMP_BACKUP=/tmp/backuptestserver/
 
 echo "Creating package $PKG_VERSION"
+echo "with source $APP_SRC_PATH"
 
 # clean code
 find $APP_SRC_PATH/. -name "*.pyo" -exec rm -rf {} \;
@@ -182,5 +183,5 @@ echo "- generate doc api"
 $APP_SRC_PATH/Scripts/yaml-restapi-docs.sh $APP_SRC_PATH
 
 echo "- create pkg"
-tar -czvf /tmp/$PKG_NAME-$PKG_VERSION.tar.gz ../$PKG_NAME-$PKG_VERSION/  1>> /dev/null 2>&1
+tar -czvf /tmp/$PKG_NAME-$PKG_VERSION.tar.gz ../$PKG_NAME-$PKG_VERSION/
 echo "=> Result tar.gz file is located in /tmp"

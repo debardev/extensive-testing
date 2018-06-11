@@ -31,18 +31,18 @@ from setuptools import setup
 from Main import __VERSION__
 
 APP = ['../../Main.py']
-APP_NAME = "ExtensiveTestingClient_%s" % __VERSION__
+APP_NAME = "ExtensiveAutomationClient_%s" % __VERSION__
 DATA_FILES = ['../../Files']
 
 
 OPTIONS = {
     'argv_emulation': True,
-    'iconfile': '../../Resources/ExtensiveTestingClient.icns',
+    'iconfile': '../../Resources/ExtensiveAutomationClient.icns',
     'includes': ['sip', 'PyQt5', 'QScintilla'],
     'plist': {
         'CFBundleName': APP_NAME,
         'CFBundleDisplayName': APP_NAME,
-        'CFBundleGetInfoString': "ET Client",
+        'CFBundleGetInfoString': "Extensive Automation Client",
         'CFBundleVersion': "%s" % __VERSION__,
         'CFBundleShortVersionString': "%s" % __VERSION__,
         'NSHumanReadableCopyright': u"Copyright © 2018, Denys Bortovets, All Rights Reserved"

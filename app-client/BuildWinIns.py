@@ -36,7 +36,7 @@ Settings.initialize()
 settings = Settings.instance()
 
 os.rename( 
-            "%s/dist/ExtensiveTestingClient/" % settings.dirExec, 
+            "%s/dist/ExtensiveAutomationClient/" % settings.dirExec, 
             "%s/dist/%s_%s_%s_Portable" % (settings.dirExec, settings.readValue( key = 'Common/acronym' ), 
                                          __VERSION__, platform.architecture()[0]) 
         )

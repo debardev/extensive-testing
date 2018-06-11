@@ -22,7 +22,7 @@
 
 ARCH=x86_64
 PY=2.7
-CLT_NAME=ExtensiveTestingClient
+CLT_NAME=ExtensiveAutomationClient
 CLT_VERSION=17.0.0
 
 python ../../BuildLinux.py build
