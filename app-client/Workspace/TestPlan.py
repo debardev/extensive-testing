@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
+# Copyright (c) 2010-2018 Denis Machard
 # This file is part of the extensive testing project
 #
 # This library is free software; you can redistribute it and/or
@@ -68,6 +68,7 @@ except ImportError: # python3 support
 
 
 import UserClientInterface as UCI
+import RestClientInterface as RCI
 import Settings
 
 
@@ -191,12 +192,14 @@ class UpdateLocationsDialog(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         """
         currentLocation = self.currentEdit.text()
         if not len(currentLocation):
-            QMessageBox.warning(self, self.tr("Update locations") , self.tr("Path to replace cannot be empty!") )
+            QMessageBox.warning(self, self.tr("Update locations") , 
+                                self.tr("Path to replace cannot be empty!") )
             return
             
         newLocation = self.newnameEdit.text()
         if not len(newLocation):
-            QMessageBox.warning(self, self.tr("Update locations") , self.tr("New path cannot be empty!") )
+            QMessageBox.warning(self, self.tr("Update locations") , 
+                                self.tr("New path cannot be empty!") )
             return
             
         self.accept()
@@ -424,11 +427,11 @@ class QTreeWidgetEnhancement(QTreeWidget):
 
             data = pickle.loads( event.mimeData().data("application/x-%s-repo-openfile" % Settings.instance().readValue( key = 'Common/acronym' ).lower() ) )
             if self.document.testGlobal:
-                if data["ext"] not in [ UCI.EXT_TESTUNIT, UCI.EXT_TESTSUITE, UCI.EXT_TESTABSTRACT, UCI.EXT_TESTPLAN ]:
+                if data["ext"] not in [ RCI.EXT_TESTUNIT, RCI.EXT_TESTSUITE, RCI.EXT_TESTABSTRACT, RCI.EXT_TESTPLAN ]:
                     QTreeWidget.dropEvent(self, event)
                     return
             else:
-                if data["ext"] not in [ UCI.EXT_TESTUNIT, UCI.EXT_TESTSUITE, UCI.EXT_TESTABSTRACT ]:
+                if data["ext"] not in [ RCI.EXT_TESTUNIT, RCI.EXT_TESTSUITE, RCI.EXT_TESTABSTRACT ]:
                     QTreeWidget.dropEvent(self, event)
                     return
 
@@ -454,8 +457,10 @@ class WTestPlan(Document.WDocument):
     CONDITION_THEN          = "THEN"
     CONDITION_DO            = "DO"
     CONDITION_DONT          = "DONT"
-    def __init__(self, parent = None, path = None, filename = None, extension = None, nonameId = None, 
-                    remoteFile=False, repoDest=None, project=0, iRepo=None, testGlobal=False, lRepo=None, isLocked=False):
+    def __init__(self, parent = None, path = None, filename = None, 
+                    extension = None, nonameId = None, 
+                    remoteFile=False, repoDest=None, project=0, iRepo=None, 
+                    testGlobal=False, lRepo=None, isLocked=False):
         """
         Widget test plan
 
@@ -474,7 +479,8 @@ class WTestPlan(Document.WDocument):
         @param nonameId:
         @type nonameId:
         """
-        Document.WDocument.__init__(self, parent, path, filename, extension, nonameId, remoteFile, repoDest, project, isLocked)
+        Document.WDocument.__init__(self, parent, path, filename, extension, 
+                                    nonameId, remoteFile, repoDest, project, isLocked)
         
         self.loaderDialog = QtHelper.MessageBoxDialog(dialogName = self.tr("Loading"))
         
@@ -611,8 +617,10 @@ class WTestPlan(Document.WDocument):
         self.tp.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tp.setStyleSheet("""QTreeWidget::item{ height: 25px;}""");
 
-        self.labels = [ self.tr("Name"), self.tr(""), self.tr("Id"),  self.tr("Tag"),  self.tr(""), self.tr(""), self.tr(""), self.tr(""),
-                            self.tr("Run"), self.tr("Repository"), self.tr("Alias"), self.tr("Description")]
+        self.labels = [ self.tr("Name"), self.tr(""), self.tr("Id"),  self.tr("Tag"),  
+                        self.tr(""), self.tr(""), self.tr(""), self.tr(""),
+                        self.tr("Run"), self.tr("Repository"), self.tr("Alias"), 
+                        self.tr("Description") ]
         self.tp.setHeaderLabels(self.labels)
 
         # move the second column (id) on the first
@@ -782,8 +790,6 @@ class WTestPlan(Document.WDocument):
         self.dockToolbarParams.setObjectName("Params toolbar")
         self.dockToolbarParams.addAction( self.reloadParametersAction )
         self.dockToolbarParams.addAction( self.mergeParametersAction )
-        # self.dockToolbarParams.addAction( self.clearParametersAction )
-        # self.dockToolbarParams.addAction( self.clearAllParametersAction )
         self.dockToolbarParams.addAction(self.clearParamsAction)
         self.dockToolbarParams.setIconSize(QSize(16, 16))
         
@@ -891,7 +897,6 @@ class WTestPlan(Document.WDocument):
         self.menuParameters.addAction( self.reloadParametersAction )
         self.menuParameters.addAction( self.mergeParametersAction )
         self.menuParameters.addAction( self.clearParametersAction )
-        # self.menuParameters.addAction( self.clearAllParametersAction )
         
         self.reloadAction = QtHelper.createAction(self, self.tr("Inputs/Outputs"), None, 
                                         icon = QIcon(":/test-parameter-clear.png") )
@@ -1011,6 +1016,17 @@ class WTestPlan(Document.WDocument):
             self.ifKoAction.setEnabled(False)
         self.defaultActions()
 
+    # dbr13 >>>
+    def showFileUsageLine(self, line_id=None):
+        if line_id:
+            for item in self.items:
+                if item.text(COL_ID) == line_id:
+                    item.setSelected(True)
+                    self.loadProperties(item, COL_ENABLE)
+                else:
+                    item.setSelected(False)
+    # dbr13 <<<
+
     def updateIfOk(self):
         """
         """
@@ -1026,7 +1042,8 @@ class WTestPlan(Document.WDocument):
         for i in range(selectedItem.childCount()):
             itmChild = selectedItem.child(i)
             testId = str(itmChild.text(COL_ID))
-            self.dataModel.updateTestFileParentCondition(itemId=str(testId), parentCondition=FileModelTestPlan.IF_OK )
+            self.dataModel.updateTestFileParentCondition(itemId=str(testId), 
+                                                         parentCondition=FileModelTestPlan.IF_OK )
             
         self.setModify()
         
@@ -1045,7 +1062,8 @@ class WTestPlan(Document.WDocument):
         for i in range(selectedItem.childCount()):
             itmChild = selectedItem.child(i)
             testId = str(itmChild.text(COL_ID))
-            self.dataModel.updateTestFileParentCondition(itemId=str(testId), parentCondition=FileModelTestPlan.IF_KO )
+            self.dataModel.updateTestFileParentCondition(itemId=str(testId), 
+                                                         parentCondition=FileModelTestPlan.IF_KO )
             
         self.setModify()
         
@@ -1061,16 +1079,27 @@ class WTestPlan(Document.WDocument):
         if parentId == 0: insertAction = 0
         
         if self.testGlobal:
-            UCI.instance().getFileRepo( pathFile=test['pathfile'], forDest=UCI.FOR_DEST_TG, 
-                                        project=test['projectid'], actionId=insertAction, testId=parentId)
+            RCI.instance().openFileTests(projectId=int(test['projectid']), 
+                                         filePath=test['pathfile'], 
+                                         ignoreLock=True, 
+                                         readOnly=False, 
+                                         customParam=parentId, 
+                                         actionId=insertAction, 
+                                         destinationId=RCI.FOR_DEST_TG)                            
+                                        
         else:
-            UCI.instance().getFileRepo( pathFile=test['pathfile'], forDest=UCI.FOR_DEST_TP, 
-                                        project=test['projectid'], actionId=insertAction, testId=parentId)
-            
+            RCI.instance().openFileTests(projectId=int(test['projectid']), 
+                                         filePath=test['pathfile'], 
+                                         ignoreLock=True, 
+                                         readOnly=False, 
+                                         customParam=parentId, 
+                                         actionId=insertAction, 
+                                         destinationId=RCI.FOR_DEST_TP) 
     def updateAllDefaultAliases(self):
         """
         """
-        answer = QMessageBox.question(self,  self.tr("Default aliases"),  self.tr("Do you want to set all tests with default aliases?"), 
+        answer = QMessageBox.question(self,  self.tr("Default aliases"),  
+                                      self.tr("Do you want to set all tests with default aliases?"), 
             QMessageBox.Yes | QMessageBox.No)
         if answer == QMessageBox.Yes:
             testfiles = self.dataModel.testplan['testplan']['testfile']
@@ -1243,11 +1272,26 @@ class WTestPlan(Document.WDocument):
         """
         Update the path of a test
         """
+        item_id = self.itemCurrent.text(COL_ID)
+        update_location = False
         ret = self.addTestFile(updatePath=True)
         if ret is None:
             return
         
-        (testName, fromRepo, currentItem, projectId ) = ret
+        if len(ret) == 4:
+            (testName, fromRepo, currentItem, projectId ) = ret
+        else:
+            (testName, fromRepo, currentItem, projectId, update_location) = ret
+
+        # dbr13 >>>
+        # prepare old file name
+        old_test_file_name = None
+        if update_location:
+            for test_file in self.dataModel.testplan['testplan']['testfile']:
+                if item_id == test_file['id']:
+                    old_test_file_name = test_file['file']
+                    break
+        # dbr13 <<<
 
         # local file
         if projectId is None:
@@ -1267,12 +1311,24 @@ class WTestPlan(Document.WDocument):
                 absPath = '%s.%s' % ( filename, extension)
 
             if self.testGlobal:
-                UCI.instance().getFileRepo( pathFile=absPath, forDest=UCI.FOR_DEST_TG, testId=int(currentItem.text(COL_ID)),
-                                            actionId=UCI.ACTION_UPDATE_PATH, project=projectId )
+                RCI.instance().openFileTests(projectId=int(projectId), filePath=absPath, 
+                                             ignoreLock=False, readOnly=False, 
+                                             customParam=int(currentItem.text(COL_ID)), 
+                                             actionId=RCI.ACTION_UPDATE_PATH, destinationId=RCI.FOR_DEST_TG,
+                                             # dbr13 >>>
+                                             extra={'update_location': update_location,
+                                                    'file_name': old_test_file_name})
+                                             # dbr13 <<<
             else:
-                UCI.instance().getFileRepo( pathFile=absPath, forDest=UCI.FOR_DEST_TP, testId=int(currentItem.text(COL_ID)),
-                                            actionId=UCI.ACTION_UPDATE_PATH, project=projectId )
-    
+                RCI.instance().openFileTests(projectId=int(projectId), filePath=absPath, 
+                                             ignoreLock=False, readOnly=False, 
+                                             customParam=int(currentItem.text(COL_ID)), 
+                                             actionId=RCI.ACTION_UPDATE_PATH, destinationId=RCI.FOR_DEST_TP,
+                                             # dbr13 >>>
+                                             extra={'update_location': update_location,
+                                                    'file_name': old_test_file_name})
+                                             # dbr13 <<<
+
     def updateMainLocations(self):
         """
         Update projects of all remote tests
@@ -1303,7 +1359,6 @@ class WTestPlan(Document.WDocument):
             curPrj, oldPath = tsFile.split(":", 1)
             newPath = oldPath.replace(oldLoc, newLoc)
             newFile = "%s:%s" % (curPrj, newPath)
-            # newFile = tsFile.replace(":%s/" % oldLoc, ":%s/" % newLoc)
             tsname = newFile.rsplit(".", 1) # remove extension file before display
             
             if not len(itmChild.text(COL_ALIAS)): 
@@ -1394,7 +1449,7 @@ class WTestPlan(Document.WDocument):
         Insert item above
         """
         if self.itemCurrent is not None:
-            self.addTestFile( insertTest=UCI.ACTION_INSERT_AFTER)
+            self.addTestFile( insertTest=RCI.ACTION_INSERT_AFTER)
             
         # refresh stats
         self.updateStatsTestPlan()
@@ -1404,7 +1459,7 @@ class WTestPlan(Document.WDocument):
         Insert item below
         """
         if self.itemCurrent is not None:
-            self.addTestFile( insertTest=UCI.ACTION_INSERT_BELOW)
+            self.addTestFile( insertTest=RCI.ACTION_INSERT_BELOW)
             
         # refresh stats
         self.updateStatsTestPlan()
@@ -1786,7 +1841,7 @@ class WTestPlan(Document.WDocument):
                 
                 # load from remote
                 elif str(self.itemCurrent.text(COL_REPO)) == FROM_REMOTE_REPO:
-                    if UCI.instance().isAuthenticated():
+                    if RCI.instance().isAuthenticated:
                         absPath = self.dataModel.getTestFile(self.itemCurrent.text(COL_ID) )['file']
                         # get projectid
                         try:
@@ -1794,15 +1849,19 @@ class WTestPlan(Document.WDocument):
                             prjId = self.iRepo.remote().getProjectId(project=prjName)
                         except Exception as e:
                             prjId=0
-                        actionId = UCI.ACTION_RELOAD_PARAMS
+                        actionId = RCI.ACTION_RELOAD_PARAMS
                         if mergeProperties:
-                            actionId = UCI.ACTION_MERGE_PARAMS
+                            actionId = RCI.ACTION_MERGE_PARAMS
                         if self.testGlobal:
-                            UCI.instance().getFileRepo( pathFile=absPath, forDest=UCI.FOR_DEST_TG, testId=int(self.itemCurrent.text(COL_ID)), 
-                                                        project=prjId, actionId=actionId )
+                            RCI.instance().openFileTests(projectId=int(projectId), filePath=absPath, 
+                                                         ignoreLock=False, readOnly=False, 
+                                                         customParam=int(self.itemCurrent.text(COL_ID)), 
+                                                         actionId=RCI.ACTION_UPDATE_PATH, destinationId=RCI.FOR_DEST_TG)
                         else:
-                            UCI.instance().getFileRepo( pathFile=absPath, forDest=UCI.FOR_DEST_TP, testId=int(self.itemCurrent.text(COL_ID)),
-                                                        project=prjId, actionId=actionId )
+                            RCI.instance().openFileTests(projectId=int(projectId), filePath=absPath, 
+                                                         ignoreLock=False, readOnly=False, 
+                                                         customParam=int(self.itemCurrent.text(COL_ID)), 
+                                                         actionId=RCI.ACTION_UPDATE_PATH, destinationId=RCI.FOR_DEST_TP)
                     else:
                         QMessageBox.information(self, self.tr("Information") , self.tr("Connect to the server first.") )
                 else:
@@ -1850,11 +1909,11 @@ class WTestPlan(Document.WDocument):
                     if not os.path.exists( absPath ):
                         QMessageBox.warning(self, self.tr("Information") , self.tr("This file does not exist!") )
                     else:
-                        repoDest = UCI.REPO_UNDEFINED
+                        repoDest = RCI.REPO_UNDEFINED
                         if str(testSelected.text(COL_REPO)) == FROM_LOCAL_REPO or str(testSelected.text(COL_REPO)) == FROM_LOCAL_REPO_OLD:
-                            repoDest = UCI.REPO_TESTS_LOCAL
+                            repoDest = RCI.REPO_TESTS_LOCAL
                         if str(testSelected.text(COL_REPO)) == FROM_OTHER or str(testSelected.text(COL_REPO)) == FROM_HDD:
-                            repoDest = UCI.REPO_UNDEFINED
+                            repoDest = RCI.REPO_UNDEFINED
                         # the parent of the test plan is a the document viewer
                         self.parent.newTab( path = path, filename = filename, extension = extension, repoDest=repoDest )
             elif str(testSelected.text(COL_REPO)) == FROM_REMOTE_REPO:
@@ -1867,14 +1926,16 @@ class WTestPlan(Document.WDocument):
         """
         Open the remote file
         """
-        if UCI.instance().isAuthenticated():
+        if RCI.instance().isAuthenticated:
             # get projectid
             try:
                 prjName, absPath = absPath.split(':', 1)
                 prjId = self.iRepo.remote().getProjectId(project=prjName)
             except Exception as e:
                 prjId=0
-            UCI.instance().openFileRepo( pathFile=absPath, project=prjId)
+            
+            # web call
+            RCI.instance().openFileTests(projectId=int(prjId), filePath=absPath)
         else:
             QMessageBox.information(self, self.tr("Information") , self.tr("Connect to the server first.") )
     
@@ -2323,7 +2384,6 @@ class WTestPlan(Document.WDocument):
             self.reloadParametersAction.setEnabled(True)
             self.mergeParametersAction.setEnabled(True)
             self.clearParametersAction.setEnabled(True)
-            # self.clearAllParametersAction.setEnabled(True)
         else:
             self.updatePathAction.setEnabled(False)
             self.updateTcNameAction.setEnabled(False)
@@ -2546,7 +2606,8 @@ class WTestPlan(Document.WDocument):
 
         for testPaste in testsPaste:
             self.addRemoteSubItem(
-                                    pathFile='', nameFile='', extFile=testPaste['extension'], contentFile='', project=0, 
+                                    pathFile='', nameFile='', extFile=testPaste['extension'], 
+                                    contentFile='', project=0, 
                                     propertiesTest=testPaste, absPath=testPaste['file'],
                                     descriptionTest = testPaste['description'], 
                                     colorTest = testPaste['color'], parentCondition= parentCondition,
@@ -2570,7 +2631,8 @@ class WTestPlan(Document.WDocument):
             parentCondition = "1"
         
         self.addRemoteSubItem(
-                                pathFile='', nameFile='', extFile=testPaste['extension'], contentFile='', project=0, 
+                                pathFile='', nameFile='', extFile=testPaste['extension'], 
+                                contentFile='', project=0, 
                                 propertiesTest=testPaste, absPath=testPaste['file'],
                                 descriptionTest = testPaste['description'], colorTest = testPaste['color'], 
                                 parentCondition= parentCondition, control=testPaste['control'],
@@ -2600,7 +2662,8 @@ class WTestPlan(Document.WDocument):
             parentCondition = "1"
 
         self.insertRemoteSubItem( 
-                                    pathFile='', nameFile='', extFile=testPaste['extension'], contentFile='', project=0,
+                                    pathFile='', nameFile='', extFile=testPaste['extension'], 
+                                    contentFile='', project=0,
                                     below=False, propertiesTest=testPaste, absPath=testPaste['file'],
                                     descriptionTest=testPaste['description'], colorTest=testPaste['color'],
                                     aliasTest=testPaste['alias'], testParentId=int(parentId), 
@@ -2631,7 +2694,8 @@ class WTestPlan(Document.WDocument):
             parentCondition = "1"
         
         self.insertRemoteSubItem( 
-                                    pathFile='', nameFile='', extFile=testPaste['extension'], contentFile='', project=0,
+                                    pathFile='', nameFile='', extFile=testPaste['extension'], 
+                                    contentFile='', project=0,
                                     below=True, propertiesTest=testPaste, absPath=testPaste['file'],
                                     descriptionTest=testPaste['description'], colorTest=testPaste['color'],
                                     aliasTest = testPaste['alias'], testParentId=int(parentId), 
@@ -2777,7 +2841,7 @@ class WTestPlan(Document.WDocument):
                         self.addSubItems( files = dialog.getSelection() , fromType = FROM_LOCAL_REPO, parentTs=self.itemCurrent, insertTest=insertTest )
             
             else:
-                if UCI.instance().isAuthenticated(): # no then perhaps in remo repo if connected?
+                if RCI.instance().isAuthenticated: # no then perhaps in remo repo if connected?
                     prjName = self.iRepo.remote().getCurrentProject()
                     prjId = self.iRepo.remote().getProjectId(project=prjName)
                     if self.testGlobal:
@@ -2796,54 +2860,47 @@ class WTestPlan(Document.WDocument):
                     QMessageBox.warning(self, self.tr("Import") , self.tr("Connect to the test center first!") )
         
         # import test from remote
-        elif UCI.instance().isAuthenticated(): # no then perhaps in remo repo if connected?
+        elif RCI.instance().isAuthenticated: # no then perhaps in remo repo if connected?
             prjName = self.iRepo.remote().getCurrentProject()
             prjId = self.iRepo.remote().getProjectId(project=prjName)
             if self.testGlobal:
                 self.iRepo.remote().saveAs.getFilename(multipleSelection=True, project=prjName, 
-                                                    type=[TYPE, TestSuite.TYPE, TestUnit.TYPE, TestAbstract.TYPE] )
+                                                       type=[TYPE, TestSuite.TYPE, TestUnit.TYPE, TestAbstract.TYPE],
+                                                       # dbr13 >>>
+                                                       update_path=updatePath)
+                                                       # dbr13 <<<
             else:
                 self.iRepo.remote().saveAs.getFilename(multipleSelection=True, project=prjName, 
-                                                    type=[TestSuite.TYPE, TestUnit.TYPE, TestAbstract.TYPE] )
+                                                       type=[TestSuite.TYPE, TestUnit.TYPE, TestAbstract.TYPE],
+                                                       # dbr13 >>>
+                                                       update_path=updatePath)
+                                                       # dbr13 <<<
             dialog = self.iRepo.remote().saveAs
             if dialog.exec_() == QDialog.Accepted:
                 prjName = dialog.getProjectSelection()
                 prjId = self.iRepo.remote().getProjectId(project=prjName)
+                # dbr13 >>>
+                update_location_in_tests = dialog.update_location_in_tests.isChecked()
+                # dbr13 <<<
                 if updatePath:
-                    return (dialog.getSelection(), FROM_REMOTE_REPO, self.itemCurrent, prjId)
+                    # dbr13 >>> added - update_location
+                    return (dialog.getSelection(), FROM_REMOTE_REPO, self.itemCurrent, prjId, update_location_in_tests)
+                    # dbr13 <<<
                 else:
-                    self.addSubItems( files = dialog.getSelection(), fromType = FROM_REMOTE_REPO, 
-                                    parentTs=self.itemCurrent, project=prjId, insertTest=insertTest )
+                    self.addSubItems(files=dialog.getSelection(), fromType=FROM_REMOTE_REPO,
+                                     parentTs=self.itemCurrent, project=prjId, insertTest=insertTest)
+                    #  dbr13 >>>
+                    self.updateProjectsAction.setEnabled(True)
+                    #  dbr13 <<<
         else:
             QMessageBox.warning(self, self.tr("Import") , self.tr("Connect to the test center first!")     )   
 
-    # def openFromOther (self):
-        # """
-        # Open test file from the undefined repository
-        # Deprecated function, no more possible to import file from other
-        # If you need to import a file from other, import first in the local or remote repository
-        # """
-        # ret = None
-        # if self.testGlobal:
-            # fileName = QFileDialog.getOpenFileName(self, self.tr("Import test") , "", 
-                                                    # "Tests abstract (*.%s);; Tests unit (*.%s);;Tests suite (*.%s);;Tests plan (*.%s)" % (TestAbstract.TYPE, TestUnit.TYPE, TestSuite.TYPE, TYPE) )
-        # else:
-            # fileName = QFileDialog.getOpenFileName(self, self.tr("Import test") , "", 
-                                                    # "Tests abstract (*.%s);; Tests unit (*.%s);;Tests suite (*.%s)" % (TestAbstract.TYPE, TestUnit.TYPE, TestSuite.TYPE) )
-        # if len(fileName):
-            # extension = str(fileName).rsplit(".", 1)[1]
-            # if not ( extension in [ TestAbstract.TYPE, TestSuite.TYPE, TestUnit.TYPE ] ):
-                # QMessageBox.critical(self, self.tr("Open Failed") , self.tr("File not supported") )
-            # else:
-                # ret = str(fileName)
-        # return ret
-        
     def addSubItems (self, files, fromType, parentTs=None, project=0, insertTest=False):
         """
         Add severals items
         """
         # reverse the list of files only for insert mode as below 
-        if insertTest == UCI.ACTION_INSERT_BELOW:
+        if insertTest == RCI.ACTION_INSERT_BELOW:
             files.reverse()
             
         # memorize the insert options
@@ -2923,10 +2980,11 @@ class WTestPlan(Document.WDocument):
                 
             # go the to function insertRemoteSubItem to see the response to the following action
             if self.testGlobal:
-                UCI.instance().getFileRepo( pathFile=absPath, forDest=UCI.FOR_DEST_TG, project=project, actionId=insertTest, testId=parentId)
+                RCI.instance().openFileTests(projectId=int(project), filePath=absPath, ignoreLock=False, readOnly=False, 
+                                             customParam=parentId, actionId=insertTest, destinationId=RCI.FOR_DEST_TG)
             else:
-                UCI.instance().getFileRepo( pathFile=absPath, forDest=UCI.FOR_DEST_TP, project=project, actionId=insertTest, testId=parentId)
-        
+                RCI.instance().openFileTests(projectId=int(project), filePath=absPath, ignoreLock=False, readOnly=False, 
+                                             customParam=parentId, actionId=insertTest, destinationId=RCI.FOR_DEST_TP)
         else:
         
             # this part is only to import a local file in the testplan
@@ -3021,13 +3079,19 @@ class WTestPlan(Document.WDocument):
 
                 # update the model file
                 if below:
-                    self.dataModel.insertAfterTestFile( fileName = "%s.%s" % (tsname_final, extension) , type = fromType, itemId = tsId,
-                                                 parentId = str(self.itemCurrent.parent().text(COL_ID)), currentId=str(self.itemCurrent.text(COL_ID)),
-                                                 properties = properties, enabled=tsEnabled, extension=extension)
+                    self.dataModel.insertAfterTestFile( fileName = "%s.%s" % (tsname_final, extension) , 
+                                                        type = fromType, itemId = tsId,
+                                                        parentId = str(self.itemCurrent.parent().text(COL_ID)), 
+                                                        currentId=str(self.itemCurrent.text(COL_ID)),
+                                                        properties = properties, enabled=tsEnabled, 
+                                                        extension=extension)
                 else:
-                    self.dataModel.insertBeforeTestFile( fileName = "%s.%s" % (tsname_final, extension) , type = fromType, itemId = tsId,
-                                                 parentId = str(self.itemCurrent.parent().text(COL_ID)), currentId=str(self.itemCurrent.text(COL_ID)),
-                                                 properties = properties, enabled=tsEnabled, extension=extension  )
+                    self.dataModel.insertBeforeTestFile(    fileName = "%s.%s" % (tsname_final, extension) , 
+                                                            type = fromType, itemId = tsId,
+                                                            parentId = str(self.itemCurrent.parent().text(COL_ID)), 
+                                                            currentId=str(self.itemCurrent.text(COL_ID)),
+                                                            properties = properties, enabled=tsEnabled, 
+                                                            extension=extension  )
 
             else:
                 # Create tree widget item
@@ -3048,7 +3112,9 @@ class WTestPlan(Document.WDocument):
                     self.updateFontItem(parentItem)
 
                 ts = QTreeWidgetItem(parentItem, 0)
-                self.initItem( itemTree=ts, txt=info, id=tsId, isRoot = False, fromType = fromType, enabled=tsEnabled, extension=extension)
+                self.initItem( itemTree=ts, txt=info, id=tsId, 
+                               isRoot = False, fromType = fromType, 
+                               enabled=tsEnabled, extension=extension)
                 ts.setExpanded(True)
                 ts.setText(COL_ACTION, self.CONDITION_RUN)
                 ts.setText(COL_RESULT, self.CONDITION_PARENTHESE)
@@ -3058,7 +3124,8 @@ class WTestPlan(Document.WDocument):
                 tsEnabled = TS_DISABLED
                 if tsEnabled: tsEnabled = TS_ENABLED
                 self.dataModel.addTestFile( fileName = info , type = fromType, itemId = tsId,
-                                             parentId = str(parentItem.text(COL_ID)), properties = properties,
+                                             parentId = str(parentItem.text(COL_ID)), 
+                                             properties = properties,
                                              enabled=tsEnabled, extension=extension )
             
             self.setModify()
@@ -3114,12 +3181,14 @@ class WTestPlan(Document.WDocument):
             del doc
 
             # update datamodel
-            self.dataModel.updateTestFile( itemId = str(testId), testName=absPath, testExtension=extFile, 
+            self.dataModel.updateTestFile( itemId = str(testId), testName=absPath, 
+                                            testExtension=extFile, 
                                             testDescriptions=properties['properties']['descriptions']['description'] )
             self.setModify()
             self.resizeColumns()
 
-    def onUpdateRemotePropertiesSubItem(self, pathFile, nameFile, extFile, contentFile, testId, project, mergeParameters=False):
+    def onUpdateRemotePropertiesSubItem(self, pathFile, nameFile, extFile, contentFile, 
+                                            testId, project, mergeParameters=False):
         """
         Update the properties of the remote test
         """
@@ -3154,8 +3223,10 @@ class WTestPlan(Document.WDocument):
 
         self.viewer().PropertiesChanged.emit( properties['properties'], False )
 
-    def insertRemoteSubItem(self, pathFile, nameFile, extFile, contentFile, project, below=False, propertiesTest=None, absPath=None,
-                                descriptionTest="", colorTest="", aliasTest="", testParentId=0, parentCondition="0", control=""):
+    def insertRemoteSubItem(self, pathFile, nameFile, extFile, contentFile, project, 
+                                  below=False, propertiesTest=None, absPath=None,
+                                  descriptionTest="", colorTest="", aliasTest="", 
+                                  testParentId=0, parentCondition="0", control=""):
         """
         Insert a remote test
         """
@@ -3163,7 +3234,8 @@ class WTestPlan(Document.WDocument):
         # find the parent test according to the id
         currentItem = self.findParentId(testId=testParentId)
         if currentItem is None:
-            QMessageBox.warning(self, self.tr("Insert test") , self.tr("The test parent with ID=%s not found!" % testParentId)     )   
+            QMessageBox.warning(self, self.tr("Insert test") , 
+                                self.tr("The test parent with ID=%s not found!" % testParentId)     )   
             return
 
         if propertiesTest is not None:
@@ -3186,7 +3258,8 @@ class WTestPlan(Document.WDocument):
                 doc = FileModelTestUnit.DataModel()
             res = doc.load(rawData=contentFile)
             if not res:
-                QMessageBox.critical(self, self.tr("Open") , self.tr("Unable to open! Corrupted file!") )
+                QMessageBox.critical(self, self.tr("Open") , 
+                                     self.tr("Unable to open! Corrupted file!") )
                 return
             properties =  copy.deepcopy(doc.properties)
             del doc
@@ -3301,14 +3374,20 @@ class WTestPlan(Document.WDocument):
         # update the model file
         if below:
             self.dataModel.insertAfterTestFile( fileName = absPath , type = fromType, itemId = tsId,
-                                         parentId = str(currentItem.parent().text(COL_ID)), currentId=str(currentItem.text(COL_ID)),
-                                         properties = properties, enabled=tsEnabled, extension=extFile, descr=descriptionTest, 
-                                         color=colorTest, alias=aliasTest, parentCondition=parentCondition, control=control)
+                                         parentId = str(currentItem.parent().text(COL_ID)), 
+                                         currentId=str(currentItem.text(COL_ID)),
+                                         properties = properties, enabled=tsEnabled, 
+                                         extension=extFile, descr=descriptionTest, 
+                                         color=colorTest, alias=aliasTest, parentCondition=parentCondition, 
+                                         control=control)
         else:
             self.dataModel.insertBeforeTestFile( fileName = absPath , type = fromType, itemId = tsId,
-                                         parentId = str(currentItem.parent().text(COL_ID)), currentId=str(currentItem.text(COL_ID)),
-                                         properties = properties, enabled=tsEnabled, extension=extFile, descr=descriptionTest, 
-                                         color=colorTest, alias=aliasTest, parentCondition=parentCondition, control=control)
+                                         parentId = str(currentItem.parent().text(COL_ID)), 
+                                         currentId=str(currentItem.text(COL_ID)),
+                                         properties = properties, enabled=tsEnabled, 
+                                         extension=extFile, descr=descriptionTest, 
+                                         color=colorTest, alias=aliasTest, parentCondition=parentCondition, 
+                                         control=control)
                                          
         self.setModify()
         self.resizeColumns()
@@ -3324,11 +3403,15 @@ class WTestPlan(Document.WDocument):
         # more test to insert ?
         if len(self.insertQueue):
             f = self.insertQueue.pop(0)
-            ret = self.addSubItem( info=f, fromType=self.insertDetails[0], parentTs=self.insertDetails[1], 
-                                    project=self.insertDetails[2] , insertTest=self.insertDetails[3])
+            ret = self.addSubItem( info=f, fromType=self.insertDetails[0], 
+                                   parentTs=self.insertDetails[1], 
+                                   project=self.insertDetails[2] , 
+                                   insertTest=self.insertDetails[3])
                                     
-    def addRemoteSubItem(self, pathFile, nameFile, extFile, contentFile, project, propertiesTest=None, absPath=None, 
-                                descriptionTest="", colorTest="", aliasTest="", testParentId=0, parentCondition="0", control=""):
+    def addRemoteSubItem(self, pathFile, nameFile, extFile, contentFile, project, 
+                               propertiesTest=None, absPath=None, 
+                               descriptionTest="", colorTest="", aliasTest="", 
+                               testParentId=0, parentCondition="0", control=""):
         """
         Add remote test
         """  
@@ -3356,7 +3439,8 @@ class WTestPlan(Document.WDocument):
             del doc
         
         # add the item in the tree
-        added = self.createTreeWidgetItem(properties=properties, pathFile=absPath, fromType=FROM_REMOTE_REPO, extFile=extFile,
+        added = self.createTreeWidgetItem(properties=properties, pathFile=absPath, 
+                                    fromType=FROM_REMOTE_REPO, extFile=extFile,
                                     descriptionTest=descriptionTest, colorTest=colorTest, aliasTest=aliasTest, 
                                     testParentId=testParentId, parentCondition=parentCondition, control=control ) 
         
@@ -3406,7 +3490,8 @@ class WTestPlan(Document.WDocument):
         # find the parent test according to the id
         parentItem = self.findParentId(testId=testParentId)
         if parentItem is None:
-            QMessageBox.warning(self, self.tr("Add test") , self.tr("The test parent with ID=%s not found!" % testParentId)     ) 
+            QMessageBox.warning(self, self.tr("Add test") , 
+                                self.tr("The test parent with ID=%s not found!" % testParentId)     ) 
             return
 
         # get a new test id
@@ -3490,7 +3575,8 @@ class WTestPlan(Document.WDocument):
         """
         for i in xrange(parentItem.childCount()):
             curItem = parentItem.child(i)
-            self.dataModel.updateTestFileParentCondition( itemId=str(curItem.text(COL_ID)), parentCondition=parentCondition )
+            self.dataModel.updateTestFileParentCondition( itemId=str(curItem.text(COL_ID)), 
+                                                          parentCondition=parentCondition )
             if curItem.childCount():
                 if curItem.text(COL_RESULT) == self.CONDITION_OK:
                     newParentCondition = "0"

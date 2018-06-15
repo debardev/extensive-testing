@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
+# Copyright (c) 2010-2018 Denis Machard
 # This file is part of the extensive testing project
 #
 # This library is free software; you can redistribute it and/or
@@ -178,7 +178,7 @@ class VSphere(TestInteropLib.InteropPlugin):
                                 power_on=False, template=False, snapshot=None, linked=False)
             ret = True
             
-            content = { "result": "success",  "cmd": "clone-vm", 'vm-name': vmName }
+            content = { "result": "success",  "cmd": "clone-vm" }
             tpl = self.template(name=self.__class__.__name__.upper(), content=content )
             self.logResponse(msg="clone vm", details=tpl )
         except Exception as e: # log message
