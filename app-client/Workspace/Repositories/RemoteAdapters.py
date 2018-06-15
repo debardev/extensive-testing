@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -43,7 +43,7 @@ try:
     import RemoteRepository
 except ImportError: # support python3
     from . import RemoteRepository
-import UserClientInterface as UCI
+# import UserClientInterface as UCI
 import RestClientInterface as RCI
 
 class Repository(RemoteRepository.Repository):
@@ -54,7 +54,7 @@ class Repository(RemoteRepository.Repository):
         """
         Remote repository constructor
         """
-        RemoteRepository.Repository.__init__(self, parent, repoType=UCI.REPO_ADAPTERS)
+        RemoteRepository.Repository.__init__(self, parent, repoType=RCI.REPO_ADAPTERS)
 
     def addAdapters(self):
         """
@@ -62,9 +62,9 @@ class Repository(RemoteRepository.Repository):
         """
         txt, ok = QInputDialog.getText(self, "Main adapters name", "Enter name:", QLineEdit.Normal)
         if ok and txt:
-            pathFolder = self.itemCurrent.getPath(withFileName = False, withFolderName=True)
-            UCI.instance().addAdapterRepo( pathFolder=pathFolder, adapterName = txt, mainAdapters=True)
-
+            # rest call
+            RCI.instance().addPackageAdapters(packageName=txt)
+            
     def addAdapter(self):
         """
         Add one adapter
@@ -72,8 +72,10 @@ class Repository(RemoteRepository.Repository):
         txt, ok = QInputDialog.getText(self, "Adapter name", "Enter name:", QLineEdit.Normal)
         if ok and txt:
             pathFolder = self.itemCurrent.getPath(withFileName = False, withFolderName=True)
-            UCI.instance().addAdapterRepo( pathFolder=pathFolder, adapterName = txt)
-
+            
+            # rest call
+            RCI.instance().addPackageAdapter(packageName=pathFolder, adapterName=txt)
+            
     def checkSyntaxAdapters(self):
         """
         Check the syntax of all adapters
@@ -90,10 +92,10 @@ class Repository(RemoteRepository.Repository):
                                     icon = QIcon(":/adapters.png"), tip = 'Create new adapter' )
         self.checkAdaptersAction = QtHelper.createAction(self, "&Check", self.checkSyntaxAdapters, 
                                     icon = QIcon(":/adapters-check.png"), tip = 'Check syntax of all adapters' )
-        self.setAsDefaultAction = QtHelper.createAction(self, "&Set as default", self.setAdapterAsDefault, 
-                                    icon = None, tip = 'Set adapter as default' )
-        self.setAsGenericAction = QtHelper.createAction(self, "&Set as generic", self.setAdapterAsGeneric, 
-                                    icon = None, tip = 'Set adapter as generic' )
+        self.setAsDefaultAction = QtHelper.createAction(self, "&Set as Extra", self.setAdapterAsDefault, 
+                                    icon = None, tip = 'Set adapter as Extra' )
+        self.setAsGenericAction = QtHelper.createAction(self, "&Set as Generic", self.setAdapterAsGeneric, 
+                                    icon = None, tip = 'Set adapter as Generic' )
                                     
     def moreDefaultActions(self):
         """
@@ -157,14 +159,16 @@ class Repository(RemoteRepository.Repository):
         """
         Set adapter as default
         """
-        pathFolder = self.itemCurrent.getPath(withFileName = False, withFolderName=True)
+        pathFolder = self.itemCurrent.getPath(withFileName = False, 
+                                              withFolderName=True)
         RCI.instance().setDefaultAdapter(packageName=pathFolder)
         
     def setAdapterAsGeneric(self):
         """
         Set adapter as generic
         """
-        pathFolder = self.itemCurrent.getPath(withFileName = False, withFolderName=True)
+        pathFolder = self.itemCurrent.getPath(withFileName = False, 
+                                              withFolderName=True)
         RCI.instance().setGenericAdapter(packageName=pathFolder)
         
     def moveRemoteFile(self, currentName, currentPath, currentExtension, newPath):
@@ -172,20 +176,19 @@ class Repository(RemoteRepository.Repository):
         Reimplemented from RemoteRepository
         Move file
         """
-        # UCI.instance().moveFileRepo( repo=UCI.REPO_ADAPTERS, mainPath=currentPath, FileName=currentName, 
-                                    # extFile=currentExtension, newPath=newPath)
-        RCI.instance().moveFileAdapters(filePath=currentPath, fileName=currentName, fileExt=currentExtension, 
-                                     newPath=newPath)
+        RCI.instance().moveFileAdapters(filePath=currentPath, 
+                                        fileName=currentName, 
+                                        fileExt=currentExtension, 
+                                        newPath=newPath)
                                      
     def moveRemoteFolder(self, currentName, currentPath, newPath):
         """
         Reimplemented from RemoteRepository
         Move folder
         """
-        # UCI.instance().moveFolderRepo( repo=UCI.REPO_ADAPTERS, mainPath=currentPath, F
-                                    # olderName=currentName, newPath=newPath)
-        RCI.instance().moveFolderAdapters(folderPath=currentPath, folderName=currentName, 
-                                       newPath=newPath)
+        RCI.instance().moveFolderAdapters(folderPath=currentPath, 
+                                          folderName=currentName, 
+                                          newPath=newPath)
                                        
     def openRemoteFile (self, pathFile):
         """
@@ -195,7 +198,6 @@ class Repository(RemoteRepository.Repository):
         @param pathFile: 
         @type pathFile:
         """
-        # UCI.instance().openFileRepo( repo=UCI.REPO_ADAPTERS, pathFile = pathFile)
         RCI.instance().openFileAdapters(filePath=pathFile)
         
     def deleteAllFolders (self, pathFolder):
@@ -206,7 +208,6 @@ class Repository(RemoteRepository.Repository):
         @param pathFolder: 
         @type pathFolder:
         """
-        # UCI.instance().delDirAllRepo( repo=UCI.REPO_ADAPTERS, pathFolder=pathFolder)
         RCI.instance().removeFoldersAdapters(folderPath=pathFolder)
         
     def deleteFile (self, pathFile):
@@ -217,7 +218,6 @@ class Repository(RemoteRepository.Repository):
         @param pathFile: 
         @type pathFile:
         """
-        # UCI.instance().delFileRepo(repo=UCI.REPO_ADAPTERS, pathFile=pathFile)
         RCI.instance().removeFileAdapters(filePath=pathFile)
         
     def deleteFolder (self, pathFolder):
@@ -228,7 +228,6 @@ class Repository(RemoteRepository.Repository):
         @param pathFolder: 
         @type pathFolder:
         """
-        # UCI.instance().delDirRepo( repo=UCI.REPO_ADAPTERS, pathFolder=pathFolder)
         RCI.instance().removeFolderAdapters(folderPath=pathFolder)
         
     def addFolder (self, pathFolder, folderName):
@@ -242,15 +241,14 @@ class Repository(RemoteRepository.Repository):
         @param folderName: 
         @type folderName:
         """
-        # UCI.instance().addDirRepo( repo=UCI.REPO_ADAPTERS, pathFolder=pathFolder, folderName = folderName)
-        RCI.instance().addFolderAdapters(folderPath=pathFolder, folderName = folderName)
+        RCI.instance().addFolderAdapters(folderPath=pathFolder, 
+                                         folderName = folderName)
         
     def refresh(self):
         """
         Reimplemented from RemoteRepository
         Refresh
         """
-        # UCI.instance().refreshRepo(repo=UCI.REPO_ADAPTERS)
         RCI.instance().listingAdapters()
         
     def renameFile (self, mainPath, oldFileName, newFileName, extFile):
@@ -270,7 +268,6 @@ class Repository(RemoteRepository.Repository):
         @param extFile: 
         @type extFile:
         """
-        # UCI.instance().renameFileRepo(repo=UCI.REPO_ADAPTERS, mainPath=mainPath, oldFileName=oldFileName, newFileName= newFileName, extFile=extFile)
         RCI.instance().renameFileAdapters( filePath=mainPath, 
                                            fileName=oldFileName, 
                                            fileExt=extFile, 
@@ -290,7 +287,6 @@ class Repository(RemoteRepository.Repository):
         @param newFolderName: 
         @type newFolderName:
         """
-        # UCI.instance().renameDirRepo(repo=UCI.REPO_ADAPTERS, mainPath=mainPath, oldFolder=oldFolderName, newFolder=newFolderName)
         RCI.instance().renameFolderAdapters( folderPath=mainPath, 
                                              folderName = oldFolderName, 
                                              newName=newFolderName)
@@ -312,8 +308,6 @@ class Repository(RemoteRepository.Repository):
         @param extFile: 
         @type extFile:
         """
-        # UCI.instance().duplicateFileRepo(repo=UCI.REPO_ADAPTERS, mainPath=mainPath, oldFileName=oldFileName, 
-                                        # newFileName=newFileName, extFile=extFile, newPath=newPath)
         RCI.instance().duplicateFileAdapters(filePath=mainPath,
                                                fileName=oldFileName, 
                                                fileExt=extFile, 
@@ -334,8 +328,6 @@ class Repository(RemoteRepository.Repository):
         @param newFolderName: 
         @type newFolderName:
         """
-        # UCI.instance().duplicateDirRepo(repo=UCI.REPO_ADAPTERS, mainPath=mainPath, oldFolderName=oldFolderName, 
-                                            # newFolderName=newFolderName, newPath=newPath)
         RCI.instance().duplicateFolderAdapters( folderPath=mainPath, 
                                                 folderName = oldFolderName, 
                                                 newPath=newPath,

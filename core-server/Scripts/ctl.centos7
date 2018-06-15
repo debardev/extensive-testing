@@ -2,7 +2,7 @@
 
 # -------------------------------------------------------------------
 # Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,8 +23,8 @@
 ACMD="$1"
 ARGV="$@"
 
-name="Extensive Testing"
-prog="run"
+name="Extensive Automation"
+prog="extensiveautomation"
 APP_PATH=/opt/xtc/
 DB_NAME=xtc160
 BIN=$APP_PATH/current/$prog
@@ -33,14 +33,14 @@ RETVAL=0
 
 start_server()
 {
-	echo "Starting $name"
+	echo "Starting $name server"
 	$BIN start
 	RETVAL=$?
 }
 
 stop_server()
 {
-	echo "Stopping $name"
+	echo "Stopping $name server"
 	$BIN stop
 	RETVAL=$?
 }

@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -38,8 +38,12 @@ AdapterTelnet = sys.modules['SutAdapters.%s.Telnet' % TestAdapter.getVersion()]
 
 __NAME__="""Catalyst"""
 
-import templates_catalyst
-import codec_catalyst
+try:
+	import templates_catalyst
+	import codec_catalyst
+except ImportError: # python3 support
+	from . import templates_catalyst
+	from . import codec_catalyst
 
 import copy
 

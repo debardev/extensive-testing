@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -38,8 +38,12 @@ AdapterSOCKS = sys.modules['SutAdapters.%s.SOCKS' % TestAdapterLib.getVersion()]
 
 LibraryAuth = sys.modules['SutLibraries.%s.Security' % TestLibraryLib.getVersion()]
 
-import codec
-import templates
+try:
+	import codec
+	import templates
+except ImportError: # python3 support
+	from . import codec
+	from . import templates
 
 __NAME__="""HTTP"""
 
@@ -62,7 +66,8 @@ class Client(TestAdapterLib.Adapter):
 								sslSupport=False, sslVersion=AdapterSSL.SSLv23, checkCert=AdapterSSL.CHECK_CERT_NO, caCerts=None, checkHost=False,
 								debug=False, logEventSent=True, logEventReceived=True, websocketMode=False,  hostCn=None,
 								truncateBody=False, agentSupport=False, agent=None, shared=False, strictMode=False,
-								octetStreamSupport=True, manStreamSupport=True, verbose=True, keyfile=None,certfile=None):
+								octetStreamSupport=True, manStreamSupport=True, verbose=True, 
+								keyfile=None,certfile=None, clientCiphers=None):
 		"""
 		This class enables to send/receive HTTP requests and response
 		SSL and proxy (socks4, 5 and http) support.
@@ -178,6 +183,9 @@ class Client(TestAdapterLib.Adapter):
 		@param keyfile: path to the key file (default=None)
 		@type keyfile: string/none
 		
+		@param clientCiphers: ciphers client side (default=None)
+		@type clientCiphers: string/none
+		
 		@param verbose: False to disable verbose mode (default=True)
 		@type verbose: boolean
 		"""
@@ -217,7 +225,7 @@ class Client(TestAdapterLib.Adapter):
 																		sslSupport=sslSupport, sslVersion=sslVersion, checkCert=checkCert,
 																		debug=debug, logEventSent=False, logEventReceived=False, parentName=__NAME__,
 																		agentSupport=agentSupport, agent=agent, shared=shared, verbose=verbose,
-																		keyfile=keyfile, certfile=certfile)
+																		keyfile=keyfile, certfile=certfile, clientCiphers=clientCiphers)
 		# callback tcp
 		self.ADP_TCP.handleIncomingData = self.onIncomingData	
 		self.ADP_TCP.handleNoMoreData = self.onNoMoreData

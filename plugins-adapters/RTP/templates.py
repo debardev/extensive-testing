@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,8 +28,9 @@ import TestExecutorLib.TestAdapterLib as TestAdapterLib
 import TestExecutorLib.TestLibraryLib as TestLibraryLib
 import sys
 
-def rtp(pl=None, m=None, pt=None, seq=None, ts=None, ssrc=None, v=None, p=None, x=None,  cc=None, csrc=None, ext=None, pad=None,
-					pl_length=None, more=None):
+def rtp(pl=None, m=None, pt=None, seq=None, ts=None, ssrc=None, 
+        v=None, p=None, x=None,  cc=None, csrc=None, ext=None, pad=None,
+        pl_length=None, more=None):
 	"""
 	Construct a template for a RTP packet
 	"""

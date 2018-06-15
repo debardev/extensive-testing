@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,7 +24,11 @@
 import sys
 sys.path.insert(0, '../' )
 
-import MySQLdb
+try:
+    import MySQLdb
+except ImportError: # python3 support
+    import pymysql as MySQLdb
+
 from  Libs import Settings
 
 Settings.initialize(path="../../")

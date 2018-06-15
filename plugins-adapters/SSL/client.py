@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,12 +30,15 @@ from TestExecutorLib.TestExecutorLib import doc_public
 
 import sys
 
-import templates
+try:
+	import templates
+except ImportError: # python3 support
+	from . import templates
 
 # SSL support 
 try:
     import ssl
-except ImportError, x:
+except ImportError as x:
     print("error: %s" % x)
 
 __NAME__="""SSL"""
@@ -73,7 +76,7 @@ class HostnameFailed(Exception):
 class Client(TestAdapterLib.Adapter):
 	def __init__ (self, parent, sslVersion=SSLv23, checkCert=CHECK_CERT_NO, debug=False, name=None,
 											logEventSent=True, logEventReceived=True, shared=False, caCerts=None, checkHost=False, 
-											host=None, verbose=True, certfile=None,keyfile=None):
+											host=None, verbose=True, certfile=None,keyfile=None, clientCiphers=None):
 		"""
 		@param parent: parent testcase
 		@type parent: testcase
@@ -105,6 +108,7 @@ class Client(TestAdapterLib.Adapter):
 		self.cfg['host'] = host
 		self.cfg['keyfile'] = keyfile
 		self.cfg['certfile'] = certfile
+		self.cfg['ciphers'] = clientCiphers
 		
 		self.sslCipher = ''
 		self.sslVersion = ''
@@ -179,7 +183,8 @@ class Client(TestAdapterLib.Adapter):
 																							ssl_version=ver,
 																							server_hostname=_host ,
 																							keyfile=self.cfg['keyfile'],
-																							certfile=self.cfg['certfile']
+																							certfile=self.cfg['certfile'],
+																							ciphers=self.cfg['ciphers']
 																			)
 				else:
 					sock = ssl.SSLSocket(
@@ -304,14 +309,14 @@ class Client(TestAdapterLib.Adapter):
 			tpl = self.encapsule( tpl=tpl_r, ssl_event=templates.handshake_accepted(cipher=self.sslCipher,version=self.sslVersion,
 																bits=self.sslBits, certPEM=certPEM, cert=cert_svr_layer) )
 			self.logRecvEvent( shortEvt = "handshake accepted", tplEvt = tpl )
-		except ssl.SSLError, x:
+		except ssl.SSLError as x:
 			# log received event
 			tpl = self.encapsule( tpl=tpl_r, ssl_event=templates.handshake_failed(error=self.getSslError(str(x)) ) )
 			self.logRecvEvent( shortEvt = "handshake failed", tplEvt = tpl )	
 			
 			# raise failure to parent
 			raise HandshakeFailed()
-		except HostnameFailed,x:
+		except HostnameFailed as x:
 			# log received event
 			tpl = self.encapsule( tpl=tpl_r, ssl_event=templates.handshake_failed(error=self.getSslError(str(x)) ) )
 			self.logRecvEvent( shortEvt = "handshake failed", tplEvt = tpl )	

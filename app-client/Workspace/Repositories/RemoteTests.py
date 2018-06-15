@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,7 @@ try:
 except NameError: # support python3
     xrange = range
 
-import UserClientInterface as UCI
+# import UserClientInterface as UCI
 import RestClientInterface as RCI
 
 
@@ -115,7 +115,8 @@ class Repository(RemoteRepository.Repository):
         self.createSamplesAction = QtHelper.createAction(self, "&Generate samples", self.generateSamples, 
                                                          icon = None, 
                                                          tip = 'Generate samples' )
-        self.setTestsDefaultAction = QtHelper.createAction(self, "&Set default versions", self.setDefaultVersionForAllTests, 
+        self.setTestsDefaultAction = QtHelper.createAction(self, "&Set default versions", 
+                                                           self.setDefaultVersionForAllTests, 
                                                            icon = None, 
                                                            tip = 'Set default version adapters and libraries for all tests' )
 
@@ -162,8 +163,11 @@ class Repository(RemoteRepository.Repository):
                             
                         tmp__, extensionFile = el['file-path'].rsplit(".", 1)
                         pathFile, nameFile = tmp__.rsplit('/', 1)
-                        UCI.instance().importFileRepo(contentFile, extensionFile=extensionFile, nameFile=nameFile, 
-                                                      pathFile=pathFile, project=projectId, makeDirs=True)
+
+                        RCI.instance().uploadTestFile(filePath=pathFile, fileName=nameFile, 
+                                                      fileExtension=extensionFile, 
+                                                      fileContent=contentFile, projectId=projectId, 
+                                                      updateMode=False, closeTabAfter=False)
                     except Exception as e:
                         QMessageBox.warning(self, "Remote tests" , "bad file path!")
                     
@@ -175,7 +179,7 @@ class Repository(RemoteRepository.Repository):
                                      self.tr("Are you sure to set the default adapters and libraries version for all tests?"),
                                      QMessageBox.Yes | QMessageBox.Cancel )
         if reply == QMessageBox.Yes:
-            UCI.instance().setTestsWithDefaultVersion()
+            RCI.instance().setAllTestsAsDefault()
             
     def generateSamples(self):
         """
@@ -184,29 +188,32 @@ class Repository(RemoteRepository.Repository):
         reply = QMessageBox.question(self, self.tr("Generate samples"), self.tr("Are you sure to re-generate samples?"),
                                      QMessageBox.Yes | QMessageBox.Cancel )
         if reply == QMessageBox.Yes:
-            # UCI.instance().generateSamples()
             RCI.instance().buildSamples()
             
-    def moveRemoteFile(self, currentName, currentPath, currentExtension, newPath, project=0, newProject=0):
+    def moveRemoteFile(self, currentName, currentPath, currentExtension, 
+                       newPath, project=0, newProject=0, update_location=False):
         """
         Reimplemented from RemoteRepository
         Move file
         """
-        # UCI.instance().moveFileRepo( mainPath=currentPath, FileName=currentName, extFile=currentExtension,
-                                     # newPath=newPath, project=project, newProject=newProject )
-
-        RCI.instance().moveFileTests(filePath=currentPath, fileName=currentName, fileExt=currentExtension, 
-                                     fileProject=project, newPath=newPath, newProject=newProject)
+        RCI.instance().moveFileTests(filePath=currentPath, 
+                                     fileName=currentName, 
+                                     fileExt=currentExtension, 
+                                     fileProject=project, 
+                                     newPath=newPath, 
+                                     newProject=newProject,
+                                     update_location=update_location)
         
     def moveRemoteFolder(self, currentName, currentPath, newPath, project=0, newProject=0):
         """
         Reimplemented from RemoteRepository
         Move folder
         """
-        # UCI.instance().moveFolderRepo( mainPath=currentPath, FolderName=currentName, newPath=newPath,
-                                        # project=project, newProject=newProject)
-        RCI.instance().moveFolderTests(folderPath=currentPath, folderName=currentName, folderProject=project, 
-                                       newPath=newPath, newProject=newProject)
+        RCI.instance().moveFolderTests(folderPath=currentPath, 
+                                       folderName=currentName, 
+                                       folderProject=project, 
+                                       newPath=newPath, 
+                                       newProject=newProject)
         
     def initialize(self, listing):
         """
@@ -214,10 +221,7 @@ class Repository(RemoteRepository.Repository):
         """
         self.createSamplesAction.setEnabled(False)
 
-        if UCI.RIGHTS_ADMIN in RCI.instance().userRights:
-            self.createSamplesAction.setEnabled(True)
-
-        if UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
+        if RCI.RIGHTS_ADMIN in RCI.instance().userRights:
             self.createSamplesAction.setEnabled(True)
 
         RemoteRepository.Repository.initialize(self, listing)
@@ -230,7 +234,6 @@ class Repository(RemoteRepository.Repository):
         @param pathFile: 
         @type pathFile:
         """
-        # UCI.instance().openFileRepo( pathFile = pathFile, project=project)
         RCI.instance().openFileTests(projectId=int(project), filePath=pathFile)
     
     def deleteAllFolders (self, pathFolder, project=0):
@@ -241,7 +244,6 @@ class Repository(RemoteRepository.Repository):
         @param pathFolder: 
         @type pathFolder:
         """
-        # UCI.instance().delDirAllRepo(pathFolder=pathFolder, project=project)
         RCI.instance().removeFoldersTests(projectId=project,
                                           folderPath=pathFolder)
         
@@ -253,7 +255,6 @@ class Repository(RemoteRepository.Repository):
         @param pathFile: 
         @type pathFile:
         """
-        # UCI.instance().delFileRepo(pathFile=pathFile, project=project)
         RCI.instance().removeFileTests(filePath=pathFile, 
                                        fileProject=project)
         
@@ -265,7 +266,6 @@ class Repository(RemoteRepository.Repository):
         @param pathFolder: 
         @type pathFolder:
         """
-        # UCI.instance().delDirRepo(pathFolder=pathFolder, project=project)
         RCI.instance().removeFolderTests(projectId=project, 
                                          folderPath=pathFolder)
         
@@ -280,7 +280,6 @@ class Repository(RemoteRepository.Repository):
         @param folderName: 
         @type folderName:
         """
-        # UCI.instance().addDirRepo(pathFolder=pathFolder, folderName = folderName, project=project)
         RCI.instance().addFolderTests(projectId=project, 
                                       folderPath=pathFolder,
                                       folderName = folderName)
@@ -293,12 +292,24 @@ class Repository(RemoteRepository.Repository):
         if not project:
             projectname = self.getCurrentProject()
             project = self.getProjectId(project=str(projectname))
-        # UCI.instance().refreshRepo(project=project, saveAsOnly=saveAsOnly)
+
         RCI.instance().listingTests(projectId=project, 
                                     forSaveAs=saveAsOnly, 
                                     forRuns=False)
         
-    def renameFile (self, mainPath, oldFileName, newFileName, extFile, project=0):
+    def find_usage(self, project_id, file_path):
+        """
+        @param project_id:
+        @type project_id
+        
+        @param file_path:
+        @type file_path
+        """
+        RCI.instance().findTestFileUsage(projectId=project_id, 
+                                         filePath=file_path)
+        
+    def renameFile (self, mainPath, oldFileName, newFileName, extFile, 
+                    project=0, update_location=False):
         """
         Reimplemented from RemoteRepository
         Rename file
@@ -314,15 +325,16 @@ class Repository(RemoteRepository.Repository):
 
         @param extFile: 
         @type extFile:
+
+        @param update_location:
+        @type update_location:
         """
-        # UCI.instance().renameFileRepo(mainPath=mainPath, oldFileName=oldFileName, newFileName= newFileName, 
-                                      # extFile=extFile, project=project)
         RCI.instance().renameFileTests( filePath=mainPath, 
                                         fileName=oldFileName, 
                                         fileExt=extFile, 
                                         fileProject=project,
-                                        newName=newFileName
-                                       )
+                                        newName=newFileName,
+                                        update_location=update_location )
                                              
     def renameFolder (self, mainPath, oldFolderName, newFolderName, project=0):
         """
@@ -338,13 +350,13 @@ class Repository(RemoteRepository.Repository):
         @param newFolderName: 
         @type newFolderName:
         """
-        # UCI.instance().renameDirRepo(mainPath=mainPath, oldFolder=oldFolderName, newFolder=newFolderName, project=project)
         RCI.instance().renameFolderTests(projectId=project, 
                                          folderPath=mainPath, 
                                          folderName = oldFolderName, 
                                          newName=newFolderName)
         
-    def duplicateFile (self, mainPath, oldFileName, newFileName, extFile, project=0, newProject=0, newPath=''):
+    def duplicateFile (self, mainPath, oldFileName, newFileName, extFile, 
+                       project=0, newProject=0, newPath=''):
         """
         Reimplemented from RemoteRepository
         Duplicate file
@@ -361,8 +373,6 @@ class Repository(RemoteRepository.Repository):
         @param extFile: 
         @type extFile:
         """
-        # UCI.instance().duplicateFileRepo(mainPath=mainPath, oldFileName=oldFileName, newFileName=newFileName,
-                                        # extFile=extFile, project=project, newProject=newProject, newPath=newPath)
         RCI.instance().duplicateFileTests( filePath=mainPath,
                                            fileName=oldFileName, 
                                            fileExt=extFile, 
@@ -371,7 +381,8 @@ class Repository(RemoteRepository.Repository):
                                            newName=newFileName,
                                            newProject=newProject)
         
-    def duplicateFolder (self, mainPath, oldFolderName, newFolderName, project=0, newProject=0, newPath=''):
+    def duplicateFolder (self, mainPath, oldFolderName, newFolderName, 
+                         project=0, newProject=0, newPath=''):
         """
         Reimplemented from RemoteRepository
         Duplicate folder
@@ -385,8 +396,6 @@ class Repository(RemoteRepository.Repository):
         @param newFolderName: 
         @type newFolderName:
         """
-        # UCI.instance().duplicateDirRepo(mainPath=mainPath, oldFolderName=oldFolderName, newFolderName=newFolderName,
-                                        # project=project, newProject=newProject, newPath=newPath)
         RCI.instance().duplicateFolderTests( folderProject=project,
                                              folderPath=mainPath, 
                                              folderName = oldFolderName, 

@@ -1,9 +1,9 @@
 <?php
 	/*
 	---------------------------------------------------------------
-	 Copyright (c) 2010-2017 Denis Machard. All rights reserved.
+	 Copyright (c) 2010-2018 Denis Machard. All rights reserved.
 
-	 This file is part of the extensive testing project; you can redistribute it and/or
+	 This file is part of the extensive automation project; you can redistribute it and/or
 	 modify it under the terms of the GNU General Public License, Version 3.
 
 	 This file is distributed in the hope that it will be useful, but
@@ -69,7 +69,11 @@
 		'cli'							=> 'CLI',
 		'gui'							=> 'GUI',
 		'web'							=> 'Web',
-		'api'							=> 'API',
+        'api'							=> 'API',
+        'api-key'				        => 'Clé API',
+		'tester-api'					=> 'Tester API',
+        'common-api'					=> 'Common API',
+        'admin-api'				        => 'Admin API',
 		'value'							=> 'Valeur',
 		'account'						=> 'Compte',
 		'quickstart'					=> 'Quickstarts',
@@ -116,7 +120,7 @@
 		# Users
 		'administrator'					=> 'Administrateur',
 		'tester'						=> 'Testeur',
-		'leader'						=> 'Leader',
+		'monitor'						=> 'Superviseur',
 		'developer'						=> 'Développeur',
 
 		# Menu
@@ -136,7 +140,7 @@
 		'about-rn-probes'				=> 'Sondes',
         'about-rn-toolbox'				=> 'Outils',
 		'about-licenses'				=> 'Licences',
-		'about-product-description'		=> 'Extensive Testing est un framework de test générique et ouvert, il permet la conception de tests d\'intégrations et de validations. Cet environnement est open source et essaye de vous faire gagner du temps au travail. Amusez-vous!',
+		'about-product-description'		=> 'ExtensiveTesting est un framework de test et déploiement for des environnements d\'intégration, régression et tests de bout en bout. Cet environnement est open source et essaye de vous faire gagner du temps au travail. Amusez-vous!',
 		'about-developped-by'			=> 'Développé et maintenu par',
 		'about-what'					=> 'C\'est quoi?',
 		'about-what-new'				=> 'Les nouveautés',
@@ -214,7 +218,7 @@
 		'admin-users'					=> 'Utilisateurs',
 		'admin-users-email'				=> 'Email',
 		'admin-users-lang'				=> 'Langage',
-		'admin-users-rights'			=> 'Niveau d\'accès',
+		'admin-users-rights'			=> 'Rôle',
 		'admin-users-access'			=> 'Droit d\'accès',
 		'admin-users-style'				=> 'Style',
 		'admin-users-old-pwd'			=> 'Mot de passe actuel',

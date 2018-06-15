@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,15 +21,27 @@
 # MA 02110-1301 USA
 # -------------------------------------------------------------------
 
-from blowfish import Blowfish
-from rc4 import RC4
-from aes import AES
-from xor import XOR
-from openssl import OpenSSL
-from rsa import RSA
-
-from blowfish import MODE_ECB
-from blowfish import MODE_CBC
-from blowfish import PAD_PKCS5
-
+try:
+	from blowfish import Blowfish
+	from rc4 import RC4
+	from aes import AES
+	from xor import XOR
+	from openssl import OpenSSL
+	from rsa import RSA
+	
+	from blowfish import MODE_ECB
+	from blowfish import MODE_CBC
+	from blowfish import PAD_PKCS5
+except ImportError: # support python 3
+	from .blowfish import Blowfish
+	from .rc4 import RC4
+	from .aes import AES
+	from .xor import XOR
+	from .openssl import OpenSSL
+	from .rsa import RSA
+	
+	from .blowfish import MODE_ECB
+	from .blowfish import MODE_CBC
+	from .blowfish import PAD_PKCS5
+	
 __DESCRIPTION__ = "Ciphers implementation"

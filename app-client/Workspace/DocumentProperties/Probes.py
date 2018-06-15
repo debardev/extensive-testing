@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -470,7 +470,6 @@ class ComboBoxProbesActiveDelegate(QItemDelegate, Logger.ClassLogger):
         qvalue = editor.currentText()
         value = QtHelper.displayToValue( q(qvalue) )
         self.setValue(index, value)
-
 
 class CheckBoxActiveDelegate(QItemDelegate, Logger.ClassLogger):
     """

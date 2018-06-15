@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -48,9 +48,8 @@ fi
 # init somes variables
 PREVIOUS_APP_NAME="ExtensiveTesting"
 PREVIOUS_PRODUCT_SVC_NAME="$(echo $PREVIOUS_APP_NAME | sed 's/.*/\L&/')"
-# PREVIOUS_PRODUCT_SVC_CTRL="xtctl"
 
-APP_NAME="ExtensiveTesting"
+APP_NAME="ExtensiveAutomation"
 APP_PATH="$(pwd)"
 LOG_FILE="$APP_PATH/install.log"
 PKG_PATH="$APP_PATH/PKG/"
@@ -63,11 +62,11 @@ fi
 PRODUCT_VERSION="$(cat "$APP_SRC_PATH"/VERSION)"
 PRODUCT_SVC_NAME="$(echo $APP_NAME | sed 's/.*/\L&/')"
 
-echo "================================================"
-echo "=  - Update of the $APP_NAME product -  ="
-echo "=              Denis Machard                   ="
-echo "=          www.extensivetesting.org            ="
-echo "================================================"
+echo "==================================================="
+echo "=       - Update of the $APP_NAME product -       ="
+echo "=              Denis Machard                      ="
+echo "=          www.extensiveautomation.org            ="
+echo "==================================================="
 
 # import default config
 source $APP_PATH/default.cfg
@@ -237,7 +236,6 @@ fi
 # Stop the product server
 #
 #######################################
-echo -n "* Stopping the new version $PRODUCT_VERSION"
 if [ "$OS_RELEASE" == "7" ]; then
 	systemctl stop $PRODUCT_SVC_NAME.service 1>> "$LOG_FILE" 2>&1
 	if [ $? -ne 0 ]; then
@@ -253,7 +251,8 @@ else
 		exit_on_error
 	fi
 fi
-echo_success; echo
+
+/usr/sbin/"$PRODUCT_SVC_CTRL" stop 1>> $LOG_FILE 2>&1
 
 
 #######################################
@@ -316,10 +315,28 @@ echo_success; echo
 
 #######################################
 #
-# Restarting server
+# Restarting services
 #
 #######################################
-echo -n "* Restarting the new version $PRODUCT_VERSION"
+echo -n "* Restarting $HTTPD_SERVICE_NAME"
+if [ "$OS_RELEASE" == "7" ]; then
+    systemctl restart $HTTPD_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
+    if [ $? -ne 0 ]; then
+        echo_failure; echo
+        echo "Unable to restart $HTTPD_SERVICE_NAME" >> "$LOG_FILE"
+        exit_on_error
+    fi
+else
+    service $HTTPD_SERVICE_NAME restart 1>> "$LOG_FILE" 2>&1
+    if [ $? -ne 0 ]; then
+        echo_failure; echo
+        echo "Unable to restart $HTTPD_SERVICE_NAME" >> "$LOG_FILE"
+        exit_on_error
+    fi
+fi
+echo_success; echo
+    
+echo -n "* Starting the new version $PRODUCT_VERSION"
 if [ "$OS_RELEASE" == "7" ]; then
 	systemctl start $PRODUCT_SVC_NAME.service 1>> "$LOG_FILE" 2>&1
 	if [ $? -ne 0 ]; then
@@ -338,6 +355,6 @@ fi
 echo_success; echo
 
 echo "========================================================================="
-echo "- Update terminated!"
+echo "- Update completed successfully!"
 echo "- Continue and go to the web interface (https://$PREVIOUS_EXT_IP/web/index.php)"
 echo "========================================================================="

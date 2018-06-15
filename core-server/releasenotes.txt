@@ -1,13 +1,52 @@
 
-18.0.0
-	Date: xx/xx/2017
+19.0.0
+	Date: xx/xx/2018
 	What's new
-		1. (minor) test library: change open source project url in test report header
-		2. (major) toolboxes windows and linux no more embedded in the package
-		3. (medium) no more default agent and probe running on server side
-		4. (medium) no more toolbox deployed on boot server
-        5. (medium) build: update of the python selenium library with version 3.7.0
-        6. (minor) remove deprecated python modules: commands, compiler
-		7. (minor) rest api: /rest/results/report/basic/html updated to support replay id
+		1. (major) test model - change the way to access to the adapters and libraries
+		2. (major) new major of generic sut adapters and libraries
+		3. (medium) support generic adapters or libraries on build online documentations
+		4. (medium) code update to support python3.5 on core, test library, sut libraries and adapters
+		5. (minor) no more add sql queries in debug mode in logs, VERBOSE mode can be activated
+		6. (minor) python traceback added on documentation generation for adapters and libraries
+		7. (minor) repository manager updated to ignore __pycache__ folders present in python3
+		8. (medium) test model: access data from any level for custom parameter (pull request #7)
+		9. (medium) check syntax: parent testname added in error message, useful for test global
+		10. (major) test files model updated to support xml format as default, no more zlib (backward compatibility)
+		11. (minor) rest api: code cleanup to be more respectful of python language and code factory
+		12. (medium) rest api: update location and rename/move test path in test plan/global (pull request #8)
+		13. (minor) new python ansible library embedded by default
+		14. (minor) PyYAML library installed by default, to support the new ansible adapter
+		15. (major) embedded python libraries updated and drop support of python 2.6
+		16. (minor) new chef interop module (TBC!!)
+		17. (minor) small improvments in cron scripts
+		18. (minor) web: new feature to add security banner on the login page of the web interface
+		19. (minor) rest api: some update in the swagger api documentation
+		20. (medium) rest api: improvment in administration user part
+		21. (medium) web server: update to use the rest api on user part
+		22. (minor) ignore __pycache__ during build of adapters and libraries packages
+		23. (major) new cache memory for users and relations, optimization to reduce the number of queries in db
+		24. (major) new cache memory for projects, optimization to reduce the number of queries in db
+		25. (minor) rest api: update parameters on search variable by name or id
+		26. (minor) web server: pretty json print called automatically on test variable load
+		27. (major) web server: update to use the rest api on test variables part
+		28. (major) new cache memory for test variables, sql queries decreased
+		29. (minor) code splitted in testmodel file to be more readable
+		30. (medium) rest api: update adapters/Libs version for multiple entities (pull request #18)
+		31. (major) new code source files tree organization, to be more clear
+		32. (medium) rest api: integration of the find test usage feature (pull request #18)
+		33. (medium) test interop: extensivetesting plugin renamed to extensiveautomation
+		34. (major) product renamed to extensive automation (TBC!!!)
+		35. (minor) new basic scenarios in snippets part
+		36. (medium) test library: new advanced test properties
+		37. (major) all file models updated to support the new "scope" attribute in test parameters
+		38. (major) test library: new feature to save in the cache all parameters with the scope equals to cache
 	Issues Fixed
-		1. (minor) test library: undefined variable in virtualRun function #issue1
+		1. (minor) fix typo error in logs messages
+		2. (medium) fix regression, unable to generate test design with test global only
+		3. (minor) test interop vsphere: error during clone virtual machine issue #11
+		4. (medium) check syntax in testplan/testglobal: fix regression test name missing in error messages
+		5. (medium) fix regression: unable to check syntax of a test global
+		6. (minor) password update from web server, fix PHP Warning expects string parameter, object given
+		7. (medium) rest api: fix update password ressource, missing sha1 procedure
+		8. (medium) web server: unable to display test report in test results part
+		9. (minor) test executor: fix issue #13 - getSize function missing on template message

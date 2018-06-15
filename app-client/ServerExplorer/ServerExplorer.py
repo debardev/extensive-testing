@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -36,7 +36,7 @@ try:
     from PyQt4.QtGui import (QWidget, QVBoxLayout, QProgressBar, QFont, QHBoxLayout, QLabel, 
                             QComboBox, QSizePolicy, QLineEdit, QIntValidator, QCheckBox, QGridLayout, 
                             QFrame, QPushButton, QMessageBox, QTabWidget, QIcon, QDialog)
-    from PyQt4.QtCore import (pyqtSignal, Qt, QRect, QUrl, QByteArray, QObject)
+    from PyQt4.QtCore import (pyqtSignal, Qt, QRect, QUrl, QByteArray, QObject, QFile)
     from PyQt4.QtNetwork import (QHttp, QNetworkProxy, QHttpRequestHeader, 
                                 QNetworkAccessManager, QNetworkRequest )
 except ImportError:
@@ -44,7 +44,7 @@ except ImportError:
     from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QProgressBar, QHBoxLayout, QLabel, 
                                 QComboBox, QSizePolicy, QLineEdit, QCheckBox, QGridLayout, 
                                 QFrame, QPushButton, QMessageBox, QTabWidget, QDialog)
-    from PyQt5.QtCore import (pyqtSignal, Qt, QRect, QUrl, QByteArray, QObject)
+    from PyQt5.QtCore import (pyqtSignal, Qt, QRect, QUrl, QByteArray, QObject, QFile)
     from PyQt5.QtNetwork import (QNetworkProxy, QNetworkAccessManager, QNetworkRequest)
     
 import UserClientInterface as UCI
@@ -77,11 +77,7 @@ import hashlib
 import base64
 import json
 import zlib
-try:
-    import xmlrpclib
-except ImportError: # support python3
-    import xmlrpc.client as xmlrpclib
-    
+  
 from Libs import PyBlowFish
 
 NETWORK_ERRORS = {}
@@ -109,210 +105,6 @@ NETWORK_ERRORS[301] = "The Network Access API cannot honor the request because t
 NETWORK_ERRORS[302] = "The requested operation is invalid for this protocol."
 NETWORK_ERRORS[399] = "A breakdown in protocol was detected (parsing error, invalid or unexpected responses."
 
-class XmlrpcNetworkHandler(QObject, Logger.ClassLogger):
-    """
-    Xmlrpc network handler
-    """
-    StartWorking = pyqtSignal()
-    StartWorkingChannel = pyqtSignal()
-    StopWorking = pyqtSignal()
-    InProgress = pyqtSignal(int, int)
-    def __init__(self, parent = None):
-        """
-        Constructor
-
-        @param dialogName: 
-        @type dialogName:
-
-        @param parent: 
-        @type parent:
-        """
-        QObject.__init__(self, parent)
-
-        self.WsAddress = ''
-
-        self.httpPostReq = []
-        self.reqInProgress= None
-
-        self.manager = QNetworkAccessManager()
-        self.manager.finished.connect(self.onNetworkFinished)
-        self.manager.sslErrors.connect(self.onNetworkSslErrors)
-
-    def onNetworkProgress(self, bytesRead, totalBytes):
-        """
-        On network progress
-        """
-        self.InProgress.emit(bytesRead, totalBytes)
-
-    def onNetworkSslErrors(self, reply, errors):
-        """
-        Ignore SSL errors, not good ...
-        """
-        self.trace('WS ignore ssl errors')
-        reply.ignoreSslErrors()
-
-    def onNetworkFinished(self, reply):
-        """
-        On network finished
-        """
-
-        if reply in NETWORK_ERRORS:
-            self.error( 'XmlRPC response error: %s' % NETWORK_ERRORS[reply] )
-            self.stopWorking()
-            UCI.instance().onError( title=self.tr("XmlRPC - Connection Error"), err=self.tr( "%s" % NETWORK_ERRORS[reply] ) )
-        else:
-            # read the body
-            rsp = reply.readAll()
-            
-            # read the http response code
-            httpCode = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
-            if sys.version_info < (3,): httpCode = httpCode.toString()
-                
-            self.trace("http code response: %s" % httpCode)
-            if httpCode is None: return
-            
-            if int(httpCode) != 200:
-                self.error("bad code response %s, http body content for xmlrpc: %s" % (httpCode,rsp) )
-                self.stopWorking()
-                UCI.instance().onError( title=self.tr("XmlRPC Error"), err="Error Code: %s\n\nError details:\n%s" % (httpCode,rsp) )
-            else:
-                if len(rsp):
-                    try:
-                        self.trace('XmlRPC response received (truncated): %s' % rsp[:500])
-                        # decode xml rpc response and strip it
-                        if sys.version_info > (3,):
-                            xml_rsp = xmlrpclib.loads( str(rsp, 'utf8').strip() )
-                        else:
-                            xml_rsp = xmlrpclib.loads( unicode(rsp).strip() )
-                    except xmlrpclib.Fault as e:
-                        self.error("XmlRPC Fault code: %d" % e.faultCode)
-                        self.error("XmlRPC Fault string: %s" % e.faultString)
-                        self.error("XmlRPC Data received: %s" % rsp)
-                        self.stopWorking()
-                        UCI.instance().onError( title=self.tr("XmlRPC Error"), err=self.tr("Unable to read XML response")  )
-                    except Exception as e:
-                        self.trace("XmlRPC data received: %s" % rsp)
-                        self.error( "XmlRPC generic error: %s" % e)
-                        self.stopWorking()
-                        UCI.instance().onError( title=self.tr("XmlRPC Generic Error"), err=self.tr("Unexpected response received") )
-                    else:
-                        self.stopWorking()
-                        UCI.instance().onResponse(value=tuple(xml_rsp[0][0]) )
-
-        reply.close()
-        reply.deleteLater()
-        
-        self.reqInProgress = None
-        if len(self.httpPostReq):
-            self.__NetworkCall( postData=self.httpPostReq.pop(0) )
-            
-    def closeEvent(self, event):
-        """
-        On close event
-        """
-        self.httpPostId = None
-        event.accept()
-
-    def setWsAddress(self, address, port, scheme, webpath, hostname ):
-        """
-        Set webservice address
-        """
-        self.WsAddress = address
-        self.WsHostname = hostname 
-        self.WsPort = int(port)
-        self.WsScheme = scheme 
-        self.WsWebpath = webpath
-        self.trace("configure address=%s:%s scheme=%s webpath=%s hostname=%s for xmlrpc" % (address, port, scheme, webpath, hostname) )
-
-    def setWsProxy(self, ip, port, login=None, password=None):
-        """
-        Set webservice proxy
-        """
-        if len(ip):
-            if port:
-                proxy = QNetworkProxy()
-                proxy.setType(3); # http
-                proxy.setHostName(ip)
-                proxy.setPort(int(port))
-                
-                if login is not None:
-                    proxy.setUser(login)
-                if password is not None:
-                    proxy.setPassword(password)
-
-                self.manager.setProxy(proxy)
-                self.trace("configure proxy address for xmlrpc: %s:%s" % (ip, port) )
-                
-    def unsetWsProxy(self):
-        """
-        Unset webservice proxy
-        """
-        proxy = QNetworkProxy()
-        proxy.setType(2); # no proxy
-        self.manager.setProxy(proxy)
-
-    def startWorking(self):
-        """
-        Start working, emit signal
-        """
-        self.StartWorking.emit()
-        return True
-
-    def startWorkingChannel(self):
-        """
-        Start working on channel, emit signal
-        """
-        self.StartWorkingChannel.emit()
-        return True
-
-    def stopWorking(self):
-        """
-        Stop working, emit signal
-        """
-        self.StopWorking.emit()
-
-    def NetworkCall(self, postData ):
-        """
-        Network call
-        """
-        self.httpPostReq.append( postData )
-        if self.reqInProgress is None:
-            self.__NetworkCall( postData=self.httpPostReq.pop(0) )
-            
-    def __NetworkCall(self, postData):
-        """
-        Sub network call
-        """
-        self.startWorking()
-
-        self.trace('prepare post request for xmlrpc api' )
-        try:
-            url   = QUrl("%s://%s:%s/%s" % (self.WsScheme.lower(), self.WsAddress, self.WsPort, self.WsWebpath) )
-            
-            req   = QNetworkRequest (url)
-            if sys.version_info > (3,):
-                req.setRawHeader( b"Host", bytes(self.WsHostname, 'utf8') )
-                req.setRawHeader( b"User-Agent", bytes(Settings.instance().readValue( key = 'Common/acronym'), "utf8") )
-                req.setRawHeader( b"Connexion", b"Keep-Alive" )
-                req.setRawHeader( b"Content-Type", b"text/xml" )
-            else:
-                req.setRawHeader( b"Host", bytes(self.WsHostname) )
-                req.setRawHeader( b"User-Agent", bytes(Settings.instance().readValue( key = 'Common/acronym' )) )
-                req.setRawHeader( b"Connexion", b"Keep-Alive" )
-                req.setRawHeader( b"Content-Type", b"text/xml" )
-            
-            if sys.version_info > (3,):
-                reply = self.manager.post(req, bytes(postData, "utf8") )
-            else:
-                reply = self.manager.post(req, bytes(postData) )
-
-            reply.downloadProgress.connect(self.onNetworkProgress)
-
-        except Exception as e:
-            self.error( str(e) )
-            self.stopWorking()
-            UCI.instance().onError(err='XmlRPC Call Error: %s' % str(e) )
-            
 class RestNetworkHandler(QObject, Logger.ClassLogger):
     """
     Webservice network handler
@@ -335,6 +127,7 @@ class RestNetworkHandler(QObject, Logger.ClassLogger):
         self.WsAddress = ''
         self.WsCookie = None
         
+        self.__parent = parent
         self.httpPostReq = []
         self.reqInProgress= None
 
@@ -373,7 +166,13 @@ class RestNetworkHandler(QObject, Logger.ClassLogger):
             if sys.version_info < (3,): httpCode = httpCode.toString()
                 
             self.trace("rest http code response: %s" % httpCode)
-            if httpCode is None: return
+            if httpCode is None: 
+                # self.error("no http code, timeout?")
+                # self.stopWorking()
+                # RCI.instance().onGenericError( title=self.tr("REST Error"), 
+                                                # err="Connection lost!" )
+                # self.__parent.stopConnection()
+                return
             
             if int(httpCode) in [ 401 ]:
                 self.error("rest authentication failed, http body content for REST: %s" % (rsp) )
@@ -384,7 +183,7 @@ class RestNetworkHandler(QObject, Logger.ClassLogger):
                     else:
                         auth = json.loads( unicode(rsp).strip() )
                 except Exception as e:
-                    print(e)
+                    self.error("decode json error %s" % e)
                     RCI.instance().onGenericError( title=self.tr("API Decode Error"), 
                                                     err="Error Code: %s\n\nError details:\n%s" % (httpCode,rsp) )
                 else:
@@ -409,12 +208,16 @@ class RestNetworkHandler(QObject, Logger.ClassLogger):
                         self.error( "REST generic error: %s" % e)
                         self.stopWorking()
                         RCI.instance().onGenericError( title=self.tr("API Decode Error"), 
-                                                        err=self.tr("Unexpected response received") )
+                                                       err=self.tr("Unexpected response received") )
                     else:
                         self.stopWorking()
-                        if RCI.instance() is not None:
-                            RCI.instance().onGenericResponse( response=json_rsp )
-
+                        try:
+                            if RCI.instance() is not None:
+                                RCI.instance().onGenericResponse( response=json_rsp )
+                        except Exception as e:
+                            self.error( "something is wrong in the rest response - %s" % str(e) )
+                            self.error( "rest response received... %s" % json_rsp)
+                            
         reply.close()
         reply.deleteLater()
         
@@ -574,12 +377,6 @@ class WServerProgress(QWidget, Logger.ClassLogger):
         
         self.createWidget()
 
-    def progress(self):
-        """
-        return the progress bar
-        """
-        return self.progressBar
-        
     def createWidget(self):
         """
         Create qt widget
@@ -587,13 +384,6 @@ class WServerProgress(QWidget, Logger.ClassLogger):
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 2, 0)
 
-        self.progressBar = QProgressBar(self)
-        self.progressBar.setTextVisible(False)
-        self.progressBar.setMaximum(100)
-        self.progressBar.setProperty("value", 0)
-        self.progressBar.setAlignment(Qt.AlignCenter)
-        self.progressBar.setObjectName("progressBar")
-        
         self.progressBar2 = QProgressBar(self)
         self.progressBar2.setTextVisible(False)
         self.progressBar2.setMaximum(100)
@@ -601,40 +391,18 @@ class WServerProgress(QWidget, Logger.ClassLogger):
         self.progressBar2.setAlignment(Qt.AlignCenter)
         self.progressBar2.setObjectName("progressBar")
 
-        layout.addWidget( QLabel("| Data Transfer:") )
+        layout.addWidget( QLabel("| API:") )
         
         layout2 = QVBoxLayout()
         layout2.setSpacing(0)
         layout2.setContentsMargins(0, 0, 0, 0)
-        layout2.addWidget( self.progressBar )
         layout2.addWidget( self.progressBar2 )
         
         layout.addLayout(layout2)
         
         self.setLayout(layout)
-        self.setFixedWidth(150)
+        self.setFixedWidth(180)
         self.setFixedHeight(15)
-
-    def stopWorking(self):
-        """
-        Stop working, emit signal
-        """
-        self.progressBar.setMaximum(100)
-        self.progressBar.setProperty("value", 0)
-        
-    def startWorking(self):
-        """
-        Start working, emit signal
-        """
-        self.progressBar.setMaximum(0)
-        self.progressBar.setProperty("value", 0)
-        
-    def updateProgress(self, bytesRead, totalBytes):
-        """
-        Start working, emit signal
-        """
-        self.progressBar.setMaximum(totalBytes)
-        self.progressBar.setValue(bytesRead)
 
     def stopWorkingRest(self):
         """
@@ -701,7 +469,8 @@ class WServerStatus(QWidget, Logger.ClassLogger):
         layout.addWidget(self.proxyLabel)
         self.setLayout(layout)
         
-    def setStatus(self, status, serverIp = None, rightUser = None, userLogin=None, proxyIp=None, serverPort=None):
+    def setStatus(self, status, serverIp = None, rightUser = None, userLogin=None, 
+                  proxyIp=None, serverPort=None):
         """
         Called to change the status of the connection
 
@@ -753,8 +522,10 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         # proxy http
         self.defaultProxyHttpAddr = Settings.instance().readValue( key = 'Server/addr-proxy-http' )
         self.defaultProxyHttpPort = Settings.instance().readValue( key = 'Server/port-proxy-http' )
+        
         # decryptor
         self.oEncryptor = PyBlowFish.BlowfishEncryptor()
+        
         self.createDialog()
         self.createConnections()
 
@@ -762,8 +533,8 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         """
         Create qt dialog
         """
-        self.setWindowTitle(self.tr("Login on the test center"))
-        self.resize(400, 100)
+        self.setWindowTitle(self.tr("Login to the automation center"))
+        # self.resize(400, 100)
         
         layout = QVBoxLayout()
         
@@ -787,7 +558,7 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
                 lastPassword = ''
 
         self.addrComboBox = QComboBox()
-        self.addrComboBox.setMinimumWidth(250)
+        self.addrComboBox.setMinimumWidth(350)
         self.addrComboBox.setEditable(1)
         if isinstance(addrList, str):
             addrList = [ addrList ]
@@ -818,12 +589,10 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         self.proxyPasswordEdit = QLineEdit()
         self.proxyPasswordEdit.setEchoMode( QLineEdit.Password )
         self.proxyPasswordEdit.setDisabled(True)
-        
-        self.savePassCheckBox = QCheckBox( self.tr("Saving credentials" ) )
-        if int(Settings.instance().readValue( key = 'Server/save-credentials')):
-            self.savePassCheckBox.setChecked(True)
-            
+
         # main form
+        layoutMain = QVBoxLayout()
+        
         layout = QHBoxLayout()
         paramLayout = QGridLayout()
         paramLayout.addWidget(QLabel(self.tr("Address:")), 0, 0, Qt.AlignRight)
@@ -833,13 +602,12 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         paramLayout.addWidget(self.usernameEdit, 2, 1)
         paramLayout.addWidget(QLabel(self.tr("Password:")), 3, 0, Qt.AlignRight)
         paramLayout.addWidget(self.passwordEdit, 3, 1)
-        paramLayout.addWidget(self.savePassCheckBox, 4, 1)
- 
+
         self.sep1 = QFrame()
         self.sep1.setGeometry(QRect(110, 221, 51, 20))
         self.sep1.setFrameShape(QFrame.HLine)
         self.sep1.setFrameShadow(QFrame.Sunken)
-        
+
         # proxy support
         self.withProxyCheckBox = QCheckBox( self.tr("Use a HTTPS proxy server" ) )
         if QtHelper.str2bool( Settings.instance().readValue( key = 'Server/proxy-active') ):
@@ -861,18 +629,62 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         proxyLayout.addWidget(self.proxyPasswordEdit, 3, 1)
         
         paramLayout.addLayout(proxyLayout, 7,1)
+        
         layout.addLayout(paramLayout)
         
         # Buttons
+        
+        self.savePassCheckBox = QCheckBox( self.tr("Saving credentials" ) )
+        if int(Settings.instance().readValue( key = 'Server/save-credentials')):
+            self.savePassCheckBox.setChecked(True)
+            
         buttonLayout = QVBoxLayout()
         self.okButton = QPushButton( QIcon(":/ok.png"), self.tr("Connection"), self)
         self.cancelButton = QPushButton( QIcon(":/test-close-black.png"), self.tr("Cancel"), self)
         buttonLayout.addWidget(self.okButton)
         buttonLayout.addWidget(self.cancelButton)
+        buttonLayout.addWidget(self.savePassCheckBox)
         buttonLayout.addStretch()
         layout.addLayout(buttonLayout)
 
-        self.setLayout(layout)
+        layoutMain.addLayout(layout)
+        
+        # security banner
+        try:
+
+            fh = QFile( "%s/BANNER" % QtHelper.dirExec() )
+            fh.open(QFile.ReadOnly)
+            ct = fh.readAll()
+            
+            # convert qbytearray to str
+            if sys.version_info > (3,):
+                ct = unicode(ct, 'utf8') # to support python3 
+            else:
+                ct = unicode(ct)
+ 
+            if len(ct):
+                self.sep2 = QFrame()
+                self.sep2.setGeometry(QRect(110, 221, 51, 20))
+                self.sep2.setFrameShape(QFrame.HLine)
+                self.sep2.setFrameShadow(QFrame.Sunken)
+                
+                labelBanner = QLabel( " " )
+                labelBanner.setWordWrap(True)   
+             
+                labelBanner.setText(ct)
+
+                layoutMain.addWidget(self.sep2)
+                layoutMain.addWidget(labelBanner)
+            
+            fh.close()
+            
+        except Exception as e:
+            pass
+
+        
+       
+        
+        self.setLayout(layoutMain)
 
     def createConnections (self):
         """
@@ -911,14 +723,17 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         Called on connect button
         """
         if not len(self.addrComboBox.currentText()):
-            QMessageBox.warning(self, self.tr("Connection") , self.tr("Please to set a destination address!") )
+            QMessageBox.warning(self, self.tr("Connection") , 
+                                self.tr("Please to set a destination address!") )
             return
         if self.withProxyCheckBox.checkState() :
             if not len(self.proxyHttpAddrEdit.text()):
-                QMessageBox.warning(self, self.tr("Connection") , self.tr("Please to set a http proxy!") )
+                QMessageBox.warning(self, self.tr("Connection") , 
+                                    self.tr("Please to set a http proxy!") )
                 return
             if not len(self.proxyHttpPortEdit.text()):
-                QMessageBox.warning(self, self.tr("Connection") , self.tr("Please to set a port the http proxy!") )
+                QMessageBox.warning(self, self.tr("Connection") , 
+                                    self.tr("Please to set a port the http proxy!") )
                 return
             
         self.accept()
@@ -986,18 +801,22 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
         if self.withProxyCheckBox.checkState():
             proxyActivated = True
             
-        Settings.instance().setValue( key = 'Server/proxy-active', value = "%s" % proxyActivated )
+        Settings.instance().setValue( key = 'Server/proxy-active', 
+                                      value = "%s" % proxyActivated )
         
         if self.withProxyCheckBox.checkState() :
 
             # in this case, active also proxy for the internal web browser and test report
-            Settings.instance().setValue( key = 'Server/proxy-web-active', value = "%s" % proxyActivated )
+            Settings.instance().setValue( key = 'Server/proxy-web-active', 
+                                          value = "%s" % proxyActivated )
 
             # retrieve http connection
             portProxyHttp = self.proxyHttpPortEdit.text()
-            Settings.instance().setValue( key = 'Server/port-proxy-http', value = portProxyHttp )
+            Settings.instance().setValue( key = 'Server/port-proxy-http', 
+                                          value = portProxyHttp )
             addressProxyHttp = self.proxyHttpAddrEdit.text()
-            Settings.instance().setValue( key = 'Server/addr-proxy-http', value = addressProxyHttp )
+            Settings.instance().setValue( key = 'Server/addr-proxy-http', 
+                                          value = addressProxyHttp )
         
       
             
@@ -1028,7 +847,8 @@ class DServerConnection(QtHelper.EnhancedQDialog, Logger.ClassLogger):
                     
                     # encrypt password to config file
                     if password != '':
-                        Settings.instance().setValue( key = 'Server/last-pwd', value = self.oEncryptor.encrypt( password )  )
+                        Settings.instance().setValue( key = 'Server/last-pwd', 
+                                                      value = self.oEncryptor.encrypt( password )  )
                     else:
                         Settings.instance().setValue( key = 'Server/last-pwd', value ='' )
                 ret = ( address, username, password, self.withProxyCheckBox.checkState(), addressProxyHttp, portProxyHttp)
@@ -1076,12 +896,6 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         """
         Create qt connections
         """
-        # xmlrpc
-        self.wWebService.StartWorking.connect(self.OnWsStartWorking)
-        self.wWebService.StartWorkingChannel.connect(self.OnChannelStartWorking)
-        self.wWebService.StopWorking.connect(self.OnWsStopWorking)
-        self.wWebService.InProgress.connect(self.onNetworkProgress)
-        
         # rest
         self.RestService.StartWorking.connect(self.OnRestStartWorking)
         self.RestService.StopWorking.connect(self.OnRestStopWorking)
@@ -1164,7 +978,6 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         self.wServerStatus = WServerStatus(self)
         self.parent.addWidgetToStatusBar( self.wServerStatus, 0 )
 
-        self.wWebService = XmlrpcNetworkHandler(self)
         self.RestService = RestNetworkHandler(self)
 
         self.wServerProgress = WServerProgress(self)
@@ -1191,21 +1004,29 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         Repositories.instance().setEnabled(False)
         Counters.instance().setEnabled(False)
 
-        self.serverTab.addTab( Archives.instance(), QIcon(":/archives.png") , Archives.instance().name )
+        self.serverTab.addTab( Archives.instance(), QIcon(":/archives.png") , 
+                               Archives.instance().name )
         self.serverTab.setTabEnabled( TAB_ARCHIVES_POS, False )
-        self.serverTab.addTab( Repositories.instance() , QIcon(":/repositories.png"), Repositories.instance().name  )
+        self.serverTab.addTab( Repositories.instance() , QIcon(":/repositories.png"), 
+                               Repositories.instance().name  )
         self.serverTab.setTabEnabled( TAB_REPO_POS, False )
-        self.serverTab.addTab( TestManager.instance() , QIcon(":/processes.png"), TestManager.instance().name )
+        self.serverTab.addTab( TestManager.instance() , QIcon(":/processes.png"), 
+                               TestManager.instance().name )
         self.serverTab.setTabEnabled( TAB_TESTMGR_POS, False )
-        self.serverTab.addTab( Agents.instance() , QIcon(":/agent.png") , Agents.instance().name )
+        self.serverTab.addTab( Agents.instance() , QIcon(":/agent.png") , 
+                               Agents.instance().name )
         self.serverTab.setTabEnabled( TAB_AGENTS_POS, False )
-        self.serverTab.addTab( Probes.instance() , QIcon(":/probe.png") , Probes.instance().name )
+        self.serverTab.addTab( Probes.instance() , QIcon(":/probe.png") , 
+                               Probes.instance().name )
         self.serverTab.setTabEnabled( TAB_PROBES_POS, False )
-        self.serverTab.addTab( Miscellaneous.instance(), QIcon(":/server-config.png") , Miscellaneous.instance().name )
+        self.serverTab.addTab( Miscellaneous.instance(), QIcon(":/server-config.png"), 
+                               Miscellaneous.instance().name )
         self.serverTab.setTabEnabled( TAB_MISC_POS, False )
-        self.serverTab.addTab( Counters.instance(), QIcon(":/reset-counter.png") , Counters.instance().name )
+        self.serverTab.addTab( Counters.instance(), QIcon(":/reset-counter.png"), 
+                               Counters.instance().name )
         self.serverTab.setTabEnabled( TAB_CT_POS, False )
-        self.serverTab.addTab( ReleaseNotes.instance(), QIcon(":/releasenotes.png") , ReleaseNotes.instance().name )
+        self.serverTab.addTab( ReleaseNotes.instance(), QIcon(":/releasenotes.png"), 
+                               ReleaseNotes.instance().name )
         self.serverTab.setTabEnabled( TAB_RN_POS, False )
         self.serverTab.setCurrentIndex(-1)
 
@@ -1219,12 +1040,15 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
          * disconnect from the server
          * check update of the client
         """
-        self.connectAction = QtHelper.createAction(self, self.tr("Connect"), self.startConnection, 
+        self.connectAction = QtHelper.createAction(self, self.tr("Connect"), 
+                                            self.startConnection, 
                                             icon = QIcon(":/ok.png"))
-        self.disconnectAction = QtHelper.createAction(self, self.tr("Disconnect"), self.stopConnection, 
+        self.disconnectAction = QtHelper.createAction(self, self.tr("Disconnect"), 
+                                            self.stopConnection, 
                                             icon = QIcon(":/ko.png"))
         self.disconnectAction.setEnabled( False )
-        self.checkUpdateAction = QtHelper.createAction(self, self.tr("Check for update"), self.checkUpdate)
+        self.checkUpdateAction = QtHelper.createAction(self, self.tr("Check for update"), 
+                                            self.checkUpdate)
         self.checkUpdateAction.setEnabled(False)
 
     def checkUpdateAuto(self):
@@ -1290,91 +1114,93 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
             self.disconnectAction.setEnabled(True)
             self.checkUpdateAction.setEnabled(True)
             
-            if UCI.RIGHTS_ADMIN in RCI.instance().userRights or  UCI.RIGHTS_TESTER in RCI.instance().userRights:
+            # if UCI.RIGHTS_ADMIN in RCI.instance().userRights or  UCI.RIGHTS_TESTER in RCI.instance().userRights:
 
-                TestManager.instance().active()
-                TestManager.instance().setEnabled(True)
-                self.serverTab.setTabEnabled( TAB_TESTMGR_POS, True )
-                TestManager.instance().loadProjects( data= self.decodeData(data['projects']) )
-                TestManager.instance().loadRunning( data = self.decodeData(data['tasks-running']) )
-                TestManager.instance().loadWaiting( data = self.decodeData(data['tasks-waiting']) )
-                TestManager.instance().loadHistory( data = self.decodeData(data['tasks-history']) )
-                TestManager.instance().loadEnqueued( data = self.decodeData(data['tasks-enqueued']) )
+            TestManager.instance().active()
+            TestManager.instance().setEnabled(True)
+            self.serverTab.setTabEnabled( TAB_TESTMGR_POS, True )
+            TestManager.instance().loadProjects( data= data['projects'] )
+            TestManager.instance().loadRunning( data = data['tasks-running'] )
+            TestManager.instance().loadWaiting( data = data['tasks-waiting'] )
+            TestManager.instance().loadHistory( data = data['tasks-history'] )
+            TestManager.instance().loadEnqueued( data = data['tasks-enqueued'] )
 
-                Probes.instance().active()
-                Probes.instance().setEnabled(True)
-                self.serverTab.setTabEnabled( TAB_PROBES_POS, True )
-                Probes.instance().loadData( data = self.decodeData(data['probes']), dataInstalled=self.decodeData(data['probes-installed']) )
-                Probes.instance().loadStats( data = self.decodeData(data['probes-stats']) )
-                Probes.instance().loadDefault( data = self.decodeData(data['probes-default']) )
-    
-                Agents.instance().active()
-                Agents.instance().setEnabled(True)
-                self.serverTab.setTabEnabled( TAB_AGENTS_POS, True )
-                Agents.instance().loadData( data = self.decodeData(data['agents']), dataInstalled=self.decodeData(data['agents-installed']) )
-                Agents.instance().loadStats( data = self.decodeData(data['agents-stats']) )
-                Agents.instance().loadDefault( data = self.decodeData(data['agents-default']) )
+            Probes.instance().active()
+            Probes.instance().setEnabled(True)
+            self.serverTab.setTabEnabled( TAB_PROBES_POS, True )
+            Probes.instance().loadData( data = data['probes-running'],
+                                        dataInstalled=data['probes-installed']
+                                        )
+            Probes.instance().loadDefault( data = data['probes-default'] )
 
-            if UCI.RIGHTS_ADMIN in RCI.instance().userRights or  UCI.RIGHTS_TESTER in RCI.instance().userRights or  UCI.RIGHTS_LEADER in RCI.instance().userRights:
+            Agents.instance().active()
+            Agents.instance().setEnabled(True)
+            self.serverTab.setTabEnabled( TAB_AGENTS_POS, True )
+            Agents.instance().loadData( data = data['agents-running'],
+                                        dataInstalled=data['agents-installed']
+                                        )
+            Agents.instance().loadDefault( data = data['agents-default'] )
 
-                Archives.instance().active()
-                Archives.instance().setEnabled(True)
-                self.serverTab.setTabEnabled( TAB_ARCHIVES_POS, True )
-                self.serverTab.setCurrentIndex(TAB_ARCHIVES_POS)
-                Archives.instance().cleanTreeView()
-                Repositories.instance().cleanStatsArchives()
-                rootItem = Archives.instance().createRootItem()
-                Archives.instance().loadData( data = self.decodeData(data['archives']), parent=rootItem )
-                Archives.instance().initializeProjects( projects=self.decodeData(data['projects']), defaultProject=data['default-project'] )
+            # if UCI.RIGHTS_ADMIN in RCI.instance().userRights or  UCI.RIGHTS_TESTER in RCI.instance().userRights \
+                  # or  UCI.RIGHTS_LEADER in RCI.instance().userRights:
+
+            Archives.instance().active()
+            Archives.instance().setEnabled(True)
+            self.serverTab.setTabEnabled( TAB_ARCHIVES_POS, True )
+            self.serverTab.setCurrentIndex(TAB_ARCHIVES_POS)
+            Archives.instance().cleanTreeView()
+            Repositories.instance().cleanStatsArchives()
+            rootItem = Archives.instance().createRootItem()
+            Archives.instance().loadData( data = data['archives'], 
+                                          parent=rootItem )
+            Archives.instance().initializeProjects( projects=data['projects'], 
+                                                    defaultProject=data['default-project'] )
 
             if UCI.RIGHTS_ADMIN in RCI.instance().userRights :
 
                 Miscellaneous.instance().active()
                 Miscellaneous.instance().setEnabled(True)
                 self.serverTab.setTabEnabled( TAB_MISC_POS, True )
-                Miscellaneous.instance().loadData( data = self.decodeData(data['informations']) )
-                Miscellaneous.instance().loadStats( data = self.decodeData(data['stats-server']) )
+                Miscellaneous.instance().loadData( data = data['informations'] )
+                Miscellaneous.instance().loadStats( data = data['stats-server'] )
                 
                 Repositories.instance().active()
                 Repositories.instance().setEnabled(True)
                 self.serverTab.setTabEnabled( TAB_REPO_POS, True )
                 
-                Repositories.instance().initializeProjects( projects=self.decodeData(data['projects']), defaultProject=data['default-project'] )
+                Repositories.instance().initializeProjects( projects=data['projects'], 
+                                                            defaultProject=data['default-project'] )
                 Repositories.instance().loadData(   data = data['stats-repo-tests'], 
-                                                    backups=self.decodeData(data['backups-repo-tests']) )
+                                                    backups=data['backups-repo-tests'] )
                 Repositories.instance().loadDataAdapters(   data = data['stats-repo-adapters'],
-                                                            backups=self.decodeData(data['backups-repo-adapters'])   )
+                                                            backups=data['backups-repo-adapters']   )
                 Repositories.instance().loadDataLibraries(  data = data['stats-repo-libraries'],
-                                                            backups=self.decodeData(data['backups-repo-libraries'])   )
+                                                            backups=data['backups-repo-libraries']   )
                 Repositories.instance().loadDataArchives( data = data['stats-repo-archives'],
-                                                            backups=self.decodeData(data['backups-repo-archives']) )
+                                                            backups=data['backups-repo-archives'] )
                 
-            if UCI.RIGHTS_ADMIN in RCI.instance().userRights or  UCI.RIGHTS_TESTER in RCI.instance().userRights or \
-                UCI.RIGHTS_DEVELOPER in RCI.instance().userRights or  UCI.RIGHTS_LEADER in RCI.instance().userRights:
+            # if UCI.RIGHTS_ADMIN in RCI.instance().userRights or  UCI.RIGHTS_TESTER in RCI.instance().userRights or \
+                # UCI.RIGHTS_DEVELOPER in RCI.instance().userRights or  UCI.RIGHTS_LEADER in RCI.instance().userRights:
 
-                Settings.instance().setServerContext( self.decodeData(data['informations']) )
-                ReleaseNotes.instance().active()
-                ReleaseNotes.instance().setEnabled(True)
-                self.serverTab.setTabEnabled( TAB_RN_POS, True )
-                if len(RCI.instance().userRights) == 1 and RCI.instance().userRights[0] == UCI.RIGHTS_DEVELOPER:
-                    self.serverTab.setCurrentIndex(TAB_RN_POS)
-                
-                rnDecoded = base64.b64decode( data['rn'] )
-                rnAdpDecoded = base64.b64decode( data['rnAdp'] )
-                rnLibAdpDecoded = base64.b64decode( data['rnLibAdp'] )
-                rnToolboxDecoded =  base64.b64decode( data['rnToolbox'] )
-                ReleaseNotes.instance().loadData(   data = rnDecoded, 
-                                                    dataAdp = rnAdpDecoded,
-                                                    dataLibAdp=rnLibAdpDecoded, 
-                                                    dataToolbox=rnToolboxDecoded  )
+            Settings.instance().setServerContext( data['informations'] )
+            ReleaseNotes.instance().active()
+            ReleaseNotes.instance().setEnabled(True)
+            self.serverTab.setTabEnabled( TAB_RN_POS, True )
+            # if len(RCI.instance().userRights) == 1 and RCI.instance().userRights[0] == UCI.RIGHTS_DEVELOPER:
+                # self.serverTab.setCurrentIndex(TAB_RN_POS)
 
-                Counters.instance().active()
-                Counters.instance().setEnabled(True)
-                self.serverTab.setTabEnabled( TAB_CT_POS, True )
+            ReleaseNotes.instance().loadData(   data = data['core'], 
+                                                dataAdp = data['adapters'],
+                                                dataLibAdp=data['libraries'], 
+                                                dataToolbox=data['toolbox']  )
 
-                Counters.instance().loadData(counters=data['stats'] )
-            
-            if UCI.RIGHTS_TESTER in RCI.instance().userRights or UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
+            Counters.instance().active()
+            Counters.instance().setEnabled(True)
+            self.serverTab.setTabEnabled( TAB_CT_POS, True )
+
+            Counters.instance().loadData(counters=data['stats'] )
+        
+            if UCI.RIGHTS_TESTER in RCI.instance().userRights:
                 Counters.instance().deactivate()
             else:
                 Counters.instance().active()
@@ -1382,7 +1208,6 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         except Exception as e:
             self.error('error on connection: %s' % str(e) )
             self.stopConnection()
-            self.wWebService.stopWorking()
             self.RestService.stopWorking()
             
     def onDisconnection (self):
@@ -1434,18 +1259,20 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         if dConnect.exec_() == QDialog.Accepted:
             retCtx = dConnect.getCtx()
             if retCtx:
-                started = self.wWebService.startWorking()
+                started = self.RestService.startWorking()
                 addr, login, pwd, supportProxy, addrProxyHttp, portProxyHttp  = retCtx
                 if started:
-                    ret = UCI.instance().setCtx(address = addr, login = login, password = pwd, 
-                                                supportProxy=supportProxy, addressProxyHttp=addrProxyHttp,
+                    ret = UCI.instance().setCtx(address = addr, 
+                                                login = login, 
+                                                password = pwd, 
+                                                supportProxy=supportProxy, 
+                                                addressProxyHttp=addrProxyHttp,
                                                 portProxyHttp=portProxyHttp)
                     if ret is not None:
                         self.connectAction.setEnabled(False)
                         self.disconnectAction.setEnabled(True)
                         UCI.instance().connectChannel()
                     else:
-                        self.wWebService.stopWorking()
                         self.RestService.stopWorking()
             else:
                 self.ConnectCancelled.emit()
@@ -1473,10 +1300,8 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         @type data: tuple
         """ 
         action, event = data[1]
-        if data[0] == 'progressbar':    
-            cur_progress, max_progress = event
-            self.wWebService.WsUpdateDataReadProgress(cur_progress, max_progress)
-        elif data[0] == 'context-server':       
+        
+        if data[0] == 'context-server':       
             Settings.instance().setServerContext( event )
             Miscellaneous.instance().cleanContext()
             Miscellaneous.instance().loadData( data=event )
@@ -1497,9 +1322,13 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
                 Archives.instance().resetPreview()
             else:
                 if 'stats-repo-archives' in event:
-                    Archives.instance().refreshData(data = event['archive'], data_stats=event['stats-repo-archives'], action = action )
+                    Archives.instance().refreshData(data = event['archive'], 
+                                                    data_stats=event['stats-repo-archives'], 
+                                                    action = action )
                 else:
-                    Archives.instance().refreshData(data = event['archive'], data_stats=None, action = action )
+                    Archives.instance().refreshData(data = event['archive'], 
+                                                    data_stats=None, 
+                                                    action = action )
         elif data[0] == 'archives':
             if action == 'reset-backups':
                 Repositories.instance().resetBackupArchivesPart()
@@ -1568,7 +1397,7 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         @param data: 
         @type data:
         """
-        Repositories.instance().loadDataArchives( data = datan)   
+        Repositories.instance().loadDataArchives( data = data)   
 
     def onRefreshStatsServer(self, usages):
         """
@@ -1586,21 +1415,9 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         @param data: 
         @type data:
         """
-        data_decoded =  self.decodeData(data)
-        Settings.instance().setServerContext(data_decoded)
+        Settings.instance().setServerContext(data)
         Miscellaneous.instance().cleanContext()
-        Miscellaneous.instance().loadData( data = data_decoded )
-
-    def onRefreshArchives(self, data):
-        """
-        Refresh data on xml rpc call, deprecated
-
-        @param data: 
-        @type data:     
-        """
-        Archives.instance().cleanTreeView()
-        rootItem = Archives.instance().createRootItem()
-        Archives.instance().loadData( data = self.decodeData(data), parent=rootItem )
+        Miscellaneous.instance().loadData( data = data )
 
     def onRefreshResults(self, listing):
         """
@@ -1677,13 +1494,7 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         Clear tasks history
         """
         TestManager.instance().updateHistory( data = [] )
-        
-    def onWebCall(self, data):
-        """
-        On web call
-        """
-        self.wWebService.NetworkCall(postData=data)
-        
+
     def onRestCall(self, uri, request, body=''):
         """
         On rest call
@@ -1694,10 +1505,6 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         """
         Configure server for network handler
         """
-        self.wWebService.setWsAddress( address= address, port = port,
-                                        scheme=scheme, 
-                                        webpath=Settings.instance().readValue( key = 'Server/xmlrpc-path' ),
-                                        hostname=hostname )
         self.RestService.setWsAddress( address= address, port = port,
                                         scheme=scheme, 
                                         webpath=Settings.instance().readValue( key = 'Server/rest-path' ),
@@ -1707,14 +1514,12 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         """
         Configure proxy for network handler
         """
-        self.wWebService.setWsProxy(ip=ip, port=port)
         self.RestService.setWsProxy(ip=ip, port=port)
         
     def stopWorking(self):
         """
         Stop working
         """
-        self.wWebService.stopWorking()
         self.RestService.stopWorking()
         
     def rest(self):
@@ -1722,14 +1527,7 @@ class WServerExplorer(QWidget, Logger.ClassLogger):
         Return rest webservice object
         """
         return self.RestService
-        
-    def xmlrpc(self):
-        """
-        Return the xmlrpc object
-        """
-        return self.wWebService
-        
-        
+
 ServerExplorer = None # Singleton
 def instance ():
     """

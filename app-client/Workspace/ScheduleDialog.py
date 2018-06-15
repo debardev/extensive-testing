@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -959,8 +959,10 @@ class SchedDialog(QtHelper.EnhancedQDialog):
         self.cancelButton.clicked.connect(self.reject)
         self.groupRadio.buttonClicked.connect(self.changePage)
         
-    def fillFields(self, schedType, schedArgs, taskName, taskId, schedNb, withoutProbes, enabled=True,
-                    noKeepTr=False, withoutNotifs=False, schedFrom=(0,0,0,0,0,0), schedTo=(0,0,0,0,0,0) ):
+    def fillFields(self, schedType, schedArgs, taskName, 
+                    taskId, schedNb, withoutProbes, enabled=True,
+                    noKeepTr=False, withoutNotifs=False, 
+                    schedFrom=(0,0,0,0,0,0), schedTo=(0,0,0,0,0,0) ):
         """
         Fill fields
         """
@@ -1350,9 +1352,11 @@ class SchedDialogV1(QtHelper.EnhancedQDialog):
         if toggled:
             self.configBox.setChecked(False)
 
-    def fillFields(self, schedType, schedArgs, taskName, taskId, schedNb, 
-                        withoutProbes, enabled=True, noKeepTr=False, withoutNotifs=False, 
-                        schedFrom=(0,0,0,0,0,0), schedTo=(0,0,0,0,0,0) ):
+    def fillFields(self, schedType, schedArgs, 
+                    taskName, taskId, schedNb, 
+                    withoutProbes, enabled=True, 
+                    noKeepTr=False, withoutNotifs=False, 
+                    schedFrom=(0,0,0,0,0,0), schedTo=(0,0,0,0,0,0) ):
         """
         Fill fields
         """

@@ -1,8 +1,27 @@
 #!/usr/bin/env python
 
-import sys, os, time, atexit
+import sys
+import os
+import time
+import atexit
 import signal
 
+def log_exception(*args):
+    """
+    Log exception
+    """
+    timestamp = time.time()
+    c,e,traceback = args
+
+    # extract number line, function name and file
+    lineno = traceback.tb_lineno
+    frame = traceback.tb_frame
+    name = frame.f_code.co_name
+    filename = frame.f_code.co_filename
+
+    sys.stderr.write('%s Traceback Num=%s Function=%s File=%s' % (timestamp, lineno, name, filename))
+    sys.stderr.write('%s')
+    
 # a simple unix/linux daemon in Python by Sander Marechal
 # adaptation for this project
 
@@ -49,7 +68,7 @@ class Daemon(object):
             if pid > 0:
                 # exit first parent
                 sys.exit(0)
-        except OSError, e:
+        except OSError as e:
             sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1)
    
@@ -74,17 +93,24 @@ class Daemon(object):
         # redirect standard file descriptors
         sys.stdout.flush()
         sys.stderr.flush()
-        si = file(self.stdin, 'r')
-        so = file(self.stdout, 'a+')
-        se = file(self.stderr, 'a+', 0)
-        os.dup2(si.fileno(), sys.stdin.fileno())
-        os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
-   
+        
+        if sys.version_info < (3,):
+            si = file(self.stdin, 'r')
+            so = file(self.stdout, 'a+')
+            se = file(self.stderr, 'a+', 0)
+            os.dup2(si.fileno(), sys.stdin.fileno())
+            os.dup2(so.fileno(), sys.stdout.fileno())
+            os.dup2(se.fileno(), sys.stderr.fileno())
+        else:
+            # 1 to select line buffering (only usable in text mode)
+            sys.stdout = open( self.stdout ,"a+", 1) 
+            sys.stderr = open( self.stderr ,"a+", 1)
+            sys.excepthook = log_exception
+            
         # write pidfile
         atexit.register(self.delpid)
         pid = str(os.getpid())
-        file(self.pidfile,'w+').write("%s\n" % pid)
+        open(self.pidfile,'w+').write("%s\n" % pid)
     
         # write running file
         self.delrunning()
@@ -145,7 +171,7 @@ class Daemon(object):
             sys.stderr.write( " (no pid file detected!)" )
             sys.exit(1)
         try:
-            pf = file(self.pidfile,'r')
+            pf = open(self.pidfile,'r')
             pid = int(pf.read().strip())
             pf.close()
         except IOError:
@@ -163,7 +189,7 @@ class Daemon(object):
     def setrunning(self):
         """
         """
-        file(self.runningfile,'w+').write("OK")
+        open(self.runningfile,'w+').write("OK")
         
     def start(self):
         """

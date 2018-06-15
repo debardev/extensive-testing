@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -34,9 +34,13 @@ AdapterIP = sys.modules['SutAdapters.%s.IPLITE' % TestAdapterLib.getVersion()]
 AdapterTCP = sys.modules['SutAdapters.%s.TCP' % TestAdapterLib.getVersion()]
 AdapterSOCKS = sys.modules['SutAdapters.%s.SOCKS' % TestAdapterLib.getVersion()]
 
-import codec
-import templates
-
+try:
+	import codec
+	import templates
+except ImportError: # python3 support
+	from . import codec
+	from . import templates
+	
 __NAME__="""TELNET"""
 
 AGENT_TYPE_EXPECTED='socket'
@@ -388,8 +392,13 @@ class Client(TestAdapterLib.Adapter):
 			cmds_str = ''
 			if cmd in codec.TELNET_COMMANDS:
 				cmds_str = '%s' % codec.TELNET_COMMANDS[cmd]
+			else:
+				self.warning("telnet command not supported: %s" % cmd)
 			if opt in codec.TELNET_OPTIONS:
 				cmds_str += ' %s' % codec.TELNET_OPTIONS[opt]
+			else:
+				self.warning("telnet option not supported: %s" % opt)
+				cmd_str += ' Unsupported'
 			tpl_cmds.addKey(name="%s" % nb_cmd, data=cmds_str)
 			nb_cmd += 1
 			

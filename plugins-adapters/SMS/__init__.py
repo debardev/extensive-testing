@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,10 @@
 # MA 02110-1301 USA
 # -------------------------------------------------------------------
 
-from gateway import *
+try:
+	from gateway import *
+except ImportError: # python3 support
+	from .gateway import *
 
 __DESCRIPTION__ = """This adapter enable to send/received sms through a real device.
 Install the app SMS Gateway on your android mobile device to use it"""

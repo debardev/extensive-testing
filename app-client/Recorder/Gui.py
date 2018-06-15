@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -61,6 +61,8 @@ import ServerExplorer.Agents as ServerAgents
 
 import Settings
 import UserClientInterface as UCI
+import RestClientInterface as RCI
+
 import Workspace as WWorkspace
 import DefaultTemplates
 
@@ -1004,7 +1006,7 @@ class WRecorderGui(QWidget, Logger.ClassLogger):
         Export steps
         """
         if not self.offlineMode:
-            if not UCI.instance().isAuthenticated():
+            if not RCI.instance().isAuthenticated():
                 QMessageBox.warning(self, "Assistant Automation" , "Connect to the test center in first!")
                 return
 
@@ -2637,7 +2639,8 @@ class WRecorderGui(QWidget, Logger.ClassLogger):
         # finally replace all keys in the template
         newTest = newTest.replace( "<<PURPOSE>>", 'self.setPurpose(purpose="%s")' % self.tcPurposeLine.text() )
         if not len(adpsGui): adpsGui = [ "pass" ]
-        newTest = newTest.replace( "<<ADPS>>", '\n\t'.join(adpsGui) )
+        if TS: newTest = newTest.replace( "<<ADPS>>", '\n\t\t'.join(adpsGui) )
+        if TU: newTest = newTest.replace( "<<ADPS>>", '\n\t'.join(adpsGui) )
         
         if not len(steps): steps = [ "pass" ]
         

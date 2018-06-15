@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,16 +30,16 @@
 #        AUTHOR:  Denis Machard
 #====================================================================
 
-PKG_NAME="ExtensiveTesting"
+PKG_NAME="ExtensiveAutomation"
 APP_PATH="$(pwd)"
 APP_SRC_PATH="$(pwd)/$PKG_NAME/"
 HTTPLIB2="httplib2-0.8"
 
-echo "========================================"
-echo "=     - Cleanup the $PKG_NAME product -      ="
-echo "=           Denis Machard              ="
-echo "=      www.extensivetesting.org        ="
-echo "========================================"
+echo "=============================================="
+echo "=      - Cleanup the $PKG_NAME product -     ="
+echo "=            Denis Machard                   ="
+echo "=       www.extensiveautomation.org          ="
+echo "=============================================="
 
 rm -rf $APP_PATH/$HTTPLIB2/
 rm -rf $APP_SRC_PATH/Libs/NetLayerLib/

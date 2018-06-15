@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -37,7 +37,10 @@ import socket
 import select
 import time
 
-import templates
+try:
+	import templates
+except ImportError: # python3 support
+	from . import templates
 
 __NAME__="""UDP"""
 
@@ -239,7 +242,7 @@ class Server(TestAdapterLib.Adapter):
 			
 			# start thread
 			self.setRunning()
-		except socket.error, e:
+		except socket.error as e:
 			self.onStartListeningFailed(e)
 		except Exception as e:
 			self.error( "start listen error: %s" % str(e) )
@@ -270,7 +273,7 @@ class Server(TestAdapterLib.Adapter):
 									else:
 										self.clients[addr] = { 'buffer': data, 'id': self.getId() }
 									self.onClientIncomingData(clientAddress=addr)		
-		except socket.error, e:
+		except socket.error as e:
 			self.onSocketError(e)					
 		except Exception as e:
 			self.error( "on run %s" % str(e) )

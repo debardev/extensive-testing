@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,10 +28,12 @@ import TestExecutorLib.TestAdapterLib as TestAdapterLib
 import TestExecutorLib.TestLibraryLib as TestLibraryLib
 import sys
 
-import templates
-import struct
+try:
+	import templates
+except ImportError: # python3 support
+	from . import templates
 
-import TestExecutorLib.TestTemplatesLib as TestTemplatesLib
+import struct
 
 SE                  = 240    #End of subnegotiation parameters.
 NOP                 = 241    #No operation.
@@ -103,14 +105,21 @@ X3D = 30 	#X.3 PAD
 NAWS = 31 	#Negotiate About Window Size
 TS = 32 	#Terminal Speed
 RFC = 33 	#Remote Flow Control
-Linemode = 22 # 	Linemode
+Linemode = 34 # 	Linemode
 XDL = 35 	#X Display Location
-EOL = 255 	#Extended-Options-List
+Env = 36
+Auth = 37
+Encrypt = 38
 NewEnv = 39
+EOL = 255 	#Extended-Options-List
+
 
 TELNET_OPTIONS = {
 	TS: 'Terminal Speed',
 	NewEnv: 'New Environment Option',
+	Env:  'Environment Option',
+	Auth:  'Authentication Option',
+	Encrypt: 'Data Encryption Option',
 	BIN : 'Binary Transmission',
 	ECHO : 'Echo',
 	RECON : 'Reconnection',
@@ -187,12 +196,16 @@ class Codec(object):
 							break
 					# convert string options to integer value
 					finalOtps = 0
+					supported = False
 					for key, value in TELNET_OPTIONS.items():
 						if opt == value:
 							finalOtps = key
-							break			
-					# final pack			
-					commands.append( struct.pack('!BBB', IAC, finalCmd, finalOtps ) )
+							supported = True
+							break	
+					
+					# final pack, only if the option is supported
+					if supported:	
+						commands.append( struct.pack('!BBB', IAC, finalCmd, finalOtps ) )
 			except Exception as e:
 				self.error( 'unable to pack options: %s' % e)
 			else:	
@@ -283,8 +296,7 @@ class Codec(object):
 					cmdCountLen += 1
 				else:
 					left_data += data[i]
-					
-#		left_data = data[len_cmd*nb_cmd:]
+
 		if not nb_cmd:
 			tplCmd = None
 			

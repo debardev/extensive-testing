@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -38,7 +38,7 @@ if [ ! $UID -eq 0 ]; then
     exit 1
 fi
 
-APP_NAME="ExtensiveTesting"
+APP_NAME="ExtensiveAutomation"
 APP_PATH="$(pwd)"
 LOG_FILE="$APP_PATH/install.log"
 PKG_PATH="$APP_PATH/PKG/"
@@ -51,7 +51,7 @@ PRODUCT_VERSION="$(cat "$APP_SRC_PATH"/VERSION)"
 PRODUCT_SVC_NAME="$(echo $APP_NAME | sed 's/.*/\L&/')"
 PRODUCT_SVC_CTRL="xtctl"
 
-read -p "Are you sure to install the product? (yes or no) " yn 
+read -p "Are you sure you want to install the product? (yes or no) " yn 
 case $yn in 
 	[Yy]* ) ;; 
 	[Nn]* ) echo "Ok, goodbye."; exit 1;; 

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -29,9 +29,9 @@ import TestExecutorLib.TestLibraryLib as TestLibraryLib
 import sys
 
 def icmp(tp=None, tp_str=None, code=None, code_str=None, sum=None, sum_status=None, sum_int=None,
-					id=None, id_int=None, seq_num=None, seq_num_int=None, data=None, data_size=None, 
-					mask=None, time_orig=None, time_rx=None, time_tx=None,
-					gw_addr=None, unused=None, pointer=None):
+        id=None, id_int=None, seq_num=None, seq_num_int=None, data=None, data_size=None, 
+        mask=None, time_orig=None, time_rx=None, time_tx=None,
+        gw_addr=None, unused=None, pointer=None):
 	"""
 	Construct a template for a icmp packet
 	"""	

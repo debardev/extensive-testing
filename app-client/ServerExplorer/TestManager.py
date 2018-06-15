@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -196,14 +196,19 @@ class TaskWaitingItem(QTreeWidgetItem, Logger.ClassLogger):
         @type parent:
         """
         QTreeWidgetItem.__init__(self, parent)
-        eventid, eventtype, eventargs, eventtime, eventname, author, realruntime, duration, result, eventnb, \
-        eventnbcur, eventenabled, withoutprobes, withoutnotif, nokeeptr, userid, projectid, eventfrom, eventto, groupid  = task
+        
+        eventid, eventtype, eventargs, eventtime, eventname, \
+        author, realruntime, duration, result, eventnb, \
+        eventnbcur, eventenabled, withoutprobes, withoutnotif, \
+        nokeeptr, userid, projectid, eventfrom, eventto, groupid  = task
+        
         self.taskId = eventid
         try:
             self.taskEventArgs = eval(eventargs)
         except Exception as e:
             self.error( "unable to eval event args (%s): %s" % (str(eventargs), str(e)) )
             self.taskEventArgs = (0,0,0,0,0,0)
+
         self.taskEventType = eventtype
         self.taskEventTime = eventtime
         self.taskEventName = eventname
@@ -516,9 +521,10 @@ class WTestManager(QWidget, Logger.ClassLogger):
         self.testWaiting = QTreeWidget(self)
         self.testWaiting.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.waitingToolbar = QToolBar(self)
-        self.labelsWaiting = [ self.tr("No.") , self.tr("Group"), self.tr("Schedulation Type"),self.tr("Project"), self.tr("Name") \
-                            , self.tr("Next run"), self.tr("Repeat"), self.tr("Probes"), self.tr("Notifications") \
-                            , self.tr("Tests result"), self.tr("Author")  ]
+        self.labelsWaiting = [ self.tr("No.") , self.tr("Group"), self.tr("Schedulation Type"),
+                              self.tr("Project"), self.tr("Name") , self.tr("Next run"), 
+                              self.tr("Repeat"), self.tr("Probes"), self.tr("Notifications") , 
+                              self.tr("Tests result"), self.tr("Author")  ]
         self.testWaiting.setHeaderLabels(self.labelsWaiting)
         self.testWaiting.setIndentation(10)
         self.testWaiting.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -814,9 +820,12 @@ class WTestManager(QWidget, Logger.ClassLogger):
         """
         # if self.itemCurrent is not None:
         for currentItem in self.testWaiting.selectedItems():
-            RCI.instance().rescheduleTask(taskId=currentItem.taskId, taskEnabled=False, scheduleType=currentItem.taskEventType,
-                                            scheduleAt=currentItem.taskEventArgs, scheduleRepeat=currentItem.taskEventNb, 
-                                            probesEnabled=currentItem.taskWithoutProbes, notificationsEnabled=currentItem.taskWithoutNotif, 
+            RCI.instance().rescheduleTask(taskId=currentItem.taskId, taskEnabled=False, 
+                                            scheduleType=currentItem.taskEventType,
+                                            scheduleAt=currentItem.taskEventArgs, 
+                                            scheduleRepeat=currentItem.taskEventNb, 
+                                            probesEnabled=currentItem.taskWithoutProbes, 
+                                            notificationsEnabled=currentItem.taskWithoutNotif, 
                                             debugEnabled=False, logsEnabled=currentItem.taskNoKeepTr, 
                                             fromTime=currentItem.taskEventFrom, toTime=currentItem.taskEventTo )
                                             
@@ -826,9 +835,12 @@ class WTestManager(QWidget, Logger.ClassLogger):
         """
         # if self.itemCurrent is not None:
         for currentItem in self.testWaiting.selectedItems():
-            RCI.instance().rescheduleTask(taskId=currentItem.taskId, taskEnabled=True, scheduleType=currentItem.taskEventType,
-                                            scheduleAt=currentItem.taskEventArgs, scheduleRepeat=currentItem.taskEventNb, 
-                                            probesEnabled=currentItem.taskWithoutProbes, notificationsEnabled=currentItem.taskWithoutNotif, 
+            RCI.instance().rescheduleTask(taskId=currentItem.taskId, taskEnabled=True, 
+                                            scheduleType=currentItem.taskEventType,
+                                            scheduleAt=currentItem.taskEventArgs, 
+                                            scheduleRepeat=currentItem.taskEventNb, 
+                                            probesEnabled=currentItem.taskWithoutProbes, 
+                                            notificationsEnabled=currentItem.taskWithoutNotif, 
                                             debugEnabled=False, logsEnabled=currentItem.taskNoKeepTr, 
                                             fromTime=currentItem.taskEventFrom, toTime=currentItem.taskEventTo )
     

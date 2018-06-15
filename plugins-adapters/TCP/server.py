@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -39,8 +39,16 @@ import threading
 import socket
 import select
 import time
-import Queue
-import templates
+
+try:
+	import Queue
+except ImportError: # python3 support
+	import queue as Queue
+
+try:
+	import templates
+except ImportError: # python3 support
+	from . import templates
 
 __NAME__="""TCP"""
 
@@ -245,8 +253,9 @@ class Server(TestAdapterLib.Adapter):
                                 separatorIn='\\x00', separatorOut='\\x00', separatorDisabled=False, 
                                 sslSupport=False, sslVersion=AdapterSSL.SSLv23, checkCert=AdapterSSL.CHECK_CERT_NO,
                                 debug=False, logEventSent=True, logEventReceived=True, parentName=None, shared=False,
-                                agentSupport=False, agent=None, verbose = True, filter = None, filterTime = None, destIp = None
-                        ):
+                                agentSupport=False, agent=None, verbose = True, filter = None, filterTime = None, destIp = None,
+                                certfile="/tmp/cert.file",keyfile="/tmp/key.file"
+                                ):
         """
         This class enable to use TCP as server only, with support and dns resolution.
         Lower network layer (IP, Ethernet) are not controlable.
@@ -310,6 +319,12 @@ class Server(TestAdapterLib.Adapter):
         
         @param filterTime: time to filter the messages
         @type filterTime:   string
+        
+        @param certFile:  certificate file (default=/tmp/cert.file)
+        @type certFile:   string
+
+        @param keyFile:  key file (default=/tmp/key.file)
+        @type keyFile:   string
         """
         # check agent
         if agentSupport and agent is None:
@@ -324,7 +339,7 @@ class Server(TestAdapterLib.Adapter):
         
         # init adapter
         TestAdapterLib.Adapter.__init__(self, name = __NAME__, parent = parent, debug=debug, realname=name, shared=shared, 
-                                                                                                                    showEvts=verbose, showSentEvts=verbose, showRecvEvts=verbose)
+                                                       showEvts=verbose, showSentEvts=verbose, showRecvEvts=verbose)
         if parentName is not None:
             TestAdapterLib.Adapter.setName(self, name="%s>%s" % (parentName,__NAME__)  )
         self.__mutex__ = threading.RLock()
@@ -367,10 +382,11 @@ class Server(TestAdapterLib.Adapter):
         # ssl support
         self.cfg['ssl-support'] = sslSupport
         self.ssl = AdapterSSL.Server(parent=parent, sslVersion=sslVersion, debug=debug, name=name,
-                                                                logEventSent=logEventSent, logEventReceived=logEventReceived, shared=shared)
+                                                logEventSent=logEventSent, logEventReceived=logEventReceived, shared=shared,
+                                                certfile=certfile,keyfile=keyfile)
                                                                 
         self.TIMER_ALIVE_AGT = TestAdapterLib.Timer(parent=self, duration=20, name="keepalive-agent", callback=self.aliveAgent,
-                                                                                                                                logEvent=False, enabled=True)
+                                                                           logEvent=False, enabled=True)
         self.__checkConfig()
 
         if agentSupport:

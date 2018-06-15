@@ -1,5 +1,10 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
+   <file>../../TERMS</file>
+   <file>../../CONTRIBUTORS</file>
+   <file>find-usage@1x.png</file>
+   <file>update-adapter.png</file>
+   <file>folder_base.png</file>
    <file>sandbox.png</file>
    <file>input-unused.png</file>
    <file>build.png</file>

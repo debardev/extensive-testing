@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,7 @@ fi
 # minimum space left to install the product, 1GB
 MIN_SPACE_LEFT=1048576
 
-APP_NAME="ExtensiveTesting"
+APP_NAME="ExtensiveAutomation"
 APP_PATH="$(pwd)"
 LOG_FILE="$APP_PATH/install.log"
 PKG_PATH="$APP_PATH/PKG/"
@@ -64,9 +64,9 @@ PRODUCT_SVC_NAME="$(echo $APP_NAME | sed 's/.*/\L&/')"
 
 if [ "$SILENT" == "custom" -o "$SILENT" == "install" ]; then
 	echo "======================================================"
-	echo "=  - Installation of the $APP_NAME product -  ="
-	echo "=                    Denis Machard                   ="
-	echo "=               www.extensivetesting.org             ="
+	echo "=     - Installation of the $APP_NAME product -      ="
+	echo "=                   Denis Machard                    ="
+	echo "=              www.extensiveautomation.org           ="
 	echo "======================================================"
 fi
 
@@ -81,74 +81,85 @@ PWD_BIN="/usr/bin/pwd"
 LS_BIN="/usr/bin/ls"
 
 # python extensions modified
-SELENIUM_ZIP="selenium-3.7.0-extensivetesting"
-SELENIUM="selenium-3.7.0"
+SELENIUM_ZIP="selenium-3.9.0-extensivetesting"
+SELENIUM="selenium-3.9.0"
 PYCRYPTO_ZIP="pycryptodome-3.4.5-extensivetesting"
 PYCRYPTO="pycryptodome-3.4.5"
 PYCNIC_ZIP="pycnic-0.1.1-extensivetesting"
 PYCNIC="pycnic-0.1.1"
 
-# python extensions
-HTTPLIB2="httplib2-0.10.3"
+# embedded python extensions
+HTTPLIB2="httplib2-0.11.3"
 UUIDLIB="uuid-1.30"
-PYASN="pyasn1-0.2.3"
-PYSMI="pysmi-0.0.7"
-PLY="ply-3.8"
-PYSNMP="pysnmp-4.3.4"
-PYMSSQL="pymssql-2.1.1"
+PYASN="pyasn1-0.4.2"
+PYSMI="pysmi-0.2.2"
+PLY="ply-3.11"
+PYCRYPTODOMEX="pycryptodomex-3.5.1"
+PYSNMP="pysnmp-4.4.4"
+PYMSSQL="pymssql-2.1.3"
 FREETDS="freetds-0.91"
 ECDSA="ecdsa-0.13"
 PIL="Imaging-1.1.7"
 APPDIRS="appdirs-1.4.3"
-SETUPTOOLS="setuptools-34.3.2"
+SETUPTOOLS="setuptools-39.0.1"
 SUDS="suds-jurko-0.6"
 SUDS_ZIP="suds-jurko-0.6-extensivetesting"
-REQUESTS="requests-2.13.0"
+CERTIFI="certifi-2018.1.18"
+CHARTED="chardet-3.0.4"
+REQUESTS="requests-2.18.4"
 NTLM="python-ntlm-1.1.0"
-KERBEROS="kerberos-1.2.5"
-POSTGRESQL="psycopg2-2.7.1"
+KERBEROS="kerberos-1.3.0"
+POSTGRESQL="psycopg2-2.7.4"
 POSTGRESQL8="psycopg2-2.6.1"
-XLRD="xlrd-1.0.0"
-XLWT="xlwt-1.2.0"
-OPENXL="openpyxl-2.4.5"
+XLRD="xlrd-1.1.0"
+XLWT="xlwt-1.3.0"
+OPENXL="openpyxl-2.5.2"
 ETXMLFILE="et_xmlfile-1.0.1"
 JDCAL="jdcal-1.3"
 SETUPTOOLS_GIT="setuptools-git-1.2"
-SCANDIR="scandir-1.5"
-PBR="pbr-2.0.0"
-PYTZ="pytz-2016.10"
-PYJENKINS="jenkinsapi-0.3.3"
-GITDB2="gitdb2-2.0.0"
-PYGIT="GitPython-2.1.3"
-SMMAP2="smmap2-2.0.1"
-XML2DICT="xmltodict-0.10.2"
-ISODATE="isodate-0.5.4"
-PYWINRM="pywinrm-0.2.2"
-PYTEST="pytest-runner-2.11.1"
-SETUPTOOLS_SCM="setuptools_scm-1.15.0"
-PYTE="pyte-0.6.0"
+SCANDIR="scandir-1.7"
+PBR="pbr-4.0.1"
+PYTZ="pytz-2018.3"
+PYJENKINS="jenkinsapi-0.3.6"
+GITDB2="gitdb2-2.0.3"
+PYGIT="GitPython-2.1.9"
+SMMAP2="smmap2-2.0.3"
+XML2DICT="xmltodict-0.11.0"
+ISODATE="isodate-0.6.0"
+PYWINRM="pywinrm-0.3.0"
+PYTEST="pytest-runner-4.2"
+SETUPTOOLS_SCM="setuptools_scm-1.17.0"
+PYTE="pyte-0.8.0"
 WCWIDTH="wcwidth-0.1.7"
 PYSPHERE="pysphere-0.1.9"
-SIX="six-1.10.0"
+SIX="six-1.11.0"
 PYCHEF="PyChef-0.3.0"
-IDNA="idna-2.5"
+IDNA="idna-2.6"
 ENUM34="enum34-1.1.6"
-IPADDRESS="ipaddress-1.0.18"
-PYCPARSER="pycparser-2.17"
-CFFI="cffi-1.9.1"
+IPADDRESS="ipaddress-1.0.19"
+PYCPARSER="pycparser-2.18"
+CFFI="cffi-1.11.5"
 PYPARSING="pyparsing-2.2.0"
 ORDEREDDICT="ordereddict-1.1"
-NTLM_AUTH="ntlm-auth-1.0.2"
-REQUESTS_NTLM="requests_ntlm-1.0.0"
+NTLM_AUTH="ntlm-auth-1.1.0"
+REQUESTS_NTLM="requests_ntlm-1.1.0"
 PY_NTLM3="python-ntlm3-1.0.2"
-ASN1CRYPTO="asn1crypto-0.21.1"
-PACKAGING="packaging-16.8"
+ASN1CRYPTO="asn1crypto-0.24.0"
+PACKAGING="packaging-17.1"
 CRYPTOGRAPHY="cryptography-1.8.1"
-PARAMIKO="paramiko-2.1.2"
-JSONPATH="jsonpath-ng-1.4.2"
-WRAPT="wrapt-1.10.10"
-
+PYNACL="PyNaCl-1.2.1"
+BCRYPT="bcrypt-3.1.4"
+PARAMIKO="paramiko-2.4.1"
+JSONPATH="jsonpath-ng-1.4.3"
+WRAPT="wrapt-1.10.11"
+PYAML="pyaml-17.12.1"
+ANSIBLE="ansible-2.5.0"
 NODEJS="node-v6.11.0-linux-x64"
+URLLIB3="urllib3-1.22"
+F5_ICONTROL="f5-icontrol-rest-1.3.8"
+F5_SDK="f5-sdk-3.0.14"
+PYKAFKA="kafka-python-1.4.2"
+PYSNAPPY="python-snappy-0.5.2"
 
 # websocket module for apache, only for centos 5/6
 MOD_WSTUNNEL="mod_proxy_wstunnel.so"
@@ -463,7 +474,7 @@ fi
 
 if [ "$DL_MISSING_PKGS" = "Yes" ]; then
     echo -ne "* Adding network tools                \r" 
-	$YUM_BIN -y install vim net-snmp-utils unzip zip gmp wget ntp nmap 1>> "$LOG_FILE" 2>&1
+	$YUM_BIN -y install vim net-snmp-utils unzip zip gmp wget curl ntp nmap bind-utils 1>> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo_failure; echo
         echo "Unable to download packages httpd and more with yum" >> "$LOG_FILE"
@@ -499,7 +510,7 @@ if [ "$DL_MISSING_PKGS" = "Yes" ]; then
     fi
     
 	echo -ne "* Adding python                \r"
-	$YUM_BIN -y install python-lxml MySQL-python policycoreutils-python python-simplejson python-twisted-web python-setuptools python-ldap 1>> "$LOG_FILE" 2>&1
+	$YUM_BIN -y install python-lxml MySQL-python policycoreutils-python python-setuptools python-ldap PyYAML 1>> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo_failure; echo
         echo "Unable to download packages python and more with yum" >> "$LOG_FILE"
@@ -507,7 +518,7 @@ if [ "$DL_MISSING_PKGS" = "Yes" ]; then
     fi
     
 	echo -ne "* Adding gcc                \r"
-	$YUM_BIN -y install gcc python-devel Cython 1>> "$LOG_FILE" 2>&1
+	$YUM_BIN -y install gcc python-devel Cython gcc-c++ 1>> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo_failure; echo
         echo "Unable to download packages gcc and more with yum" >> "$LOG_FILE"
@@ -526,7 +537,7 @@ if [ "$DL_MISSING_PKGS" = "Yes" ]; then
 	$YUM_BIN -y install libpng-devel libjpeg-devel zlib-devel freetype-devel lcms-devel tk-devel tkinter >> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo_failure; echo
-        echo "Unable to download packages freetype and more with yum" >> "$LOG_FILE"
+        echo "Unable to download lib png with yum" >> "$LOG_FILE"
         exit_on_error
     fi
     
@@ -534,7 +545,15 @@ if [ "$DL_MISSING_PKGS" = "Yes" ]; then
 	$YUM_BIN -y install postgresql postgresql-libs postgresql-devel >> "$LOG_FILE" 2>&1
     if [ $? -ne 0 ]; then
         echo_failure; echo
-        echo "Unable to download packages freetype and more with yum" >> "$LOG_FILE"
+        echo "Unable to download postgresql with yum" >> "$LOG_FILE"
+        exit_on_error
+    fi
+    
+	echo -ne "* Adding snappy                \r"
+	$YUM_BIN -y install snappy-devel >> "$LOG_FILE" 2>&1
+    if [ $? -ne 0 ]; then
+        echo_failure; echo
+        echo "Unable to download packages libsnappy-devel with yum" >> "$LOG_FILE"
         exit_on_error
     fi
     
@@ -620,8 +639,8 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
 	rm -rf $APP_PATH/$PYCRYPTO/ 1>> "$LOG_FILE" 2>&1
     
 	echo -ne "* Installing pyasn                 \r"
-    rm -rf /usr/lib/python2.6/site-packages/pyasn1-0.1.9-py2.6.egg 1>> "$LOG_FILE" 2>&1
-    rm -rf /usr/lib/python2.7/site-packages/pyasn1-0.1.9-py2.7.egg 1>> "$LOG_FILE" 2>&1
+    rm -rf /usr/lib/python2.6/site-packages/pyasn1* 1>> "$LOG_FILE" 2>&1
+    rm -rf /usr/lib/python2.7/site-packages/pyasn1* 1>> "$LOG_FILE" 2>&1
 	$TAR_BIN xvf $PKG_PATH/$PYASN.tar.gz  1>> "$LOG_FILE" 2>&1
     cd $APP_PATH/$PYASN/
     $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
@@ -641,6 +660,13 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
     $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$PYSMI/ 1>> "$LOG_FILE" 2>&1
+
+	echo -ne "* Installing pycryptodomex                 \r"
+	$TAR_BIN xvf $PKG_PATH/$PYCRYPTODOMEX.tar.gz  1>> "$LOG_FILE" 2>&1
+    cd $APP_PATH/$PYCRYPTODOMEX/
+    $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$PYCRYPTODOMEX/ 1>> "$LOG_FILE" 2>&1
     
 	echo -ne "* Installing pysnmp                 \r"
 	$TAR_BIN xvf $PKG_PATH/$PYSNMP.tar.gz  1>> "$LOG_FILE" 2>&1
@@ -675,15 +701,6 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
     cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$PYMSSQL/ 1>> "$LOG_FILE" 2>&1
 
-	echo -ne "* Installing phpmcrypt                 \r"
-	if [ "$OS_RELEASE" != "7" ]; then
-		rpm -ivh $PKG_PATH/libmcrypt-2.5.8-9.el6.x86_64.rpm 1>> "$LOG_FILE" 2>&1
-		rpm -ivh $PKG_PATH/php-mcrypt-5.3.3-3.el6.x86_64.rpm 1>> "$LOG_FILE" 2>&1
-	else
-		rpm -ivh $PKG_PATH/libmcrypt-2.5.8-13.el7.x86_64.rpm 1>> "$LOG_FILE" 2>&1
-		rpm -ivh $PKG_PATH/php-mcrypt-5.4.16-2.el7.x86_64.rpm 1>> "$LOG_FILE" 2>&1
-	fi
-
 	echo -ne "* Installing ecdsa                 \r"
 	$TAR_BIN xvf $PKG_PATH/$ECDSA.tar.gz  1>> "$LOG_FILE" 2>&1
 	cd $APP_PATH/$ECDSA/
@@ -714,6 +731,20 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$SUDS/ 1>> "$LOG_FILE" 2>&1
 
+    echo -ne "* Installing certifi                 \r"
+    $TAR_BIN xvf $PKG_PATH/$CERTIFI.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$CERTIFI/
+    $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$CERTIFI/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing certifi                 \r"
+    $TAR_BIN xvf $PKG_PATH/$CHARTED.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$CHARTED/
+    $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$CHARTED/ 1>> "$LOG_FILE" 2>&1
+    
     echo -ne "* Installing requests                 \r"
     $TAR_BIN xvf $PKG_PATH/$REQUESTS.tar.gz  1>> "$LOG_FILE" 2>&1
 	cd $APP_PATH/$REQUESTS/
@@ -915,7 +946,7 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
     
     echo -ne "* Installing ntlm_auth                 \r"
     cd $APP_PATH
-    $UNZIP_BIN $PKG_PATH/$NTLM_AUTH.zip  1>> "$LOG_FILE" 2>&1
+    $TAR_BIN $PKG_PATH/$NTLM_AUTH.tar.gz  1>> "$LOG_FILE" 2>&1
 	cd $APP_PATH/$NTLM_AUTH/
 	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
 	cd .. 1>> "$LOG_FILE" 2>&1
@@ -956,6 +987,20 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$CRYPTOGRAPHY/ 1>> "$LOG_FILE" 2>&1
 
+	echo -ne "* Installing pynacl                 \r"
+	$TAR_BIN xvf $PKG_PATH/$PYNACL.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$PYNACL/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$PYNACL/ 1>> "$LOG_FILE" 2>&1
+    
+	echo -ne "* Installing bcrypt                 \r"
+	$TAR_BIN xvf $PKG_PATH/$BCRYPT.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$BCRYPT/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$BCRYPT/ 1>> "$LOG_FILE" 2>&1
+    
 	echo -ne "* Installing paramiko                 \r"
 	$TAR_BIN xvf $PKG_PATH/$PARAMIKO.tar.gz  1>> "$LOG_FILE" 2>&1
 	cd $APP_PATH/$PARAMIKO/
@@ -1018,6 +1063,55 @@ if [ "$INSTALL_EMBEDDED_PKGS" = "Yes" ]; then
 	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
 	cd .. 1>> "$LOG_FILE" 2>&1
 	rm -rf $APP_PATH/$PYGIT/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing ansible                \r"
+    $TAR_BIN xvf $PKG_PATH/$ANSIBLE.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$ANSIBLE/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$ANSIBLE/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing urllib3                \r"
+    $TAR_BIN xvf $PKG_PATH/$URLLIB3.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$URLLIB3/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$URLLIB3/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing f5 icontrol                \r"
+    $TAR_BIN xvf $PKG_PATH/$F5_ICONTROL.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$F5_ICONTROL/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$F5_ICONTROL/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing f5 sdk                \r"
+    $TAR_BIN xvf $PKG_PATH/$F5_SDK.tar.gz  1>> "$LOG_FILE" 2>&1
+	cd $APP_PATH/$F5_SDK/
+	$PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+	cd .. 1>> "$LOG_FILE" 2>&1
+	rm -rf $APP_PATH/$F5_SDK/ 1>> "$LOG_FILE" 2>&1
+    
+    echo -ne "* Installing python-snappy                \r"
+    $TAR_BIN xvf $PKG_PATH/$PYSNAPPY.tar.gz  1>> "$LOG_FILE" 2>&1
+        cd $APP_PATH/$PYSNAPPY/
+        $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+        cd .. 1>> "$LOG_FILE" 2>&1
+        rm -rf $APP_PATH/$PYSNAPPY/ 1>> "$LOG_FILE" 2>&1
+
+    echo -ne "* Installing kafka-python                \r"
+    $TAR_BIN xvf $PKG_PATH/$PYKAFKA.tar.gz  1>> "$LOG_FILE" 2>&1
+        cd $APP_PATH/$PYKAFKA/
+        $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+        cd .. 1>> "$LOG_FILE" 2>&1
+        rm -rf $APP_PATH/$PYKAFKA/ 1>> "$LOG_FILE" 2>&1
+
+    echo -ne "* Installing pyaml                 \r"
+    $TAR_BIN xvf $PKG_PATH/$PYAML.tar.gz  1>> "$LOG_FILE" 2>&1
+    cd $APP_PATH/$PYAML/
+    $PYBIN setup.py install 1>> "$LOG_FILE" 2>&1
+    cd .. 1>> "$LOG_FILE" 2>&1
+    rm -rf $APP_PATH/$PYAML/ 1>> "$LOG_FILE" 2>&1
 
     echo -ne "* Installing nodejs                \r"
     $TAR_BIN --strip-components 1 -xzvf $NODEJS* -C /usr/local 1>> "$LOG_FILE" 2>&1
@@ -1117,16 +1211,16 @@ echo_success; echo
 
 echo -n "* Adding cron scripts"
 
-$PERL_BIN -p -i -e  "s/^INSTALL_PATH=.*/INSTALL_PATH=$(echo "$INSTALL_PATH" | sed -e 's/[]\/()$*.^|[]/\\&/g')/g;"  "$INSTALL_PATH"/current/Scripts/cron.backup-tables
+$PERL_BIN -p -i -e  "s/^INSTALL_PATH=.*/INSTALL_PATH=$(echo "$INSTALL_PATH" | sed -e 's/[]\/()$*.^|[]/\\&/g')/g;"  "$INSTALL_PATH"/current/Scripts/cron/cron.backup-tables
 rm -f $CRON_DAILY/$PRODUCT_SVC_NAME-tables 1>> "$LOG_FILE" 2>&1
-ln -s "$INSTALL_PATH"/current/Scripts/cron.backup-tables $CRON_DAILY/$PRODUCT_SVC_NAME-tables 1>> "$LOG_FILE" 2>&1
+ln -s "$INSTALL_PATH"/current/Scripts/cron/cron.backup-tables $CRON_DAILY/$PRODUCT_SVC_NAME-tables 1>> "$LOG_FILE" 2>&1
     
 if [ "$CLEANUP_BACKUPS" = "Yes" ]; then
-	$PERL_BIN -p -i -e  "s/^INSTALL_PATH=.*/INSTALL_PATH=$(echo "$INSTALL_PATH" | sed -e 's/[]\/()$*.^|[]/\\&/g')/g;"  "$INSTALL_PATH"/current/Scripts/cron.cleanup-backups
-	$PERL_BIN -p -i -e  "s/^OLDER_THAN=.*/OLDER_THAN=$BACKUPS_OLDER_THAN/g;"  "$INSTALL_PATH"/current/Scripts/cron.cleanup-backups
+	$PERL_BIN -p -i -e  "s/^INSTALL_PATH=.*/INSTALL_PATH=$(echo "$INSTALL_PATH" | sed -e 's/[]\/()$*.^|[]/\\&/g')/g;"  "$INSTALL_PATH"/current/Scripts/cron/cron.cleanup-backups
+	$PERL_BIN -p -i -e  "s/^OLDER_THAN=.*/OLDER_THAN=$BACKUPS_OLDER_THAN/g;"  "$INSTALL_PATH"/current/Scripts/cron/cron.cleanup-backups
     
     rm -f $CRON_WEEKLY/$PRODUCT_SVC_NAME-backups 1>> "$LOG_FILE" 2>&1
-    ln -s "$INSTALL_PATH"/current/Scripts/cron.cleanup-backups $CRON_WEEKLY/$PRODUCT_SVC_NAME-backups 1>> "$LOG_FILE" 2>&1
+    ln -s "$INSTALL_PATH"/current/Scripts/cron/cron.cleanup-backups $CRON_WEEKLY/$PRODUCT_SVC_NAME-backups 1>> "$LOG_FILE" 2>&1
 fi
 echo_success; echo
     
@@ -1225,7 +1319,7 @@ if [ "$WEB_CONFIG" = "Yes" ]; then
 		echo -n "* Detecting selinux"
 		selinuxenabled
 		if [ $? -ne 0 ]; then
-			$PERL_BIN -i -pe "s/SELINUX=disabled/SELINUX=enforcing/g" $SELINUX_CONF
+			$PERL_BIN -i -pe "s/SELINUX=disabled/SELINUX=enforcing/g" $SELINUX_CONF 1>> "$LOG_FILE" 2>&1
 		fi
 		echo_success; echo
 		echo -n "* Updating selinux"
@@ -1245,7 +1339,7 @@ if [ "$WEB_CONFIG" = "Yes" ]; then
 		echo_success; echo
 	else
 		setenforce 0 1>> "$LOG_FILE" 2>&1
-		$PERL_BIN -i -pe "s/SELINUX=enforcing/SELINUX=disabled/g" $SELINUX_CONF
+		$PERL_BIN -i -pe "s/SELINUX=enforcing/SELINUX=disabled/g" $SELINUX_CONF 1>> "$LOG_FILE" 2>&1
 	fi
 
 	echo -n "* Updating $HTTPD_SERVICE_NAME configuration"
@@ -1290,93 +1384,95 @@ fi
 # Restart all services
 #
 #######################################
-if [ "$WEB_CONFIG" = "Yes" -o "$PHP_CONFIG" = "Yes" ] ; then
-	echo -n "* Restarting $HTTPD_SERVICE_NAME"
-	if [ "$OS_RELEASE" == "7" ]; then
-		systemctl restart $HTTPD_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
-		if [ $? -ne 0 ]; then
-			echo_failure; echo
-			echo "Unable to restart $HTTPD_SERVICE_NAME" >> "$LOG_FILE"
-			exit_on_error
-		fi
-	else
-		service $HTTPD_SERVICE_NAME restart 1>> "$LOG_FILE" 2>&1
-		if [ $? -ne 0 ]; then
-			echo_failure; echo
-			echo "Unable to restart $HTTPD_SERVICE_NAME" >> "$LOG_FILE"
-			exit_on_error
-		fi
-	fi
-	echo_success; echo
+
+if [ "$SILENT" == "custom" -o  "$SILENT" == "install" ]; then
+    if [ "$WEB_CONFIG" = "Yes" -o "$PHP_CONFIG" = "Yes" ] ; then
+        echo -n "* Restarting $HTTPD_SERVICE_NAME"
+        if [ "$OS_RELEASE" == "7" ]; then
+            systemctl restart $HTTPD_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
+            if [ $? -ne 0 ]; then
+                echo_failure; echo
+                echo "Unable to restart $HTTPD_SERVICE_NAME" >> "$LOG_FILE"
+                exit_on_error
+            fi
+        else
+            service $HTTPD_SERVICE_NAME restart 1>> "$LOG_FILE" 2>&1
+            if [ $? -ne 0 ]; then
+                echo_failure; echo
+                echo "Unable to restart $HTTPD_SERVICE_NAME" >> "$LOG_FILE"
+                exit_on_error
+            fi
+        fi
+        echo_success; echo
+    fi
+
+    if [ "$FW_CONFIG" = "Yes" ]; then
+        echo -n "* Restarting firewall"
+        if [ "$OS_RELEASE" == "7" ]; then
+            systemctl restart firewalld.service 1>> "$LOG_FILE" 2>&1
+            if [ $? -ne 0 ]; then
+                echo_failure; echo
+                echo "Unable to restart firewalld" >> "$LOG_FILE"
+                exit_on_error
+            fi
+        else
+            service $IPTABLE_SERVICE_NAME restart 1>> "$LOG_FILE" 2>&1
+            if [ $? -ne 0 ]; then
+                echo_failure; echo
+                echo "Unable to restart $IPTABLE_SERVICE_NAME" >> "$LOG_FILE"
+                exit_on_error
+            fi
+        fi
+        echo_success; echo
+    else
+        if [ "$OS_RELEASE" == "7" ]; then
+            systemctl stop firewalld.service 1>> "$LOG_FILE" 2>&1
+            systemctl disable firewalld.service 1>> "$LOG_FILE" 2>&1
+            systemctl stop $IPTABLE_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
+            systemctl disable $IPTABLE_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
+        else
+            service $IPTABLE_SERVICE_NAME stop 1>> "$LOG_FILE" 2>&1
+            chkconfig $IPTABLE_SERVICE_NAME off 1>> "$LOG_FILE" 2>&1
+        fi
+    fi
+
+    echo -n "* Restarting postfix"
+    if [ "$OS_RELEASE" == "7" ]; then
+        systemctl restart $POSTFIX_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
+        if [ $? -ne 0 ]; then
+            echo_failure; echo
+            echo "Unable to restart $POSTFIX_SERVICE_NAME" >> "$LOG_FILE"
+            exit_on_error
+        fi
+    else
+        service $POSTFIX_SERVICE_NAME restart 1>> "$LOG_FILE" 2>&1
+        if [ $? -ne 0 ]; then
+            echo_failure; echo
+            echo "Unable to restart $POSTFIX_SERVICE_NAME" >> "$LOG_FILE"
+            exit_on_error
+        fi
+    fi
+    echo_success; echo
+    
+    echo -n "* Restarting MySQL/MariaDB"
+    if [ "$OS_RELEASE" == "7" ]; then
+        systemctl restart $MARIADB_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
+        if [ $? -ne 0 ]; then
+            echo_failure; echo
+            echo "Unable to restart $MARIADB_SERVICE_NAME" >> "$LOG_FILE"
+            exit_on_error
+        fi
+    else
+        service $MYSQL_SERVICE_NAME restart 1>> "$LOG_FILE" 2>&1
+        if [ $? -ne 0 ]; then
+            echo_failure; echo
+            echo "Unable to restart $MYSQL_SERVICE_NAME" >> "$LOG_FILE"
+            exit_on_error
+        fi
+    fi
+    echo_success; echo
 fi
 
-if [ "$FW_CONFIG" = "Yes" ]; then
-	echo -n "* Restarting firewall"
-	if [ "$OS_RELEASE" == "7" ]; then
-		systemctl restart firewalld.service 1>> "$LOG_FILE" 2>&1
-		if [ $? -ne 0 ]; then
-			echo_failure; echo
-			echo "Unable to restart firewalld" >> "$LOG_FILE"
-			exit_on_error
-		fi
-	else
-		service $IPTABLE_SERVICE_NAME restart 1>> "$LOG_FILE" 2>&1
-		if [ $? -ne 0 ]; then
-			echo_failure; echo
-			echo "Unable to restart $IPTABLE_SERVICE_NAME" >> "$LOG_FILE"
-			exit_on_error
-		fi
-	fi
-	echo_success; echo
-else
-	if [ "$OS_RELEASE" == "7" ]; then
-		systemctl stop firewalld.service 1>> "$LOG_FILE" 2>&1
-		systemctl disable firewalld.service 1>> "$LOG_FILE" 2>&1
-		systemctl stop $IPTABLE_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
-		systemctl disable $IPTABLE_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
-	else
-		service $IPTABLE_SERVICE_NAME stop 1>> "$LOG_FILE" 2>&1
-		chkconfig $IPTABLE_SERVICE_NAME off 1>> "$LOG_FILE" 2>&1
-	fi
-fi
-
-echo -n "* Restarting MySQL/MariaDB"
-if [ "$OS_RELEASE" == "7" ]; then
-	systemctl restart $MARIADB_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
-	if [ $? -ne 0 ]; then
-		echo_failure; echo
-		echo "Unable to restart $MARIADB_SERVICE_NAME" >> "$LOG_FILE"
-		exit_on_error
-	fi
-else
-	service $MYSQL_SERVICE_NAME restart 1>> "$LOG_FILE" 2>&1
-	if [ $? -ne 0 ]; then
-		echo_failure; echo
-		echo "Unable to restart $MYSQL_SERVICE_NAME" >> "$LOG_FILE"
-		exit_on_error
-	fi
-fi
-echo_success; echo
-
-echo -n "* Restarting postfix"
-if [ "$OS_RELEASE" == "7" ]; then
-	systemctl restart $POSTFIX_SERVICE_NAME.service 1>> "$LOG_FILE" 2>&1
-	if [ $? -ne 0 ]; then
-		echo_failure; echo
-		echo "Unable to restart $POSTFIX_SERVICE_NAME" >> "$LOG_FILE"
-		exit_on_error
-	fi
-else
-	service $POSTFIX_SERVICE_NAME restart 1>> "$LOG_FILE" 2>&1
-	if [ $? -ne 0 ]; then
-		echo_failure; echo
-		echo "Unable to restart $POSTFIX_SERVICE_NAME" >> "$LOG_FILE"
-		exit_on_error
-	fi
-fi
-echo_success; echo
-
-echo "===> Database installation" >> "$LOG_FILE"
 echo -n "* Adding the $APP_NAME database"
 cd "$INSTALL_PATH"/current/Scripts/
 $PWD_BIN 1>> "$LOG_FILE" 2>&1
@@ -1390,29 +1486,31 @@ if [ $? -ne 0 ]; then
 fi
 echo_success; echo
 
-echo -n "* Starting $APP_NAME $PRODUCT_VERSION"
-if [ "$OS_RELEASE" == "7" ]; then
-	systemctl start $PRODUCT_SVC_NAME.service 1>> "$LOG_FILE" 2>&1
-	if [ $? -ne 0 ]; then
-		echo_failure; echo
-		echo "Unable to start the server" >> "$LOG_FILE"
-		exit_on_error
-	fi
-else
-	service $PRODUCT_SVC_NAME start 1>> "$LOG_FILE" 2>&1
-	if [ $? -ne 0 ]; then
-		echo_failure; echo
-		echo "Unable to start the server" >> "$LOG_FILE"
-		exit_on_error
-	fi
+if [ "$SILENT" == "custom" -o  "$SILENT" == "install" ]; then
+    echo -n "* Starting $APP_NAME $PRODUCT_VERSION"
+    if [ "$OS_RELEASE" == "7" ]; then
+        systemctl start $PRODUCT_SVC_NAME.service 1>> "$LOG_FILE" 2>&1
+        if [ $? -ne 0 ]; then
+            echo_failure; echo
+            echo "Unable to start the server" >> "$LOG_FILE"
+            exit_on_error
+        fi
+    else
+        service $PRODUCT_SVC_NAME start 1>> "$LOG_FILE" 2>&1
+        if [ $? -ne 0 ]; then
+            echo_failure; echo
+            echo "Unable to start the server" >> "$LOG_FILE"
+            exit_on_error
+        fi
+    fi
+    echo_success; echo
 fi
-echo_success; echo
 
 rm -rf "$APP_PATH"/default.cfg.tmp 1>> "$LOG_FILE" 2>&1
 
 if [ "$SILENT" == "custom" -o  "$SILENT" == "install" ]; then
         echo "========================================================================="
-        echo "- Installation terminated!"
+        echo "- Installation completed successfully!"
         echo "- Continue and go to the web interface (https://$EXT_IP/web/index.php)"
         echo "========================================================================="
 fi

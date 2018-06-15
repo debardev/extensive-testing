@@ -1,9 +1,9 @@
 <?php
 	/*
 	---------------------------------------------------------------
-	 Copyright (c) 2010-2017 Denis Machard. All rights reserved.
+	 Copyright (c) 2010-2018 Denis Machard. All rights reserved.
 
-	 This file is part of the extensive testing project; you can redistribute it and/or
+	 This file is part of the extensive automation project; you can redistribute it and/or
 	 modify it under the terms of the GNU General Public License, Version 3.
 
 	 This file is distributed in the hope that it will be useful, but
@@ -332,14 +332,6 @@
 	?>
 </div>
 
-<!--<div class="bxright">
-	<div class="help"><?php echo lang('help') ?><?php echo get_ajaxloader("loader-help", "0") ?></div>
-	<div>
-		<ul class="help_list">
-		</ul>
-	</div>
-</div>-->
-
 
 <div class="bxcenter">
 	<div id="box-warn"></div>
@@ -431,7 +423,6 @@
                     $tb .= '<tr><td><a href="javascript:delelementenv('.$cur_usr['id'].','.$prj_called.')">'.lang('yes').'</a>';
                     $tb .= ' -- ';
                     $tb .= '<a href="./index.php?p='.$TESTS_PAGE.'&s='.$s.'&prj='.$prj_called.'">'.lang('no').'</a></td></tr></tbody></table>';
-                    //$tb .= '<a href="javascript:history.back()">'.lang('no').'</a></td></tr></tbody></table>';
 				}
 			}
 			$tabsbody[] = $tb;
@@ -505,15 +496,10 @@
 				$tb .= '<tr><td  class="col1">'.lang('test-environment-project').': </td><td>'.$projects_select.'</td></tr>';
 
 				$tb .= '<tr><td  class="col1">'.lang('test-environment-value').': </td><td>';
-  
-                //$tb .= '<br /><input type="radio" name="typeval"  value="text" checked disabled />text';
-                ///$tb .= '<input type="radio" name="typeval"  value="number" disabled />number';
-                //$tb .= '<input type="radio" name="typeval"  value="boolean" disabled />boolean';
-                //$tb .= '<input type="radio" name="typeval"  value="dict" disabled />key/value<br />';
-                $tb .= '<div class="textwrapper"><textarea  id="req_element_values" type="text" cols="100" rows="20">'.$el_value.'</textarea></div>';
+                
+                $tb .= '<div class="textwrapper"><textarea  id="req_element_values" type="text" cols="100" rows="20" autofocus="true" onfocus="prettyJsonPrint();">'.$el_value.'</textarea></div>';
                 
                 $tb .= '</td></tr>';
-                // <button onclick="prettyJsonPrint()">Pretty JSON</button>
 				$tb .= '<tr><td class="col1"></td><td align="right" class="col2"><br />';
                 $tb .= '[ <a href="javascript:prettyJsonPrint()">Pretty JSON</a> ] ';
                 if ($c_called == "edit") {

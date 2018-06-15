@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -33,10 +33,16 @@ import sys
 AdapterEthernet = sys.modules['SutAdapters.%s.Ethernet' % TestAdapterLib.getVersion()]
 AdapterARP = sys.modules['SutAdapters.%s.ARP' % TestAdapterLib.getVersion()]
 
-import common
-import codec4
-import codec6
-import templates
+try:
+	import common
+	import codec4
+	import codec6
+	import templates
+except ImportError: # python3 support
+	from . import common
+	from . import codec4
+	from . import codec6
+	from . import templates
 
 __NAMEV4__="""IP4"""
 __NAMEV6__="""IP6"""

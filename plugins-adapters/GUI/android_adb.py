@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -32,7 +32,10 @@ import sys
 import threading
 import json
 
-import templates
+try:
+	import templates
+except ImportError: # python3 support
+	from . import templates
 
 from Libs.PyXmlDict import Xml2Dict
 from Libs.PyXmlDict import Dict2Xml
@@ -98,6 +101,7 @@ ADB_KEY_VOLUMEMUTE = "volume_mute"
 ADB_KEY_CAMERA = "camera"
 ADB_KEY_POWER = "power"
 
+ADB_KEYCODE_NUM_LOCK = 143
 ADB_KEYCODE_APP_SWITCH = 187
 ADB_KEYCODE_BACK = 4
 ADB_KEYCODE_BACKSLASH  = 73

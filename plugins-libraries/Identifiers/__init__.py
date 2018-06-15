@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,11 @@
 # MA 02110-1301 USA
 # -------------------------------------------------------------------
 
-from sessionid import SessionID
-from uuids import UUIDS
+try:
+	from sessionid import SessionID
+	from uuids import UUIDS
+except ImportError: # support python 3
+	from .sessionid import SessionID
+	from .uuids import UUIDS
 
 __DESCRIPTION__ = "Identifiers tools"

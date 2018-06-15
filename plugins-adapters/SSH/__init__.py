@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,12 +21,18 @@
 # MA 02110-1301 USA
 # -------------------------------------------------------------------
 
-from client import *
-from cli import * # deprecated
-from console import *
-from terminal import *
-from templates import *
-
+try:
+	from client import *
+	from cli import * # deprecated
+	from console import *
+	from terminal import *
+	from templates import *
+except ImportError: # python3 support
+	from .client import *
+	from .console import *
+	from .terminal import *
+	from .templates import *
+	
 __DESCRIPTION__ = """This adapter enables to send/receive data trought SSH.
 
  The Secure Shell (SSH) is a protocol for secure remote login over an insecure network."""

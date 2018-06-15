@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -41,7 +41,10 @@ AdapterHTTP = sys.modules['SutAdapters.%s.HTTP' % TestAdapter.getVersion()]
 
 LibraryCodecs = sys.modules['SutLibraries.%s.Codecs' % TestLibrary.getVersion()]
 
-import templates
+try:
+	import templates
+except ImportError: # python3 support
+	from . import templates
 
 __NAME__="""REST"""
 

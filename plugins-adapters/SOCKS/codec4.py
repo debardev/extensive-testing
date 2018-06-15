@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -35,8 +35,12 @@ import sys
 # # of bytes:	   1    1      2              4           variable       1
 
 import struct
-import templates
 
+try:
+	import templates
+except ImportError: # python3 support
+	from . import templates
+	
 # VN = Version
 # CD = Command
 # DSTPORT = Destination port

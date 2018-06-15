@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,10 @@ STATE_STANDBY         = "standby"
 STATE_PAUSING        = "pausing"
 STATE_OFF                = "off"
 
-import adapter
+try:
+	import adapter
+except ImportError: # python3 support
+	from . import adapter
 
 class Automate(TestAdapter.Adapter):
 	@doc_public

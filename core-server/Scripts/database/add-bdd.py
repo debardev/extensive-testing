@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,14 +24,15 @@
 import sys
 sys.path.insert(0, '../' )
 
-try:
-    import hashlib
-    sha1_constructor = hashlib.sha1
-except ImportError, e: # support python 2.4
-    import sha
-    sha1_constructor = sha.new
+import hashlib
+from binascii import hexlify
+import os
 
-import MySQLdb
+try:
+    import MySQLdb
+except ImportError: # python3 support
+    import pymysql as MySQLdb
+
 from  Libs import Settings
 
 Settings.initialize(path="../../")
@@ -311,43 +312,53 @@ CREATE TABLE `%s-test-environment` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 """% prefix_table)
 
+# prepare hash for password
 def_pwd = ''
-t1 = sha1_constructor()
+t1 = hashlib.sha1()
 t1.update( def_pwd )
 pwd_hash = t1.hexdigest()
 
-t2 = sha1_constructor()
+t2 = hashlib.sha1()
 t2.update( "%s%s" % ( Settings.get('Misc', 'salt'), pwd_hash ) )
 pwd_sha = t2.hexdigest()
 
-
 def_pwd_sys = Settings.get('Default', 'user-sys-password')
-t1 = sha1_constructor()
+t1 = hashlib.sha1()
 t1.update( def_pwd_sys )
 pwd_hash_sys = t1.hexdigest()
 
-t2 = sha1_constructor()
+t2 = hashlib.sha1()
 t2.update( "%s%s" % ( Settings.get('Misc', 'salt'), pwd_hash_sys ) )
 pwd_hash_sys = t2.hexdigest()
 
- 
+# prepare apikey secret
+k1_secret = hexlify(os.urandom(20))
+k2_secret = hexlify(os.urandom(20))
+k3_secret = hexlify(os.urandom(20))
+
 # Insert default users
 print("Insert default users" )
 querySQL( query = """
-INSERT INTO `%s-users` (`login`, `password`, `administrator`, `leader`, `developer`, `tester`, `system`, `email`, `lang`, `style`, `active`, `default`, `online`, `cli`, `gui`, `web`, `notifications`, `defaultproject`  ) VALUES
-('%s', '%s', 0, 0, 0, 0, 1, '%s@localhost', '%s', '%s',  1, 1, 0, 1, 0, 0, 'false;false;false;false;false;false;false;', 1 ),
-('%s', '%s', 1, 0, 0, 0, 0, '%s@localhost', '%s', '%s',  1, 1, 0, 1, 1, 1, 'false;false;false;false;false;false;false;', 1 ),
-('%s', '%s', 0, 1, 0, 0, 0, '%s@localhost',  '%s', '%s', 1, 1, 0, 1, 1, 1, 'false;false;false;false;false;false;false;', 1 ),
-('%s', '%s', 0, 0, 1, 0, 0, '%s@localhost', '%s', '%s', 1, 1, 0, 1, 1, 1, 'false;false;false;false;false;false;false;', 1 ),
-('%s', '%s', 0, 0, 0, 1, 0, '%s@localhost',  '%s', '%s', 1, 1, 0, 1, 1, 1, 'false;false;false;false;false;false;false;', 1 ),
-('%s', '%s', 0, 0, 1, 1, 0, '%s@localhost',  '%s', '%s', 1, 1, 0, 1, 1, 0, 'false;false;false;false;false;false;false;', 1 );
+INSERT INTO `%s-users` (`login`, `password`, `administrator`, `leader`, `developer`, `tester`, `system`, `email`, `lang`, `style`, `active`, `default`, `online`, `cli`, `gui`, `web`, `notifications`, `defaultproject`, `apikey_id`, `apikey_secret`  ) VALUES
+('%s', '%s', 0, 0, 0, 0, 1, '%s@localhost', '%s', '%s',  1, 1, 0, 1, 0, 0, 'false;false;false;false;false;false;false;', 1, null, null ),
+('%s', '%s', 1, 0, 0, 0, 0, '%s@localhost', '%s', '%s',  1, 1, 0, 1, 1, 1, 'false;false;false;false;false;false;false;', 1, '%s', '%s' ),
+('%s', '%s', 0, 1, 0, 0, 0, '%s@localhost',  '%s', '%s', 1, 1, 0, 1, 1, 1, 'false;false;false;false;false;false;false;', 1, '%s', '%s' ),
+('%s', '%s', 0, 0, 1, 1, 0, '%s@localhost',  '%s', '%s', 1, 1, 0, 1, 1, 0, 'false;false;false;false;false;false;false;', 1, '%s', '%s' );
 """ % ( prefix_table, 
-        Settings.get('Default', 'user-sys' ), pwd_hash_sys, Settings.get('Default', 'user-sys' ), Settings.get('Default', 'lang' ), Settings.get('Default', 'style'),
-        Settings.get('Default', 'user-admin' ), pwd_sha, Settings.get('Default', 'user-admin' ), Settings.get('Default', 'lang' ), Settings.get('Default', 'style'),
-        Settings.get('Default', 'user-leader' ), pwd_sha, Settings.get('Default', 'user-leader' ), Settings.get('Default', 'lang' ), Settings.get('Default', 'style'),
-        Settings.get('Default', 'user-developer' ), pwd_sha, Settings.get('Default', 'user-developer' ), Settings.get('Default', 'lang' ), Settings.get('Default', 'style'),
-        Settings.get('Default', 'user-tester' ), pwd_sha, Settings.get('Default', 'user-tester' ), Settings.get('Default', 'lang' ), Settings.get('Default', 'style'),
-        Settings.get('Default', 'user-automaton' ), pwd_sha, Settings.get('Default', 'user-automaton' ), Settings.get('Default', 'lang' ), Settings.get('Default', 'style')
+        Settings.get('Default', 'user-sys' ), pwd_hash_sys, Settings.get('Default', 'user-sys' ), 
+        Settings.get('Default', 'lang' ), Settings.get('Default', 'style'),
+        
+        Settings.get('Default', 'user-admin' ), pwd_sha, Settings.get('Default', 'user-admin' ), 
+        Settings.get('Default', 'lang' ), Settings.get('Default', 'style'),
+        Settings.get('Default', 'user-admin' ), k1_secret,
+        
+        Settings.get('Default', 'user-monitor' ), pwd_sha, Settings.get('Default', 'user-monitor' ), 
+        Settings.get('Default', 'lang' ), Settings.get('Default', 'style'),
+        Settings.get('Default', 'user-monitor' ), k2_secret,
+        
+        Settings.get('Default', 'user-tester' ), pwd_sha, Settings.get('Default', 'user-tester' ), 
+        Settings.get('Default', 'lang' ), Settings.get('Default', 'style'),
+        Settings.get('Default', 'user-tester' ), k3_secret
     )
 )
 
@@ -379,7 +390,7 @@ INSERT INTO `%s-test-environment` (`name`, `value`, `project_id` ) VALUES
 ('TIMEOUT', '1.0', 1),
 ('SAMPLE_NODE', '{
     "COMMON": {
-        "HOSTNAME": "extensivetesting"
+        "HOSTNAME": "extensiveautomation"
     },
     "INSTANCES": {
         "SSH": {
@@ -402,7 +413,7 @@ INSERT INTO `%s-test-environment` (`name`, `value`, `project_id` ) VALUES
                 "HTTP_DEST_HOST": "%s",
                 "HTTP_DEST_PORT": 443,
                 "HTTP_DEST_SSL": true,
-                "HTTP_HOSTNAME": "www.extensvitesting.org",
+                "HTTP_HOSTNAME": "www.extensiveautomation.org",
                 "HTTP_AGENT_SUPPORT": false,
                 "HTTP_AGENT": {
                     "type": "socket",
@@ -426,7 +437,7 @@ INSERT INTO `%s-test-environment` (`name`, `value`, `project_id` ) VALUES
            "LDAP": {
                "DB_HOST": "%s",
                "DB_PORT": 389,
-               "DB_LOGIN":  "cn=ldapadm,dc=extensivetesting,dc=local",
+               "DB_LOGIN":  "cn=ldapadm,dc=extensiveautomation,dc=local",
                "DB_PWD":  ""
            }
        }

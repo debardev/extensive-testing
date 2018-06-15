@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -1522,8 +1522,9 @@ class Socket(GenericTool.Tool):
         """
         Constructor
         """
-        GenericTool.Tool.__init__(self, controllerIp, controllerPort, toolName, toolDesc, defaultTool, supportProxy=supportProxy,
-                                        proxyIp=proxyIp, proxyPort=proxyPort, sslSupport=sslSupport)
+        GenericTool.Tool.__init__(self, controllerIp, controllerPort, toolName, 
+                                  toolDesc, defaultTool, supportProxy=supportProxy,
+                                  proxyIp=proxyIp, proxyPort=proxyPort, sslSupport=sslSupport)
         self.__type__ = __TYPE__
 
     def onResetAgentCalled(self):

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -1092,7 +1092,7 @@ class PreviewVerdict(QWidget, Logger.ClassLogger):
         if self.toXml:
             self.txtEdit = QtHelper.RawXmlEditor(parent=self)
             self.txtEdit.setText( self.__data )
-            self.txtEdit.setUtf8(True)
+            # self.txtEdit.setUtf8(True)
             self.txtEdit.setFont( QFont( "%s" % fontName, int(fontSize)) )
         else:
             self.txtEdit = QtHelper.RawEditor(parent=self) 
@@ -1574,11 +1574,11 @@ class WArchives(QWidget, Logger.ClassLogger):
         layoutRight.addWidget(self.previewTab)
 
         style = self.style()
-        self.folderIcon = QIcon()
-        self.folderIcon.addPixmap(style.standardPixmap(QStyle.SP_DirClosedIcon), 
-                                  QIcon.Normal, QIcon.Off)
-        self.folderIcon.addPixmap(style.standardPixmap(QStyle.SP_DirOpenIcon), 
-                                  QIcon.Normal, QIcon.On)
+        self.folderIcon = QIcon(":/folder_base.png")
+        # self.folderIcon.addPixmap(style.standardPixmap(QStyle.SP_DirClosedIcon), 
+                                  # QIcon.Normal, QIcon.Off)
+        # self.folderIcon.addPixmap(style.standardPixmap(QStyle.SP_DirOpenIcon), 
+                                  # QIcon.Normal, QIcon.On)
         self.rootIcon = QIcon()       
         self.rootIcon.addPixmap( style.standardPixmap(QStyle.SP_DriveNetIcon) )
 
@@ -1702,13 +1702,10 @@ class WArchives(QWidget, Logger.ClassLogger):
                                         QMessageBox.Yes |QMessageBox.Cancel )
             #call web service
             if reply == QMessageBox.Yes:   
-                # UCI.instance().deleteTestResult(  '%s/' % (logDirName), projectId=projectId )
                 RCI.instance().deleteTestResultByDate( date=date, projectId=projectId )
                 
         elif cur.typeItem == 1: # test result folder
             testId = cur.testId
-            # logDirName = cur.parent.archiveDescr['name']
-            # logSubDirName = cur.archiveDescr['name']
             projectId =  cur.archiveDescr['project']
        
             
@@ -1717,8 +1714,6 @@ class WArchives(QWidget, Logger.ClassLogger):
                                        QMessageBox.Yes |QMessageBox.Cancel )
             #call web service
             if reply == QMessageBox.Yes:   
-                # UCI.instance().deleteTestResult('%s/%s' % (logDirName,logSubDirName), 
-                                                # projectId=projectId )
                 RCI.instance().deleteTestResult( testId=testId, projectId=projectId )
         else:
             pass
@@ -2542,7 +2537,7 @@ class WArchives(QWidget, Logger.ClassLogger):
         
         # load reports
         if 'review' in content:
-            self.tabReports.loadReports( self.decodeData(content['review']) )
+            self.tabReports.loadReports( content['review'] )
         else:
             self.tabReports.loadReports( "No test report available" )
             self.previewTab.setTabEnabled(TAB_COMMENTS, False)
@@ -2553,44 +2548,24 @@ class WArchives(QWidget, Logger.ClassLogger):
 
         if 'verdict' in content:
             self.previewTab.setTabEnabled(TAB_VERDICTS, True)
-            self.tabVerdicts.loadVerdicts( self.decodeData(content['verdict']) )
+            self.tabVerdicts.loadVerdicts( content['verdict'] )
         else:
             self.tabVerdicts.loadVerdicts( "No csv verdict available" )
             self.previewTab.setTabEnabled(TAB_VERDICTS, False)
 
         if 'xml-verdict' in content:
             self.previewTab.setTabEnabled(TAB_XML_VERDICTS, True)
-            self.tabXmlVerdicts.loadVerdicts( self.decodeData(content['xml-verdict']) )
+            self.tabXmlVerdicts.loadVerdicts( content['xml-verdict'] )
         else:
             self.tabXmlVerdicts.loadVerdicts( "No xml verdict available" )
             self.previewTab.setTabEnabled(TAB_XML_VERDICTS, False)
             
         if 'basic-review' in content:
-            self.tabBasicReports.loadReports( self.decodeData(content['basic-review']) )
+            self.tabBasicReports.loadReports( content['basic-review'] )
         else:
             self.tabBasicReports.loadReports( "No basic test report available" )
             self.previewTab.setTabEnabled(TAB_BASIC_REPORTS, False)
-        
-    def decodeData(self, b64data):
-        """
-        Decode data
-        """
-        data = ''
-        try:
-            data_decoded = base64.b64decode(b64data)
-        except Exception as e:
-            self.error( 'unable to decode from base64 structure: %s' % str(e) )
-        else:
-            try:
-                data = zlib.decompress(data_decoded)
-                try:
-                    data = data.decode('utf8')
-                except UnicodeDecodeError as e:
-                    data = data
-            except Exception as e:
-                self.error( 'unable to decompress: %s' % str(e) )
-        return data
-        
+
 AR = None # Singleton
 def instance ():
     """

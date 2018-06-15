@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -33,18 +33,18 @@ distinguished_name = dn
 C=FR
 ST=CALVADOS
 L=CAEN
-O=ExtensiveTesting
-OU=ExtensiveTesting.ORG
+O=ExtensiveAutomation
+OU=ExtensiveAutomation.ORG
 emailAddress=d.machard@gmail.com
-CN=demo.extensivetesting.org 
+CN=demo.extensiveautomation.org 
  
 [ req_ext ]
 subjectAltName = @alt_names
  
 [ alt_names ]
-DNS.1 = www.extensivetesting.org
-DNS.2 = www.extensive-testing.org
-DNS.3 = demo.extensive-testing.org
+DNS.1 = www.extensiveautomation.org
+DNS.2 = www.extensive-automation.org
+DNS.3 = demo.extensive-automation.org
 EOF
 openssl req -new -nodes -sha256 -out ca.csr -newkey rsa:2048 -keyout ca.key -extensions req_ext -config <( cat csr_details.txt )
 

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -32,11 +32,7 @@ def run():
     settings = Settings.instance()
 
     # Reset settings with default values
-    # settings.set( section='Trace', key='level', value='INFO' )
     settings.setValue( key='Trace/level', value='INFO' )
-    
-    # Writes any unsaved changes
-    # settings.save()
 
     # read the main python file to change some constant
     fd = open( "%s/MyPlugin.py" % settings.dirExec ,"r")

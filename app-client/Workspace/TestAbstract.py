@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -101,7 +101,8 @@ class WTestAbstract(Document.WDocument):
         @param nonameId: 
         @type nonameId: 
         """
-        Document.WDocument.__init__(self, parent, path, filename, extension, nonameId, remoteFile, repoDest, project, isLocked)
+        Document.WDocument.__init__(self, parent, path, filename, extension, nonameId, 
+                                    remoteFile, repoDest, project, isLocked)
 
         # prepare model with default value
         userName = Settings.instance().readValue( key = 'Server/last-username' )
@@ -109,13 +110,15 @@ class WTestAbstract(Document.WDocument):
         testdef = defaultTemplates.getTestUnitDefinition()
         if not 'default-library' in Settings.instance().serverContext:
             if not Settings.instance().offlineMode:
-                QMessageBox.critical(self, "Open" , "Server context incomplete (default library is missing), please to reconnect!")
+                QMessageBox.critical(self, "Open" , 
+                                     "Server context incomplete (default library is missing), please to reconnect!")
             defLibrary = 'v000'
         else:
             defLibrary = Settings.instance().serverContext['default-library']
         if not 'default-adapter' in Settings.instance().serverContext:
             if not Settings.instance().offlineMode:
-                QMessageBox.critical(self, "Open" , "Server context incomplete (default adapter is missing), please to reconnect!")
+                QMessageBox.critical(self, "Open" , 
+                                     "Server context incomplete (default adapter is missing), please to reconnect!")
             defAdapter = 'v000'
         else:
             defAdapter = Settings.instance().serverContext['default-adapter']
@@ -137,10 +140,13 @@ class WTestAbstract(Document.WDocument):
             self.error("bad default outputs provided: %s - %s" % (e,defaultOutputs))
         # end of new
         
-        self.dataModel = FileModelTestAbstract.DataModel(userName=userName, testDef=testdef, 
-                                                        defLibrary=defLibrary, defAdapter=defAdapter,
-                                                        timeout=defaultTimeout, inputs=_defaults_inputs, 
-                                                     outputs=_defaults_outputs)
+        self.dataModel = FileModelTestAbstract.DataModel(userName=userName, 
+                                                        testDef=testdef, 
+                                                        defLibrary=defLibrary, 
+                                                        defAdapter=defAdapter,
+                                                        timeout=defaultTimeout, 
+                                                        inputs=_defaults_inputs, 
+                                                        outputs=_defaults_outputs)
         
 
         self.defaultTemplates = DefaultTemplates.Templates()
@@ -155,8 +161,10 @@ class WTestAbstract(Document.WDocument):
         """
         Create actions
         """
-        self.toTestUnitAction = QtHelper.createAction(self, self.tr("&Convert\nTest Unit"), self.toTestUnit,
-                                            icon = QIcon(":/tux.png") )
+        self.toTestUnitAction = QtHelper.createAction(self, 
+                                                      self.tr("&Convert\nTest Unit"), 
+                                                      self.toTestUnit,
+                                                      icon = QIcon(":/tux.png") )
 
     def createToolbar(self):
         """
@@ -172,7 +180,8 @@ class WTestAbstract(Document.WDocument):
         """
         QtWidgets creation
         """
-        self.graphScene = GraphScene.GraphAbstract(self, helper=Helper.instance(), testParams=DocumentProperties.instance())
+        self.graphScene = GraphScene.GraphAbstract(self, helper=Helper.instance(), 
+                                                   testParams=DocumentProperties.instance())
         self.graphScene.dockToolbarTest.addAction(self.toTestUnitAction)
 
         layoutFinal = QVBoxLayout()
@@ -213,8 +222,10 @@ class WTestAbstract(Document.WDocument):
         Default load
         """
         self.setReadOnly( readOnly=False )
+        
         # adding start item
         self.graphScene.loadDefault()
+        
         # adding default step
         self.dataModel.steps['steps']['step'] = [DEFAULT_STEP]
         DocumentProperties.instance().steps.table().insertItem(stepParams=DEFAULT_STEP)
@@ -237,31 +248,37 @@ class WTestAbstract(Document.WDocument):
         """
         return DocumentProperties.instance().libraries.table()
 
-    def getHelpLibraries(self):
+    def getHelpLibraries(self, generic=False):
         """
         Return the help of all libraries according to the current
         version of the test
         """
-        testDescrs = DocumentProperties.instance().descrs.table().model.getData()
-        currentLibVersion = None
-        for descr in testDescrs:
-            if descr['key'] == 'libraries':
-                currentLibVersion = descr['value']
-                break
-        return Helper.instance().helpLibraries(name=currentLibVersion)
+        if generic:
+            return Helper.instance().helpLibraries(generic=generic)
+        else:
+            testDescrs = DocumentProperties.instance().descrs.table().model.getData()
+            currentLibVersion = None
+            for descr in testDescrs:
+                if descr['key'] == 'libraries':
+                    currentLibVersion = descr['value']
+                    break
+            return Helper.instance().helpLibraries(name=currentLibVersion)
         
-    def getHelpAdapters(self):
+    def getHelpAdapters(self, generic=False):
         """
         Return the help of all adapters according to the current
         version of the test
         """
-        testDescrs = DocumentProperties.instance().descrs.table().model.getData()
-        currentAdpVersion = None
-        for descr in testDescrs:
-            if descr['key'] == 'adapters':
-                currentAdpVersion = descr['value']
-                break
-        return Helper.instance().helpAdapters(name=currentAdpVersion)
+        if generic:
+            return Helper.instance().helpAdapters(generic=generic)
+        else:
+            testDescrs = DocumentProperties.instance().descrs.table().model.getData()
+            currentAdpVersion = None
+            for descr in testDescrs:
+                if descr['key'] == 'adapters':
+                    currentAdpVersion = descr['value']
+                    break
+            return Helper.instance().helpAdapters(name=currentAdpVersion)
         
     def load (self, content=None):
         """
@@ -739,7 +756,15 @@ class WTestAbstract(Document.WDocument):
             for param in adp['data']['obj']:
                 self.__constructArgument(param=param, params=adpParams)
 
-            adaptersList.append("self.ADAPTER%s = SutAdapters.%s.%s(%s)" % (y, adp['data']['main-name'], adp['data']['sub-name'], ', '.join(adpParams) ) )
+            extra_adp = ""
+            if "is-default" in adp['data']:
+                if adp['data']['is-default'] == "True":
+                    extra_adp = ".Extra"
+            adaptersList.append("self.ADAPTER%s = SutAdapters%s.%s.%s(%s)" % (y,
+                                                                            extra_adp,
+                                                                            adp['data']['main-name'], 
+                                                                            adp['data']['sub-name'], 
+                                                                            ', '.join(adpParams) ) )
 
         # construct libraries part
         librariesModel = DocumentProperties.instance().libraries.table().model.getData()
@@ -751,7 +776,15 @@ class WTestAbstract(Document.WDocument):
             for param in lib['data']['obj']:
                 self.__constructArgument(param=param, params=libParams)
 
-            adaptersList.append("self.LIBRARY%s = SutLibraries.%s.%s(%s)" % (y, lib['data']['main-name'], lib['data']['sub-name'], ', '.join(libParams) ) )
+            extra_lib = ""
+            if "is-default" in adp['data']:
+                if adp['data']['is-default'] == "True":
+                    extra_lib = ".Extra"
+            adaptersList.append("self.LIBRARY%s = SutLibraries%s.%s.%s(%s)" % (y,
+                                                                             extra_lib,
+                                                                             lib['data']['main-name'], 
+                                                                             lib['data']['sub-name'], 
+                                                                             ', '.join(libParams) ) )
 
 
         newTest = newTest.replace( "<<ADPS>>", '\n\t%s' % '\n\t'.join(adaptersList) )

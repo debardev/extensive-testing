@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -28,11 +28,13 @@ import TestExecutorLib.TestAdapterLib as TestAdapterLib
 import TestExecutorLib.TestLibraryLib as TestLibraryLib
 import sys
 
-def tcp(source=None, destination=None, more=None,  sum=None, sum_status=None, sum_int=None,seq_num=None,  ack_num=None, 
-				data=None, data_size=None, window=None, window_int=None, urgent=None, urgent_int=None,
-				data_offset=None, control_bits=None, control_bits_str=None,
-				options=None, options_size=None, opt_max_seg=None, opt_pad=None, opt_nop=None, opt_end=None, opt_win_scale=None,
-				opt_ts=None, opt_sack_permitted=None, opt_sack=None, opt_echo=None, opt_reply=None):
+def tcp(source=None, destination=None, more=None,  sum=None, 
+        sum_status=None, sum_int=None,seq_num=None,  ack_num=None, 
+        data=None, data_size=None, window=None, window_int=None, urgent=None, urgent_int=None,
+        data_offset=None, control_bits=None, control_bits_str=None,
+        options=None, options_size=None, opt_max_seg=None, opt_pad=None, 
+        opt_nop=None, opt_end=None, opt_win_scale=None,
+        opt_ts=None, opt_sack_permitted=None, opt_sack=None, opt_echo=None, opt_reply=None):
 	"""
 	Construct a template for a tcp packet
 	"""

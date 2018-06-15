@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -71,7 +71,8 @@ class DataModel(GenericModel.GenericModel):
     """
     Data model for test suite
     """
-    def __init__ (self, userName='unknown', testDef='', testExec='', defLibrary='', defAdapter='', timeout="10.0", inputs=[], outputs=[]):
+    def __init__ (self, userName='unknown', testDef='', testExec='', defLibrary='', 
+                  defAdapter='', timeout="10.0", inputs=[], outputs=[]):
         """
         This class describes the model of one script document, and provides a xml <=> python encoder
         The following xml :

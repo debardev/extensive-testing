@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# This file is part of the extensive testing project
-# Copyright (c) 2010-2017 Denis Machard
+# This file is part of the extensive automation project
+# Copyright (c) 2010-2018 Denis Machard
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 #
 # Author: Denis Machard
 # Contact: d.machard@gmail.com
-# Website: www.extensivetesting.org
+# Website: www.extensiveautomation.org
 # -------------------------------------------------------------------
 
 """
@@ -32,49 +32,29 @@ Main module
 from __future__ import print_function 
 
 # define the current version
-__VERSION__ = '16.0.0'
+__VERSION__ = '19.0.0alpha3'
 # name of the main developer
 __AUTHOR__ = 'Denis Machard'
 # email of the main developer
 __EMAIL__ = 'd.machard@gmail.com'
-# list of contributors
-__CONTRIBUTORS__ = [ "", "Emmanuel Monsoro (logo, graphical abstract engine)" ]
-# list of contributors
-__TESTERS__ = [ "Emmanuel Monsoro", "Thibault Lecoq"  ]
 # project start in year
 __BEGIN__="2010"
 # year of the latest build
-__END__="2017"
+__END__="2018"
 # date and time of the buid
-__BUILDTIME__="29/10/2017 09:38:08"
+__BUILDTIME__="10/06/2018 23:10:55"
 # Redirect stdout and stderr to log file only on production
-REDIRECT_STD=False
+REDIRECT_STD=True
 # disable warning from qt framework on production 
 QT_WARNING_MODE=False
 # workspace offline, for dev only
 WORKSPACE_OFFLINE=False
-
-LICENSE="""<i>This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-<br /><br />
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-Lesser General Public License for more details.
-<br /><br />
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-MA 02110-1301 USA</i>"""
 
 # import standard modules
 import sys
 import os
 import platform
 import subprocess
-# from functools import partial
 import json
 import uuid
 import shutil
@@ -129,7 +109,7 @@ if not os.path.exists(settingsFile):
 # Detect the operating system 
 # For Unix systems, this is the lowercased OS name as returned
 # by uname -s with the first part of the version as returned by uname -r
-if sys.platform in [ "win32", "linux2", "linux" ]:
+if sys.platform in [ "win32", "linux2", "linux", "darwin" ]:
     try:
         from PyQt4.QtGui import (QMainWindow, QApplication, QMessageBox, QTabWidget, QIcon, QToolButton, 
                                 QAction, qApp, QDesktopServices, QFileDialog, QSystemTrayIcon, QDialog, 
@@ -139,7 +119,7 @@ if sys.platform in [ "win32", "linux2", "linux" ]:
                                 QThread, pyqtSignal, QT_VERSION_STR, PYQT_VERSION_STR, QSettings, 
                                 QFile, Qt, QTimer, QSize, QUrl, QIODevice, QT_VERSION_STR, QEvent,
                                 qInstallMsgHandler, QTranslator, QLibraryInfo, QObject, QProcess,
-                                QByteArray)
+                                QByteArray, QLocale )
         from PyQt4.QtNetwork import (QUdpSocket, QHostAddress)
     except ImportError:
         from PyQt5.QtGui import (QIcon, QDesktopServices, QCursor, QColor, QPixmap, QFont)
@@ -150,7 +130,8 @@ if sys.platform in [ "win32", "linux2", "linux" ]:
         from PyQt5.QtCore import (QDateTime, QtDebugMsg, QtWarningMsg, QtCriticalMsg, QtFatalMsg, 
                                 QThread, pyqtSignal, QT_VERSION_STR, PYQT_VERSION_STR, QSettings, 
                                 QFile, Qt, QTimer, QSize, QUrl, QIODevice, QT_VERSION_STR, 
-                                QTranslator, QLibraryInfo, QObject, QProcess, QEvent, QByteArray )
+                                QTranslator, QLibraryInfo, QObject, QProcess, QEvent, QByteArray,
+                                QLocale )
         from PyQt5.QtCore import qInstallMessageHandler as qInstallMsgHandler
         from PyQt5.QtNetwork import (QUdpSocket, QHostAddress)
 else:
@@ -184,6 +165,11 @@ import Settings
 import Recorder as WRecorder
 import ReleaseNotes as RN
 import Workspace.Repositories as Repositories
+
+# set locale to english
+if QtHelper.IS_QT5:
+    newLocale = QLocale(QLocale().English)
+    QLocale().setDefault(newLocale)
 
 class MessageHandler(object):
     """
@@ -393,6 +379,7 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         nbFiles = int( Settings.instance().readValue( key = 'Trace/nb-backup-max' ) )
         Logger.initialize( logPathFile=logPathFile, level=level, size=size, 
                             nbFiles=nbFiles, noSettings=True )
+        self.trace( "application logger initialized..." )
         
         # log python module version
         self.trace( "Running platform: %s" %  platform.system() )
@@ -404,29 +391,41 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         self.trace( "Qt version: %s" % QT_VERSION_STR )
         self.trace( "PyQt version: %s" % PYQT_VERSION_STR )
 
+        self.trace( "Locale Country: %s" % QLocale().countryToString(QLocale().country()) )
+        self.trace( "Locale Point: %s" % QLocale().decimalPoint() )
+        
         # read update settings ?
         settingsBackup = "%s//Update//backup_settings.ini" % QtHelper.dirExec()
         if os.path.exists(settingsBackup):
             self.updateSettingsFromBackup(settingsBackup)
-                
+
+        # change application style for splashscreen
+        self.changeStyle()
+        
+        self.trace('Initializing record widget...')
+        showMessageSplashscreen( self.tr('Initializing record widget...') )
         self.widgetRecord = RecordButton()
         self.widgetRecord.hide()
 
         # continue to start
+        self.trace('Initializing API interface...')
         showMessageSplashscreen( self.tr('Initializing API interface...') )
         UCI.initialize( parent = self, clientVersion=__VERSION__ )
         RCI.initialize( parent = self, clientVersion=__VERSION__  )
         UCI.instance().startCA()
 
+        self.trace('Initializing test results...')
         showMessageSplashscreen( self.tr('Initializing test results...') )
         TestResults.initialize( parent = self )
 
-        showMessageSplashscreen( self.tr('Initializing recorder engine...') )
+        self.trace('Initializing assistant engine...')
+        showMessageSplashscreen( self.tr('Initializing assistant engine...') )
         WRecorder.initialize(parent=self, offlineMode=WORKSPACE_OFFLINE)    
 
         self.listActionsRecentFiles = []
         self.mainTab = None
 
+        self.trace('Initializing user interface...')
         showMessageSplashscreen( self.tr('Initializing user interface...') )   
 
         self.createWidgets()
@@ -434,30 +433,25 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         self.createTrayIcon()
         self.createStatusBar()
 
+        self.trace('Initializing menus...')
         showMessageSplashscreen( self.tr('Initializing menus...') )
         self.createMenus()
         self.createConnections()
         self.moreMenu()
     
-        name = Settings.instance().readValue( key = 'Common/name' )
+        # name = Settings.instance().readValue( key = 'Common/name' )
         self.updateWindowTitle( title = None)
 
-        self.os_ = sys.platform
-        if QT_VERSION_STR.startswith("4."):
-            style = Settings.instance().readValue( key = 'Common/style-%s' % self.os_ )
-        else:
-            style = Settings.instance().readValue( key = 'Common/style-qt5' )
-        self.changeStyle( styleName = style )
         self.setCentralWidget(self.mainTab)
 
         self.currentMainTabChanged( tabId = WWorkspace.instance().type )
         WWorkspace.instance().documentViewerEmpty()
 
         # cleanup all test result, new in v11.2
+        self.trace('Empty storage..')
         showMessageSplashscreen( self.tr('Empty storage...') )   
         self.removeTestResults()
         self.cleanupTmp()
-        # end of new
         
         # initialize all extensions 
         self.pluginsStarted = {}
@@ -471,6 +465,9 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         pos.setX(0)
         pos.setY(0)
         self.move(pos)
+        
+        self.trace('Main Application Ready!')
+
         
     def getCurrentVersion(self):
         """
@@ -491,6 +488,7 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         """
         Update settings from backup
         """
+        self.trace("replace settings with previous file")
         settingsUpdate = QSettings( settingsBackup,  QSettings.IniFormat    )
         
         lastAddrUpdate = settingsUpdate.value("Server/last-addr")
@@ -822,7 +820,7 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         self.restoreAction.setEnabled(not self.isMaximized() or not visible)
         super(MainApplication, self).setVisible(visible)
         
-    def changeStyle(self, styleName):
+    def changeStyle(self):
         """
         Change the style of the window
         Styles availables:
@@ -838,7 +836,13 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         @param styleName:
         @type styleName:
         """
-        QApplication.setStyle( styleName )
+        self.trace('Initializing application style...')
+
+        if QT_VERSION_STR.startswith("4."):
+            style = Settings.instance().readValue( key = 'Common/style-%s' % sys.platform )
+        else:
+            style = Settings.instance().readValue( key = 'Common/style-qt5' )
+        QApplication.setStyle( style )
 
     def keyPressEvent(self, e):
         """
@@ -871,7 +875,6 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
                         self.tr("You are connected to the test center.\nAre you really sure to quit?"),
                         QMessageBox.Yes | QMessageBox.Cancel )
             if reply == QMessageBox.Yes:
-                # TCI.instance().closeAll()
                 UCI.instance().closeConnection()
             else:
                 event.ignore()
@@ -963,8 +966,11 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         if Settings.instance().readValue( key = 'Common/maintab-orientation' ) == "South":
             self.mainTab.setTabPosition(QTabWidget.South)
 
+        self.trace('Initializing workspace...')
         showMessageSplashscreen( self.tr('Initializing workspace...') )  
         WWorkspace.initialize( parent = self )
+        
+        self.trace('Initializing explorer...')
         showMessageSplashscreen( self.tr('Initializing explorer...') )   
         WServerExplorer.initialize( parent = self )
 
@@ -1029,9 +1035,9 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
                                                 icon=QIcon(":/server-config.png") )
         self.rnAction = QtHelper.createAction(self, self.tr("&Release Notes"), self.releaseNotes, 
                                                 icon=QIcon(":/releasenotes.png") )
-        self.aboutAction = QtHelper.createAction(self, self.tr("&About"), self.about,  icon=QIcon(":/about.png"), 
+        self.aboutAction = QtHelper.createAction(self, self.tr("&About"), self.aboutPage,  icon=QIcon(":/about.png"), 
                                                 shortcut = Settings.instance().readValue( key = 'KeyboardShorcuts/about' ) )
-        self.aboutQtAction = QtHelper.createAction(self, self.tr("Qt"), qApp.aboutQt)
+        # self.aboutQtAction = QtHelper.createAction(self, self.tr("Qt"), qApp.aboutQt)
         self.openTestResultAction = QtHelper.createAction(self, self.tr("Open Test Result"), 
                                                 self.openTestResult)
         self.openAllRecentFilesAction = QtHelper.createAction(self, self.tr("Open All Recent Files"), 
@@ -1515,7 +1521,7 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
             if sys.platform == "win32":
                subprocess.Popen (['cmd.exe', '/c', appPath ], shell=True)
             
-            if sys.platform == "linux2":
+            if sys.platform in [ "linux2", "darwin" ] :
                 subprocess.Popen ([appPath ], shell=True)
             
         else:
@@ -1663,9 +1669,6 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
                     newImageName = tmp[0].rsplit(".", 1)[0]
 
                 # call the ws
-                # UCI.instance().importFileRepo( contentFile=imageData, extensionFile=imageExtension, 
-                                                # nameFile=newImageName, pathFile=newImagePath, 
-                                                # repo=UCI.REPO_TESTS, project=projectid)
                 content_encoded = base64.b64encode(imageData)
                 if sys.version_info > (3,): # python3 support
                     content_encoded = content_encoded.decode("utf8")
@@ -1964,11 +1967,9 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         WWorkspace.instance().BusyCursor.connect(self.setCursorBusy)
         WWorkspace.instance().ArrowCursor.connect(self.setCursorWait)
 
-        # new in v10.1
         WWorkspace.WDocumentViewer.instance().LinkConnect.connect(self.onLinkConnectClicked)
         WWorkspace.WDocumentViewer.instance().LinkDisconnect.connect(self.onLinkDisconnectClicked)
 
-        # new in v11
         WWorkspace.WDocumentViewer.instance().LinkMacro.connect(self.onLinkMacroClicked)
         WWorkspace.WDocumentViewer.instance().LinkWebMacro.connect(self.onLinkWebMacroClicked)
         WWorkspace.WDocumentViewer.instance().LinkBasicMacro.connect(self.onLinkBasicMacroClicked)
@@ -1976,16 +1977,11 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         WWorkspace.WDocumentViewer.instance().OpenWeb.connect(self.onOpenWebsite)
         WWorkspace.WDocumentViewer.instance().OpenWebProduct.connect(self.onOpenProductWebsite)
         WWorkspace.WDocumentViewer.instance().GoMacroMode.connect(self.onMacroMode)
-        
-        # new in v15
+
         WWorkspace.WDocumentViewer.instance().LinkSysMacro.connect(self.onLinkSysMacroClicked)
         WWorkspace.WDocumentViewer.instance().LinkPlugin.connect(self.onLinkPluginClicked)
-        
-        # new in v12.1
         WWorkspace.WDocumentViewer.instance().NbReplaced.connect(self.onTextNbReplaced)
-        # end of new
 
-        # new in v13.1
         RCI.instance().CriticalMsg.connect(self.displayCriticalMsg)
         RCI.instance().WarningMsg.connect(self.displayWarningMsg)
         RCI.instance().InformationMsg.connect(self.displayInformationMsg)
@@ -1993,74 +1989,34 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         RCI.instance().IdleCursor.connect(self.setCursorWait)
         RCI.instance().WebCall.connect(WServerExplorer.instance().onRestCall)
         RCI.instance().CloseConnection.connect(UCI.instance().closeConnection)
-        # RCI.instance().Authenticated.connect(UCI.instance().onRestAuthenticated)
-        # end if new
-        
-        UCI.instance().AddTestTab.connect(self.addTab)
+
         UCI.instance().CriticalMsg.connect(self.displayCriticalMsg)
         UCI.instance().WarningMsg.connect(self.displayWarningMsg)
         UCI.instance().InformationMsg.connect(self.displayInformationMsg)
-        
-        RCI.instance().Connected.connect(self.onConnection)
-        # UCI.instance().Connected.connect(self.onConnection)
+
         UCI.instance().Disconnected.connect(self.onDisconnection)
         UCI.instance().Notify.connect(self.onNotify)
-        # UCI.instance().OpenTestResult.connect(self.openLog)
-        
+
         self.Notify.connect(self.onNotify)
         self.LoadLocalTestResult.connect(self.onLoadLocalTestResult)
         self.LoadLocalTestResultTerminated.connect(self.onLoadLocalTestResultTerminated)
 
-        # UCI.instance().RefreshHelper.connect(WWorkspace.WHelper.instance().onRefresh)
-        # UCI.instance().RefreshRepo.connect( self.onRefreshRepo )
-        RCI.instance().RefreshTestsRepo.connect( self.onRefreshTestsRepo )
-        RCI.instance().RefreshAdaptersRepo.connect( self.onRefreshAdaptersRepo ) 
-        RCI.instance().RefreshLibrariesRepo.connect( self.onRefreshLibrariesRepo ) 
-        # UCI.instance().RefreshStatsRepo.connect( WServerExplorer.instance().onRefreshStatsRepo )
-        # UCI.instance().RefreshStatsRepoAdapters.connect(WServerExplorer.instance().onRefreshStatsRepoAdapters )
-        # UCI.instance().RefreshStatsRepoLibraries.connect( WServerExplorer.instance().onRefreshStatsRepoLibraries )
-        # UCI.instance().RefreshStatsRepoArchives.connect( WServerExplorer.instance().onRefreshStatsRepoArchives)
-        # UCI.instance().RefreshStatsServer.connect( WServerExplorer.instance().onRefreshStatsServer)
-        # UCI.instance().RefreshContextServer.connect( WServerExplorer.instance().onRefreshContextServer)
-        # UCI.instance().RefreshRunningProbes.connect( WServerExplorer.instance().onRefreshRunningProbes )
-        # UCI.instance().RefreshDefaultProbes.connect( WServerExplorer.instance().onRefreshDefaultProbes )
-        # UCI.instance().RefreshTasksWaiting.connect(WServerExplorer.instance().onRefreshTasksWaiting)
-        # UCI.instance().RefreshTasksRunning.connect(WServerExplorer.instance().onRefreshTasksRunning)
-        # UCI.instance().RefreshTasksHistory.connect(WServerExplorer.instance().onRefreshTasksHistory)
-        UCI.instance().GetFileRepo.connect(self.onGetFileRepo)
-        # UCI.instance().OpenFileRepo.connect(self.onOpenFileRepo)
-        # UCI.instance().PutFileRepo.connect(WWorkspace.WDocumentViewer.instance().remoteFileSaved)
-        # UCI.instance().PutFileErrRepo.connect(WWorkspace.WDocumentViewer.instance().remoteFileSaveErr)
-        # UCI.instance().TestKilled.connect(self.onTestKilled)
-        # UCI.instance().TestsKilled.connect(self.onTestsKilled) # new in v12.1
-        # UCI.instance().RenameFileRepo.connect( WWorkspace.WDocumentViewer.instance().remoteFileRenamed)
-        # UCI.instance().RenameDirRepo.connect(WWorkspace.WDocumentViewer.instance().remoteDirRenamed)
-        # UCI.instance().CommentArchiveAdded.connect( WServerExplorer.Archives.instance().comments().onCommentAdded)
-        # UCI.instance().CommentsArchiveLoaded.connect( WServerExplorer.Archives.instance().comments().onLoadComments)
-        # UCI.instance().CommentsArchiveDeleted.connect(WServerExplorer.Archives.instance().comments().onDeleteComments)
-        # UCI.instance().TestresultVerdictLoaded.connect(self.onTestVerdictLoaded)
-        # UCI.instance().TestresultReportLoaded.connect(self.onTestReportLoaded)
-        # UCI.instance().TestresultDesignLoaded.connect(self.onTestDesignLoaded)
         UCI.instance().Interact.connect(self.onInteractCalled )
         UCI.instance().Pause.connect(self.onPauseCalled )
         UCI.instance().BreakPoint.connect(self.onBreakPointCalled )
         UCI.instance().BusyCursor.connect(self.setCursorBusy)
         UCI.instance().ArrowCursor.connect(self.setCursorWait)
-        # UCI.instance().ResetStatistics.connect(self.onStatisticsResetted)
-        # new in v12.1
-        UCI.instance().WebCall.connect(WServerExplorer.instance().onWebCall)
-        
+
         WServerExplorer.instance().BusyCursor.connect(self.setCursorBusy)
         WServerExplorer.instance().BusyCursorChannel.connect(self.setCursorChannelBusy)
         WServerExplorer.instance().ArrowCursor.connect(self.setCursorWait)
         WServerExplorer.instance().Disconnect.connect(self.closeConnection)
         WServerExplorer.instance().ConnectCancelled.connect(self.onConnectionCancelled)
-        
-        # new in v12
-        # UCI.instance().GetImagePreview.connect(WServerExplorer.Archives.instance().images().onGetImagePreview)
-        # UCI.instance().GetTestPreview.connect(WServerExplorer.Archives.instance().onGetTestPreview)
-        
+
         # new in v18
+        RCI.instance().Connected.connect(self.onConnection)
+        
+        RCI.instance().AddTestTab.connect(self.addTab)
         RCI.instance().OpenTestResult.connect(self.openLog)
         RCI.instance().GetTrReports.connect(WServerExplorer.Archives.instance().onGetTestPreview)
         RCI.instance().GetTrImage.connect(WServerExplorer.Archives.instance().images().onGetImagePreview)
@@ -2111,6 +2067,15 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         RCI.instance().FileTestsRenamed.connect( WWorkspace.WDocumentViewer.instance().remoteTestsFileRenamed)
         RCI.instance().FileAdaptersRenamed.connect( WWorkspace.WDocumentViewer.instance().remoteAdaptersFileRenamed)
         RCI.instance().FileLibrariesRenamed.connect( WWorkspace.WDocumentViewer.instance().remoteLibrariesFileRenamed)
+        
+        RCI.instance().GetFileRepo.connect(self.onGetFileRepo)
+        
+        RCI.instance().RefreshTestsRepo.connect( self.onRefreshTestsRepo )
+        RCI.instance().RefreshAdaptersRepo.connect( self.onRefreshAdaptersRepo ) 
+        RCI.instance().RefreshLibrariesRepo.connect( self.onRefreshLibrariesRepo ) 
+        
+        # new in v19
+        RCI.instance().FindTestFileUsage.connect( self.onFindTestFileUsage )
         
     def onTextNbReplaced(self, counter):
         """
@@ -2238,9 +2203,11 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
                                         QMessageBox.Yes | QMessageBox.No 
                                         )
             if reply == QMessageBox.Yes:
-                UCI.instance().closeConnection()
+                if UCI.instance() is not None: UCI.instance().closeConnection()
+            else:
+                 WWorkspace.WDocumentViewer.instance().updateConnectLink(connected=True)
         else:
-            UCI.instance().closeConnection()
+            if UCI.instance() is not None: UCI.instance().closeConnection()
         
     def setCursorBusy(self):
         """
@@ -2505,7 +2472,8 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         if recentListFiles:
             # search if already exist in the list
             for rf in recentListFiles:
-                if rf['file'] == fileDescription['file'] and rf['type'] == fileDescription['type'] and rf['project'] == fileDescription['project']:
+                if rf['file'] == fileDescription['file'] and \
+                    rf['type'] == fileDescription['type'] and rf['project'] == fileDescription['project']:
                     self.trace('already exist in the list, nothing todo')
                     return
 
@@ -2614,24 +2582,42 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
             except IndexError as e:
                 self.error( "open recent file: %s" % e )
             else:
-                if tplFile['type']==UCI.REPO_TESTS or tplFile['type']==UCI.REPO_ADAPTERS or tplFile['type']==UCI.REPO_LIBRARIES:
+                if tplFile['type']==UCI.REPO_TESTS:
                     if RCI.instance().isAuthenticated():
                         cur_prj_id = Repositories.instance().remote().getProjectId(tplFile['project'])
-                        UCI.instance().openFileRepo( pathFile = tplFile['file'], 
-                                                    repo=tplFile['type'], project=cur_prj_id )
+                        RCI.instance().openFileTests( projectId=int(cur_prj_id), filePath=tplFile['file'])
                     else:
-                        QMessageBox.warning(self, self.tr("Open file") , self.tr("Connect you to the test center!") )
+                        QMessageBox.warning(self, self.tr("Open file") , 
+                                            self.tr("Connect you to the test center!") )
+                        
+                elif tplFile['type']==UCI.REPO_ADAPTERS:
+                    if RCI.instance().isAuthenticated():
+                        cur_prj_id = Repositories.instance().remote().getProjectId(tplFile['project'])
+                        RCI.instance().openFileAdapters(filePath=tplFile['file'])
+                    else:
+                        QMessageBox.warning(self, self.tr("Open file") , 
+                                            self.tr("Connect you to the test center!") )
+                        
+                elif tplFile['type']==UCI.REPO_LIBRARIES:
+                    if RCI.instance().isAuthenticated():
+                        cur_prj_id = Repositories.instance().remote().getProjectId(tplFile['project'])
+                        RCI.instance().openFileLibraries(filePath=tplFile['file'])
+                    else:
+                        QMessageBox.warning(self, self.tr("Open file") , 
+                                            self.tr("Connect you to the test center!") )
+                           
                 elif tplFile['type']==UCI.REPO_TESTS_LOCAL or tplFile['type']==UCI.REPO_UNDEFINED :
-                    if UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
-                        QMessageBox.warning(self, self.tr("Authorization") , 
-                                            self.tr("You are not authorized to do that!") )
-                    else:
-                        extension = str(tplFile['file']).rsplit(".", 1)[1]
-                        tmp = str(tplFile['file']).rsplit("/", 1)
-                        path = tmp[0]
-                        filename = tmp[1].rsplit(".", 1)[0]
-                        WWorkspace.WDocumentViewer.instance().newTab( path = path, filename = filename, 
-                                                                    extension = extension, repoDest=tplFile['type'])
+                    # if UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
+                        # QMessageBox.warning(self, self.tr("Authorization") , 
+                                            # self.tr("You are not authorized to do that!") )
+                    # else:
+                    extension = str(tplFile['file']).rsplit(".", 1)[1]
+                    tmp = str(tplFile['file']).rsplit("/", 1)
+                    path = tmp[0]
+                    filename = tmp[1].rsplit(".", 1)[0]
+                    WWorkspace.WDocumentViewer.instance().newTab( path = path, filename = filename, 
+                                                                  extension = extension, 
+                                                                  repoDest=tplFile['type'])
                 else:
                     self.error('type unkwnown')
 
@@ -2770,86 +2756,89 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         self.gotoHomepageAction.setEnabled(True)
         WWorkspace.WDocumentViewer.instance().updateConnectLink(connected=True)
         WWorkspace.WDocumentViewer.instance().updateMacroLink()
-        
-        if UCI.RIGHTS_MANAGER in RCI.instance().userRights:
-            self.mainTab.setTabEnabled( self.TAB_WORKSPACE, False )
-            self.mainTab.setCurrentIndex( self.TAB_SERVER )
-            self.openMenu.setEnabled(False)
 
         WServerExplorer.instance().onConnection(data = data)
         WWorkspace.WRepositories.instance().onLoadRemote(data = data)
-        if UCI.RIGHTS_TESTER in RCI.instance().userRights or UCI.RIGHTS_ADMIN in RCI.instance().userRights \
-                or UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
-            WWorkspace.WHelper.instance().onLoad(data=data)
+        WWorkspace.WHelper.instance().onLoad(data=data)
 
-        if UCI.RIGHTS_TESTER in RCI.instance().userRights or UCI.RIGHTS_ADMIN in RCI.instance().userRights \
-                or UCI.RIGHTS_DEVELOPER in RCI.instance().userRights :
-            self.mainTab.setTabEnabled( self.TAB_WORKSPACE, True )
-            self.mainTab.setCurrentIndex( self.TAB_WORKSPACE )
-            WWorkspace.WDocumentViewer.instance().enableWorkspace()
-            WWorkspace.WDocumentViewer.instance().enableTabs()
-            if not WWorkspace.WDocumentViewer.instance().isEmpty():
-                # active test properties only if the first tab need it
-                currentIndexTab = WWorkspace.WDocumentViewer.instance().tab.currentIndex()
-                if WWorkspace.WDocumentViewer.instance().supportProperties( tabId=currentIndexTab ):
-                    WWorkspace.WDocumentProperties.instance().setEnabled(True)
-           
-            self.editMenu.setDisabled(False)
-            self.sourceMenu.setDisabled(False)
-            self.newMenu.setEnabled(True)
-            if len(self.listActionsRecentFiles) > 0:
-                self.recentMenu.setEnabled(True)
-                self.openAllRecentFilesAction.setEnabled(True)
-                self.emptyRecentFilesListAction.setEnabled(True)
+        self.mainTab.setTabEnabled( self.TAB_WORKSPACE, True )
+        self.mainTab.setCurrentIndex( self.TAB_WORKSPACE )
+        WWorkspace.WDocumentViewer.instance().enableWorkspace()
+        WWorkspace.WDocumentViewer.instance().enableTabs()
+        if not WWorkspace.WDocumentViewer.instance().isEmpty():
+            # active test properties only if the first tab need it
+            currentIndexTab = WWorkspace.WDocumentViewer.instance().tab.currentIndex()
+            if WWorkspace.WDocumentViewer.instance().supportProperties( tabId=currentIndexTab ):
+                WWorkspace.WDocumentProperties.instance().setEnabled(True)
+       
+        self.editMenu.setDisabled(False)
+        self.sourceMenu.setDisabled(False)
+        self.newMenu.setEnabled(True)
+        if len(self.listActionsRecentFiles) > 0:
+            self.recentMenu.setEnabled(True)
+            self.openAllRecentFilesAction.setEnabled(True)
+            self.emptyRecentFilesListAction.setEnabled(True)
 
-        if UCI.RIGHTS_TESTER in RCI.instance().userRights or UCI.RIGHTS_ADMIN in RCI.instance().userRights :
-            WWorkspace.Repositories.instance().initLocalRepo()
-            WWorkspace.WDocumentViewer.instance().runSeveralAction.setEnabled(True)
-            if not WWorkspace.WDocumentViewer.instance().isEmpty():
-                WWorkspace.WDocumentViewer.instance().setCurrentActions()
-            else:
-                WWorkspace.WDocumentViewer.instance().runAction.setEnabled(False)
-                WWorkspace.WDocumentViewer.instance().runStepByStepAction.setEnabled(False)
-                WWorkspace.WDocumentViewer.instance().runBreakpointAction.setEnabled(False)
-                WWorkspace.WDocumentViewer.instance().runBackgroundAction.setEnabled(False)
-                WWorkspace.WDocumentViewer.instance().checkAction.setEnabled(False)
-                WWorkspace.WDocumentViewer.instance().checkSyntaxAction.setEnabled(False)
-                WWorkspace.WDocumentViewer.instance().checkDesignAction.setEnabled(False)
-                WWorkspace.WDocumentViewer.instance().runSchedAction.setEnabled(False)
+        WWorkspace.Repositories.instance().initLocalRepo()
+        WWorkspace.WDocumentViewer.instance().runSeveralAction.setEnabled(True)
+        if not WWorkspace.WDocumentViewer.instance().isEmpty():
+            WWorkspace.WDocumentViewer.instance().setCurrentActions()
+        else:
+            WWorkspace.WDocumentViewer.instance().runAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().runStepByStepAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().runBreakpointAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().runBackgroundAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().checkAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().checkSyntaxAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().checkDesignAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().runSchedAction.setEnabled(False)
 
+        WWorkspace.WDocumentViewer.instance().newAdapterAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().newLibraryAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().newTxtAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().newTestConfigAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().newTestAbstractAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().newTestUnitAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().newTestSuiteAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().newTestPlanAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().newTestGlobalAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().newTestDataAction.setEnabled(True)
+        WWorkspace.WDocumentViewer.instance().openAction.setEnabled(True)
+        self.importImageAction.setEnabled(True)
+
+        if UCI.RIGHTS_MONITOR in RCI.instance().userRights :
             WWorkspace.WDocumentViewer.instance().newAdapterAction.setEnabled(False)
             WWorkspace.WDocumentViewer.instance().newLibraryAction.setEnabled(False)
             WWorkspace.WDocumentViewer.instance().newTxtAction.setEnabled(False)
             WWorkspace.WDocumentViewer.instance().newTestConfigAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newTestAbstractAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newTestUnitAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newTestSuiteAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newTestPlanAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newTestGlobalAction.setEnabled(True)
+            WWorkspace.WDocumentViewer.instance().newTestAbstractAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().newTestUnitAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().newTestSuiteAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().newTestPlanAction.setEnabled(False)
+            WWorkspace.WDocumentViewer.instance().newTestGlobalAction.setEnabled(False)
             WWorkspace.WDocumentViewer.instance().newTestDataAction.setEnabled(True)
             WWorkspace.WDocumentViewer.instance().openAction.setEnabled(True)
-            self.importImageAction.setEnabled(True)
-
-            if sys.platform == "win32": 
-                WRecorder.instance().restartGuiAction.setEnabled(True)
-                self.desktopCaptureMenu.setEnabled(True)
-                self.webCaptureMenu.setEnabled(True)
-                self.mobCaptureMenu.setEnabled(True)
-                self.basicCaptureMenu.setEnabled(True)
-                self.sysCaptureMenu.setEnabled(True)
-                
-            self.networkCaptureMenu.setEnabled(True)
+            self.importImageAction.setEnabled(False)
             
-        if UCI.RIGHTS_ADMIN in RCI.instance().userRights :
-            WWorkspace.WDocumentViewer.instance().runSeveralAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newAdapterAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newLibraryAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newTxtAction.setEnabled(True)
-
-        if UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
-            WWorkspace.WDocumentViewer.instance().newAdapterAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newLibraryAction.setEnabled(True)
-            WWorkspace.WDocumentViewer.instance().newTxtAction.setEnabled(True)
+        if sys.platform == "win32": 
+            WRecorder.instance().restartGuiAction.setEnabled(True)
+            self.desktopCaptureMenu.setEnabled(True)
+            self.webCaptureMenu.setEnabled(True)
+            self.mobCaptureMenu.setEnabled(True)
+            self.basicCaptureMenu.setEnabled(True)
+            self.sysCaptureMenu.setEnabled(True)
+            
+            if UCI.RIGHTS_MONITOR in RCI.instance().userRights :
+                WRecorder.instance().restartGuiAction.setEnabled(False)
+                self.desktopCaptureMenu.setEnabled(False)
+                self.webCaptureMenu.setEnabled(False)
+                self.mobCaptureMenu.setEnabled(False)
+                self.basicCaptureMenu.setEnabled(False)
+                self.sysCaptureMenu.setEnabled(False)
+                
+        self.networkCaptureMenu.setEnabled(True)
+        if UCI.RIGHTS_MONITOR in RCI.instance().userRights :
+            self.networkCaptureMenu.setEnabled(False)
 
     def onDisconnection (self):
         """
@@ -2952,13 +2941,25 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         @param data: data received from server
         @type data:
         """
-        if data[0] in [ 'task', 'archive', 'stats',
-                        'users', 'users-stats',
-                        'probes', 'probes-default',
-                        'agents', 'agents-default',
-                        'task-running', 'task-waiting', 'task-history', 'task-enqueued',
-                        'repositories', "progressbar",
-                        'archives', 'context-server', 'rn-libraries', 'rn-adapters',
+        if data[0] in [ 'task', 
+                        'archive', 
+                        'stats',
+                        'users', 
+                        'users-stats',
+                        'probes', 
+                        'probes-default',
+                        'agents', 
+                        'agents-default',
+                        'task-running', 
+                        'task-waiting', 
+                        'task-history', 
+                        'task-enqueued',
+                        'repositories', 
+                        "progressbar",
+                        'archives', 
+                        'context-server', 
+                        'rn-libraries', 
+                        'rn-adapters',
                         ] :
             if WServerExplorer.instance() is not None:
                 WServerExplorer.instance().notifyReceived(data)
@@ -2979,13 +2980,22 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         try:
             actionName, actionData = data
             if actionName == "changed":
-                changedBy=''
-                if "modified-by" in actionData: changedBy = actionData["modified-by"]
-                fileChanged = actionData["path"].split("/", 1)[1]
-                
-                msg = "The test (%s) has been modified by %s" % (fileChanged, changedBy)
-                msg += "\n Please to re-open this file!"
-                self.displayWarningMsg(title="Test changed", err=msg )
+                # check if the file is opened in the workspace
+                tabid = WWorkspace.WDocumentViewer.instance().checkAlreadyOpened(
+                                                                                  path=actionData["path"], 
+                                                                                  remoteFile=True, 
+                                                                                  repoType=RCI.REPO_TESTS, 
+                                                                                  project=actionData["project-id"]
+                                                                                )
+                if tabid is not None:
+                    # set the focus in this tab
+                    WWorkspace.WDocumentViewer.instance().tab.setCurrentIndex(tabid)
+                    
+                    # display a message to inform the user
+                    msg = "The test (%s) has been modified by %s" % (actionData["path"], actionData["modified-by"])
+                    msg += "\n Please to re-open this file!"
+                    self.displayWarningMsg(title="Test modified", err=msg )
+                    
         except Exception as e:
             self.error("bad test changed event received: %s" % e)
   
@@ -3019,21 +3029,13 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
 
             if RCI.instance().isAuthenticated():
                 WWorkspace.WDocumentViewer.instance().enableWorkspace()
-                if UCI.RIGHTS_DEVELOPER in RCI.instance().userRights or UCI.RIGHTS_ADMIN in RCI.instance().userRights:
-                    WWorkspace.WDocumentViewer.instance().newAdapterAction.setEnabled(True)
-                    WWorkspace.WDocumentViewer.instance().newLibraryAction.setEnabled(True)
-                    WWorkspace.WDocumentViewer.instance().newTxtAction.setEnabled(True)
-                    WWorkspace.WDocumentViewer.instance().newTestConfigAction.setEnabled(False)
-                    WWorkspace.WDocumentViewer.instance().newTestAbstractAction.setEnabled(False)
-                    WWorkspace.WDocumentViewer.instance().newTestUnitAction.setEnabled(False)
-                    WWorkspace.WDocumentViewer.instance().newTestSuiteAction.setEnabled(False)
-                    WWorkspace.WDocumentViewer.instance().newTestPlanAction.setEnabled(False)
-                    WWorkspace.WDocumentViewer.instance().newTestGlobalAction.setEnabled(False)
-                    WWorkspace.WDocumentViewer.instance().newTestDataAction.setEnabled(False)
-                    self.openTestResultAction.setEnabled(False)
                 if UCI.RIGHTS_TESTER in RCI.instance().userRights or UCI.RIGHTS_ADMIN in RCI.instance().userRights :
                     WWorkspace.WDocumentViewer.instance().setCurrentActions()
                         
+                    WWorkspace.WDocumentViewer.instance().newAdapterAction.setEnabled(True)
+                    WWorkspace.WDocumentViewer.instance().newLibraryAction.setEnabled(True)
+                    WWorkspace.WDocumentViewer.instance().newTxtAction.setEnabled(True)
+                    
                     WWorkspace.WDocumentViewer.instance().newTestUnitAction.setEnabled(True)
                     WWorkspace.WDocumentViewer.instance().newTestAbstractAction.setEnabled(True)
                     WWorkspace.WDocumentViewer.instance().newTestSuiteAction.setEnabled(True)
@@ -3111,7 +3113,7 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
             WWorkspace.WDocumentViewer.instance().closeTabAction.setEnabled(False)
             WWorkspace.WDocumentViewer.instance().closeAllTabAction.setEnabled(False)
 
-    def about(self):
+    def aboutPage(self):
         """
         Display About Menu
         """
@@ -3120,107 +3122,73 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         #
         about = [ "<b>%s %s</b>" % (name,__VERSION__) ]
         about.append( "Copyright (c) %s-%s %s" % (__BEGIN__,__END__, __AUTHOR__) )
-        about.append( "Extensive Testing<br />" )
-
-        about.append( "%s" % self.tr("This application tries to save your time and make your life easier at work.") )
-        about.append( "%s" % self.tr("Use at your own risk, no warranty, no promises...") )
-        about.append( "%s" % self.tr("Enjoy!") )
-        about.append( "" )           
+        about.append( "%s<br />" %  Settings.instance().readValue( key = 'Common/product-name' ))       
         about.append( "%s: <a href='mailto:%s'>%s</a>" %(self.tr("Contact"), __EMAIL__,__EMAIL__) )
         about.append( "%s: <a href='%s'>%s</a>" % (self.tr("Home page"), url, url) )
-        about.append( "" )
-        about.append( "%s: <i>%s</i>" % (self.tr("Contributors"), ' '.join(__CONTRIBUTORS__)))
-        about.append( "%s: <i>%s</i>" % (self.tr("Testers"), ', '.join(__TESTERS__)))
 
         about.append( "<hr />" )
         about.append( "%s <b>%s</b>" % (self.tr("Developed and maintained by"), __AUTHOR__) ) 
 
         about.append( "%s python %s (%s) - Qt %s - PyQt %s on %s" % (self.tr("Built with: "), 
-                                                                        platform.python_version(), 
-                                                                        platform.architecture()[0],
-                                                                        QT_VERSION_STR, PYQT_VERSION_STR,  
-                                                                        platform.system() )
+                                                                    platform.python_version(), 
+                                                                    platform.architecture()[0],
+                                                                    QT_VERSION_STR, PYQT_VERSION_STR,  
+                                                                    platform.system() )
                     )
         about.append( "%s %s" % (self.tr("Built time: "), __BUILDTIME__ )  )
         if QtHelper.str2bool(Settings.instance().readValue( key = 'Common/portable')): 
             about.append( "%s" % self.tr("Portable edition") )
         about.append( "<hr />" )
-        about.append( LICENSE ) 
+
+        contrib = self.readFileRessources(filename=":/CONTRIBUTORS")
+        about.append( "%s: <i>%s</i>" % (self.tr("Contributors"), contrib))
+        
+        about.append( "<hr />" )
+        lic = self.readFileRessources(filename=":/TERMS")
+        about.append( "<i>%s</i>" % lic ) 
+        
         QMessageBox.about(self, "%s - %s" % (name, self.tr("About")), "<br />".join(about) )
 
     def releaseNotes (self):
         """
         Read the release notes
         """
-        rn = ''
-        try:
-            # open the release note from resources and read all
-            fh = QFile(":/releasenotes.txt")
-            fh.open(QFile.ReadOnly)
-            rn = fh.readAll()
-            
-            # convert qbytearray to str
-            if sys.version_info > (3,):
-                rn = unicode(rn, 'utf8') # to support python3 
-            else:
-                rn = unicode(rn)
-                
-            # close the file descriptor
-            fh.close()
-        except Exception as e:
-            self.error( "Unable to read release notes: " + str(e) )
-            
+        rn = self.readFileRessources(filename=":/releasenotes.txt")
+
         # open the dialog
         name = Settings.instance().readValue( key = 'Common/name' )
         rnDialog = RN.ReleaseNotesDialog( dialogName = name, parent = self)
         rnDialog.parseRn( text = rn )
         rnDialog.exec_()
 
-    # def onOpenFileRepo(self, repoType, path_file, name_file, ext_file, encoded_data, project, is_locked):
-        # """
-        # Called on open file from remote repository
-
-        # @param repoType: 
-        # @type repoType:
-
-        # @param path_file: 
-        # @type path_file:
-
-        # @param name_file: 
-        # @type name_file:
-        
-        # @param ext_file: 
-        # @type ext_file:
-        
-        # @param encoded_data: 
-        # @type encoded_data:
-        
-        # @param project: 
-        # @type project:
-        # """
-        # WWorkspace.WDocumentViewer.instance().openRemoteFile( 
-                                                                # data=(repoType, str(path_file), 
-                                                                # str(name_file), str(ext_file), 
-                                                                # encoded_data, project, is_locked) 
-                                                            # )
-
-    def onRefreshRepo(self, repoType, data, saveAsOnly, forRuns, projectid):
+    def readFileRessources(self, filename):
         """
-        On refresh repo
+        Read a file from ressources
         """
-        if forRuns:
-            WWorkspace.WDocumentViewer.instance().onRefreshRepositoryRuns(repoType, data, projectid)
-        else:
-            if repoType == UCI.REPO_ARCHIVES:
-                WServerExplorer.instance().onRefreshArchives(data=data)
+        ct = ''
+        try:
+            # open the file  from resources and read all
+            fh = QFile(filename)
+            fh.open(QFile.ReadOnly)
+            ct = fh.readAll()
+            
+            # convert qbytearray to str
+            if sys.version_info > (3,):
+                ct = unicode(ct, 'utf8') # to support python3 
             else:
-                WWorkspace.WRepositories.instance().onRefreshRemote(repoType, data, saveAsOnly, projectid)
-
+                ct = unicode(ct)
+                
+            # close the file descriptor
+            fh.close()
+        except Exception as e:
+            self.error( "Unable to read the file %s from ressources: %s " % ( filename, str(e)) )
+        return ct
+        
     def onRefreshTestsRepo(self, data, projectId, forSaveAs, forRuns):
         """
         """
         if forRuns:
-            WWorkspace.WDocumentViewer.instance().onRefreshRepositoryRuns(data, projectid)
+            WWorkspace.WDocumentViewer.instance().onRefreshRepositoryRuns(data, projectId)
         else:
             WWorkspace.WRepositories.instance().onRefreshRemoteTests(data, projectId, forSaveAs)
 
@@ -3234,8 +3202,8 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         """
         WWorkspace.WRepositories.instance().onRefreshRemoteLibraries(data)
         
-    def onGetFileRepo(self, repoType, path_file, name_file, ext_file, encoded_data, 
-                        project, forDest, actionId, testId):
+    def onGetFileRepo(self, path_file, name_file, ext_file, encoded_data, 
+                        project, forDest, actionId, testId, refreshOtherItems):
         """
         Called on get file from remote repository
 
@@ -3245,39 +3213,65 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         # for test plan
         if forDest == UCI.FOR_DEST_TP:
             if actionId == UCI.ACTION_ADD:
-                WWorkspace.WDocumentViewer.instance().addRemoteTestToTestplan( data=(str(path_file), str(name_file), 
-                                                                                str(ext_file), encoded_data, project), 
-                                                                                testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().addRemoteTestToTestplan( data=(str(path_file), 
+                                                                                   str(name_file), 
+                                                                                   str(ext_file), 
+                                                                                   encoded_data, 
+                                                                                   project), 
+                                                                               testParentId=testId )
+            
             elif actionId == UCI.ACTION_INSERT_AFTER:
-                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestplan( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project),
-                                                                                  below=False, testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestplan( data=(str(path_file), 
+                                                                                      str(name_file), 
+                                                                                      str(ext_file), 
+                                                                                      encoded_data, 
+                                                                                      project),
+                                                                                  below=False, 
+                                                                                  testParentId=testId )
+            
             elif actionId == UCI.ACTION_INSERT_BELOW:
-                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestplan( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project),
-                                                                                  below=True, testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestplan( data=(str(path_file), 
+                                                                                      str(name_file), 
+                                                                                      str(ext_file), 
+                                                                                      encoded_data, 
+                                                                                      project),
+                                                                                  below=True, 
+                                                                                  testParentId=testId )
                 
             elif actionId == UCI.ACTION_RELOAD_PARAMS:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestplan( data=(
-                                                                                        str(path_file), str(name_file), str(ext_file),
-                                                                                        encoded_data, testId, project
+                                                                                        str(path_file), 
+                                                                                        str(name_file), 
+                                                                                        str(ext_file),
+                                                                                        encoded_data, 
+                                                                                        testId,
+                                                                                        project
                                                                                         ) 
                                                                                  )
                 
             elif actionId == UCI.ACTION_MERGE_PARAMS:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestplan( data=(
-                                                                                        str(path_file), str(name_file), str(ext_file),
-                                                                                        encoded_data, testId, project
-                                                                                        )  ,
+                                                                                        str(path_file), 
+                                                                                        str(name_file), 
+                                                                                        str(ext_file),
+                                                                                        encoded_data, 
+                                                                                        testId, 
+                                                                                        project
+                                                                                        ),
                                                                                     mergeParameters=True
                                                                                  )
 
             elif actionId == UCI.ACTION_UPDATE_PATH:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestplan( data=(
-                                                                                        str(path_file), str(name_file), str(ext_file),
-                                                                                        encoded_data, testId, project
+                                                                                        str(path_file), 
+                                                                                        str(name_file), 
+                                                                                        str(ext_file),
+                                                                                        encoded_data,
+                                                                                        testId, 
+                                                                                        project
                                                                                         ),
-                                                                                  parametersOnly=False
+                                                                                  parametersOnly=False,
+                                                                                  refreshOtherItems=refreshOtherItems
                                                                                  )
 
             else:
@@ -3286,39 +3280,63 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         # for test global
         elif forDest == UCI.FOR_DEST_TG:
             if actionId == UCI.ACTION_ADD:
-                WWorkspace.WDocumentViewer.instance().addRemoteTestToTestglobal( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project), 
-                                                                                        testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().addRemoteTestToTestglobal( data=(str(path_file), 
+                                                                                        str(name_file), 
+                                                                                        str(ext_file), 
+                                                                                        encoded_data, 
+                                                                                        project), 
+                                                                                 testParentId=testId )
+            
             elif actionId == UCI.ACTION_INSERT_AFTER:
-                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestglobal( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project),
-                                                                                    below=False, testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestglobal( data=(str(path_file), 
+                                                                                          str(name_file), 
+                                                                                          str(ext_file), 
+                                                                                          encoded_data, 
+                                                                                          project),
+                                                                                    below=False, 
+                                                                                    testParentId=testId )
+            
             elif actionId == UCI.ACTION_INSERT_BELOW:
-                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestglobal( data=(str(path_file), str(name_file), 
-                                                                                    str(ext_file), encoded_data, project),
-                                                                                    below=True, testParentId=testId )
+                WWorkspace.WDocumentViewer.instance().insertRemoteTestToTestglobal( data=(str(path_file),
+                                                                                          str(name_file), 
+                                                                                          str(ext_file),
+                                                                                          encoded_data, 
+                                                                                          project),
+                                                                                    below=True, 
+                                                                                    testParentId=testId )
+            
             elif actionId == UCI.ACTION_RELOAD_PARAMS:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestglobal( data=(
-                                                                                            str(path_file), str(name_file), 
+                                                                                            str(path_file), 
+                                                                                            str(name_file), 
                                                                                             str(ext_file),
-                                                                                            encoded_data, testId, project
+                                                                                            encoded_data, 
+                                                                                            testId,
+                                                                                            project
                                                                                           ) 
                                                                                    )
+            
             elif actionId == UCI.ACTION_MERGE_PARAMS:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestglobal( data=(
-                                                                                            str(path_file), str(name_file), 
+                                                                                            str(path_file), 
+                                                                                            str(name_file), 
                                                                                             str(ext_file),
-                                                                                            encoded_data, testId, project
+                                                                                            encoded_data, 
+                                                                                            testId, project
                                                                                           ) ,
                                                                                     mergeParameters=True
                                                                                    )
+            
             elif actionId == UCI.ACTION_UPDATE_PATH:
                 WWorkspace.WDocumentViewer.instance().updateRemoteTestOnTestglobal( data=(
-                                                                                            str(path_file), str(name_file), 
+                                                                                            str(path_file), 
+                                                                                            str(name_file), 
                                                                                             str(ext_file),
-                                                                                            encoded_data, testId, project
+                                                                                            encoded_data, 
+                                                                                            testId, project
                                                                                           ),
-                                                                                    parametersOnly=False
+                                                                                    parametersOnly=False,
+                                                                                    refreshOtherItems=refreshOtherItems
                                                                                    )
             else:
                 self.error( 'unknown action id for tg: %s' % actionId )
@@ -3326,12 +3344,16 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         # for all type of tests
         elif forDest == UCI.FOR_DEST_ALL:
             if actionId == UCI.ACTION_IMPORT_INPUTS:
-                WWorkspace.WDocumentProperties.instance().addRemoteTestConfigToTestsuite( data=(str(path_file), str(name_file), 
-                                                                                            str(ext_file),  encoded_data, project), 
+                WWorkspace.WDocumentProperties.instance().addRemoteTestConfigToTestsuite( data=(str(path_file), 
+                                                                                                str(name_file), 
+                                                                                                str(ext_file),  encoded_data, 
+                                                                                                project), 
                                                                                           inputs=True )
             elif actionId == UCI.ACTION_IMPORT_OUTPUTS:
-                WWorkspace.WDocumentProperties.instance().addRemoteTestConfigToTestsuite( data=(str(path_file), str(name_file), 
-                                                                                          str(ext_file), encoded_data, project),
+                WWorkspace.WDocumentProperties.instance().addRemoteTestConfigToTestsuite( data=(str(path_file), 
+                                                                                                str(name_file), 
+                                                                                                str(ext_file), encoded_data, 
+                                                                                                project),
                                                                                           inputs=False )
             else:
                 self.error( 'unknown action id for all: %s' % actionId )
@@ -3343,15 +3365,13 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         """
         Called when a test is killed
         """
-        # WServerExplorer.TestManager.instance().testKilled()
         TestResults.instance().killWidgetTest(tid=data)
 
-    def onTestsKilled(self, data):
+    def onTestsKilled(self):
         """
         Called when a test is killed
         """
         WServerExplorer.TestManager.instance().testKilled()
-        # TestResults.instance().killWidgetTests(tids=data)
 
     def onTestVerdictLoaded(self, data, dataXml):
         """
@@ -3449,6 +3469,14 @@ class MainApplication(QMainWindow, Logger.ClassLogger):
         """
         WServerExplorer.Counters.instance().resetCounters()
         
+    def onFindTestFileUsage(self, result_list, file_path, file_projectid):
+        """
+        """
+        usage_test_tree = Repositories.instance().remote().initFindTestFileUsageWTree(result_list=result_list, 
+                                                                                      file_path=file_path, 
+                                                                                      file_projectid=file_projectid)
+        usage_test_tree.exec_()
+        
 def showMessageSplashscreen(msg, sleep=0):
     """
     Show message on splahsscreen
@@ -3467,9 +3495,10 @@ if __name__ == '__main__':
     # Construct the main app
     if sys.platform == "win32":
         app = QApplication(sys.argv)
-    if sys.platform in [ "linux", "linux2" ] :
+    if sys.platform in [ "linux", "linux2", "darwin" ] :
         app = QApplication(sys.argv)
 
+        
     # register an alternative Message Handler to hide warning
     # messageHandler = MessageHandler()
     # qInstallMsgHandler(messageHandler.process) # disable in v11, crash with webkit
@@ -3526,12 +3555,6 @@ if __name__ == '__main__':
     showMessageSplashscreen( QObject().tr('Initializing main application...') )
     window = MainApplication()
 
-    # showMessageSplashscreen( QObject().tr('Initializing recorder engine...') )
-    # WRecorder.initialize(parent=window, offlineMode=WORKSPACE_OFFLINE)    
-        
-    # showMessageSplashscreen( QObject().tr('Initializing menu recorder...') )
-    # window.moreMenu()
-    
     showMessageSplashscreen( QObject().tr('Terminated...') )
 
     window.show()
@@ -3547,7 +3570,7 @@ if __name__ == '__main__':
     # no more display the splash
     if sys.platform == "win32":
         splash.finish(window)
-    if sys.platform in [ "linux", "linux2" ]:
+    if sys.platform in [ "linux", "linux2", "darwin" ]:
         splash.finish(window)
 
     # performance measurement only  for debug mode

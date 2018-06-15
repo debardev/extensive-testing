@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,14 +30,21 @@ from TestExecutorLib.TestExecutorLib import doc_public
 
 import sys
 
-import StringIO
+try:
+	import StringIO
+except ImportError: # python3 support
+	import io as StringIO
+
 import csv
 import os 
 
 from Libs.PyXmlDict import Xml2Dict
 from Libs.PyXmlDict import Dict2Xml
 
-import templates
+try:
+	import templates
+except ImportError: # python3 support
+	from . import templates
 
 __NAME__="""WINDOWS"""
 
@@ -186,6 +193,10 @@ class Windows(TestAdapterLib.Adapter):
 				#			Invalid GET Expression.
 							
 				# raw format
+				# decode the dos response command with cp850 encoding
+				# and convert to utf8
+				raw = raw.decode("cp850").encode("utf8")
+
 				if data['get'] == EXEC_CMD:
 					if self.logEventReceived:		
 						tplWin = TestTemplatesLib.TemplateLayer(name='WINDOWS')

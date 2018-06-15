@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,8 @@
 """
 Mobile widget
 """
+
+import sys
 
 try:
 	from PyQt4.QtGui import (QWidget, QLabel, QCheckBox, QVBoxLayout, QTreeView, QAbstractItemView, 
@@ -421,7 +423,13 @@ class MobileWidget(QWidget):
                 bounds_str = attribute.nodeValue()
  
         self.tableModel.mylist = attributes
-        self.tableModel.reset()
+
+        if sys.version_info > (3,):
+            self.tableModel.beginResetModel()
+            self.tableModel.endResetModel()
+        else:
+            self.tableModel.reset()
+            
         self.mobileTableView.resizeColumnsToContents ()
         self.mobileTableView.resizeRowsToContents()
         

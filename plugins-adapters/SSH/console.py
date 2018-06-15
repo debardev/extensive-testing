@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -39,10 +39,15 @@ import stat
 
 import copy
 
-import codec_ssh
-import templates
-import client
-
+try:
+	import codec_ssh
+	import templates
+	import client
+except ImportError: # python3 support
+	from . import codec_ssh
+	from . import templates
+	from . import client
+	
 client = sys.modules['SutAdapters.%s.SSH' % TestAdapter.getVersion()]
 AdapterIP = sys.modules['SutAdapters.%s.IP' % TestAdapter.getVersion()]
 

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -25,22 +25,21 @@ import TestExecutorLib.TestAdapterLib as TestAdapterLib
 import TestExecutorLib.TestLibraryLib as TestLibraryLib
 
 Generic = None
-TestAdapterLib.setVersion("v1110")
-TestLibraryLib.setVersion("v800")
+Default = None
+TestAdapterLib.setVersion("base_v1300")
+TestLibraryLib.setVersion("base_v900")
 
-__RN__ = """Date: 22/10/2017
+__RN__ = """Date: xx/xx/2018
 What's new
-	1. (minor) Gui selenium: new high level function doSwitchToDefaultWindow
-	2. (medium) Tcp server: update to support agent mode
-	3. (medium) Http server: update to support agent mode
-	4. (medium) Ssh terminal: opened event splitted in two, first screen event added
-	5. (minor) Ssh terminal: no more possible to send data if not connected
-	6. (minor) Ssh client: new handleConnectionFailed on bad authentication and negotiation
-	7. (medium) Ssh terminal: new event "open error" when the authentication failed
-	8. (minor) Tcp: wait complete ssl handshake on connection
+	1. (major) split between base and extra adapters
+	2. (minor) terminal: added the possibility of not logging sent messages from terminal adapter (pull request #7)
+	3. (minor) ssl/tcp/http server: the certificate and key files can now be added from parameters (pull request #7)
+	4. (minor) ssl/tcp/http: new ciphers client side argument 
+	5. (medium) telnet: support new options 36 to 39
+	6. (medium) New ansible adapter with agent mode support (pull request #8)
+	7. (medium) New kafka adapter with agent mode support too (pull request #15)
 Issues fixed
-	1. (medium) Ssl: disable SNI feature
-	2. (minor) Ssh client: disconnected status not set properly on bad authentication and negotiation
+	1. (minor) fix bad option code in telnet
 """
 
 __DESCRIPTION__ = """This library contains all adapters available to test your SUT (System Under Test).
@@ -48,37 +47,71 @@ __DESCRIPTION__ = """This library contains all adapters available to test your S
 %s
 """ % __RN__
 
-import IPLITE
-import Ethernet
-import ARP
-import IP
-import ICMP
-import DNS
-import UDP
-import SSL
-import SOCKS
-import TCP
-import HTTP
-import RTP
-import SSH
-import Telnet
-import Pinger
-import SOAP
-import GUI
-import Dummy
-import System
-import WebSocket
-import SNMP
-import REST
-import FTP
-import SIP
-import Cisco
-import SMS
-import SFTP
-import Database
-import NTP
-import LDAP
-
+try:
+	import IPLITE
+	import Ethernet
+	import ARP
+	import IP
+	import ICMP
+	import DNS
+	import UDP
+	import SSL
+	import SOCKS
+	import TCP
+	import HTTP
+	import RTP
+	import SSH
+	import Telnet
+	import Pinger
+	import SOAP
+	import GUI
+	import System
+	import WebSocket
+	import SNMP
+	import REST
+	import FTP
+	import SIP
+	import Cisco
+	import SMS
+	import SFTP
+	import Database
+	import NTP
+	import LDAP
+	import Ansible
+	import Kafka
+except ImportError: # python3 support
+	from . import IPLITE
+	from . import Ethernet
+	from . import ARP
+	from . import IP
+	from . import ICMP
+	from . import DNS
+	from . import UDP
+	from . import SSL
+	from . import SOCKS
+	from . import TCP
+	from . import HTTP
+	from . import RTP
+	from . import SSH
+	from . import Telnet
+	from . import Pinger
+	from . import SOAP
+	from . import GUI
+	from . import System
+	from . import WebSocket
+	from . import SNMP
+	from . import REST
+	from . import FTP
+	from . import SIP
+	from . import Cisco
+	from . import SMS
+	from . import SFTP
+	from . import Database
+	from . import NTP
+	from . import LDAP
+	from . import Ansible
+	from . import Kafka
+	
 __HELPER__ =	[ ]
 __HELPER__.append("Ethernet")
 __HELPER__.append("ARP")
@@ -94,7 +127,6 @@ __HELPER__.append("Telnet")
 __HELPER__.append("Pinger") 
 __HELPER__.append("SOAP") 
 __HELPER__.append("GUI") 
-__HELPER__.append("Dummy") 
 __HELPER__.append("System") 
 __HELPER__.append("WebSocket") 
 __HELPER__.append("SNMP") 
@@ -107,3 +139,5 @@ __HELPER__.append("SFTP")
 __HELPER__.append("Database") 
 __HELPER__.append("NTP") 
 __HELPER__.append("LDAP")
+__HELPER__.append("Ansible")
+__HELPER__.append("Kafka")

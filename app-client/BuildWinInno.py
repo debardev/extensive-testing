@@ -2,8 +2,23 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2015 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301 USA
 # -------------------------------------------------------------------
 
 """
@@ -79,7 +94,7 @@ class InnoScript:
         d.append( "AppVersion=%s" % appVersion )
         d.append( "AppVerName=%s %s" % ( appName, appVersion ) )
         d.append( "AppPublisher=%s" % appAuthor )
-        d.append( "AppPublisherURL=http://%s" % settings.readValue( key = 'Common/url' ) )
+        d.append( "AppPublisherURL=https://%s" % settings.readValue( key = 'Common/url' ) )
         d.append( "VersionInfoVersion=%s" % appVersion )
         d.append( "DefaultDirName={pf}\%s" % appName )
         d.append( "DefaultGroupName=\%s" % appName )
@@ -147,8 +162,7 @@ class InnoScript:
         print("InnoSetup returned errorlevel: %s" % errorlevel)
 
 # Init the class, create the script and compile-it
-print("%s/%s/" % (QtHelper.dirExec(),SRC_FROM))
-script = InnoScript( pathName= "%s/%s/" % (QtHelper.dirExec(),SRC_FROM) )
+script = InnoScript( pathName= SRC_FROM )
 script.create()
 script.compile()
 

@@ -1,9 +1,9 @@
 <?php
 	/*
 	---------------------------------------------------------------
-	 Copyright (c) 2010-2017 Denis Machard. All rights reserved.
+	 Copyright (c) 2010-2018 Denis Machard. All rights reserved.
 
-	 This file is part of the extensive testing project; you can redistribute it and/or
+	 This file is part of the extensive automation project; you can redistribute it and/or
 	 modify it under the terms of the GNU General Public License, Version 3.
 
 	 This file is distributed in the hope that it will be useful, but
@@ -23,7 +23,7 @@
 	$__LWF_KEYWORDS		=	"";
 
 	// application config
-	$__LWF_APP_NAME						=	"Extensive Testing";
+	$__LWF_APP_NAME						=	"Extensive Automation";
 	$__LWF_APP_ACRONYM					=	"xt";
 	$__LWF_APP_LANG_DIR					=	"ltr";
 	$__LWF_APP_VERSION					=	"Undefined";
@@ -50,7 +50,7 @@
 	$__LWF_DB_HOST='127.0.0.1';
 	$__LWF_DB_USER='root';
 	$__LWF_DB_PWD='';
-	$__LWF_DB_NAME='xtc170';
+	$__LWF_DB_NAME='xtc180';
 	$__LWF_DB_PREFIX='xtc';
 	$__LWF_DB_CONNECT					= true; # persistent connection
 

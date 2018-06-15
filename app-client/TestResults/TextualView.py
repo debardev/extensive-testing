@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -522,7 +522,6 @@ class TextualView2(QWidget):
         @param event:
         @type event: 
         """
-        # print(ihmId)
         event["ihm_id"] = ihmId
         
         # new in v11.2
@@ -555,7 +554,10 @@ class TextualView2(QWidget):
                 color = event['color']
             else:
                 color = "#000000"
-            self.parent.graphView.addStep(text=msg, color=color, width=w, height=h, data=event['short-msg'], timestamp=event['timestamp'])
+            self.parent.graphView.addStep(text=msg, color=color, 
+                                          width=w, height=h, 
+                                          data=event['short-msg'], 
+                                          timestamp=event['timestamp'])
 
         if event['level'] in 'step-started':
             h = 40; w = 400;
@@ -563,8 +565,11 @@ class TextualView2(QWidget):
             stepMsg = event['short-msg']
             if len(stepMsg) > 50:
                 stepMsg = "%s..." % stepMsg[:50]
-            blockItem = self.parent.graphView.addStep(text="%s: %s" % (stepName,stepMsg), color=event['color'], 
-                                                        width=w, height=h, data=event['data-msg'], timestamp=event['timestamp'])
+            blockItem = self.parent.graphView.addStep(text="%s: %s" % (stepName,stepMsg), 
+                                                      color=event['color'], 
+                                                      width=w, height=h, 
+                                                      data=event['data-msg'], 
+                                                      timestamp=event['timestamp'])
             self.steps[event['from-component']] = blockItem
 
         # update the graph

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -412,6 +412,7 @@ class WServerInformation(QWidget, Logger.ClassLogger):
         """
         Load statistics
         """
+
         self.nbSizeLogsOnDiskLabel.setText( str( QtHelper.bytes2human(data['disk-usage-logs']) ) )
         self.nbSizeTmpOnDiskLabel.setText( str( QtHelper.bytes2human(data['disk-usage-tmp']) ) )
 
@@ -433,7 +434,7 @@ class WServerInformation(QWidget, Logger.ClassLogger):
         for param in data:
             probeItem = ParamItem( param = param, parent= self.informations)
         
-        # resize collums
+        # resize columns
         for i in xrange(len(self.labels) - 1):
             self.informations.resizeColumnToContents(i)
 

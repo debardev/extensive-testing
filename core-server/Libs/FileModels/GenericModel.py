@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -39,16 +39,17 @@ from Libs import Logger
 
 import zlib
 import base64
-  
+
 class GenericModel(Logger.ClassLogger):
     """
     Data model for generic test
     """
-    def __init__ (self, compress=6):
+    def __init__ (self, level=6, compressed=False):
         """
         Generic model
         """
-        self.compress = compress
+        self.level = level
+        self.compressed = compressed
 
     def toXml(self):
         """
@@ -101,7 +102,10 @@ class GenericModel(Logger.ClassLogger):
             else:
                 f = open(absPath, 'wb')
                 raw =  unicode( xmlraw ).encode('utf-8') 
-                f.write( zlib.compress( raw, self.compress ) )
+                if self.compressed:
+                    f.write( zlib.compress( raw, self.level ) )
+                else:
+                    f.write( raw )
                 f.close()
                 ret = True
         except Exception as e:
@@ -118,8 +122,16 @@ class GenericModel(Logger.ClassLogger):
             if xmlraw is None: 
                 raise Exception("bad xml")
             raw = unicode( xmlraw ).encode('utf-8')
-            compressed = zlib.compress( raw, self.compress ) 
-            encoded = base64.b64encode( compressed )
+            
+            # compress and encode in base64 before to return it
+            if self.compressed:
+                compressed = zlib.compress( raw, self.compress )
+                encoded = base64.b64encode( compressed )
+            else:
+                encoded = base64.b64encode( raw )
+
+            if sys.version_info > (3,):
+                encoded = encoded.decode("utf-8") 
         except Exception as e:
             self.error( e )
         return encoded
@@ -144,15 +156,18 @@ class GenericModel(Logger.ClassLogger):
                 read_data = f.read()
                 f.close()
             except Exception as e:
-                self.error( e )
+                self.error( "open file: %s" % e )
                 return False
         else:
             read_data = rawData
+            
+        # to be backward compatible, try to decompress the file
         try:
             decompressed_data = zlib.decompress(read_data)
+            del read_data
         except Exception as e:
-            self.error( e )
-            return False
+            # return the file as plain text
+            return self.onLoad(decompressedData=read_data)
         else:
             return self.onLoad(decompressedData=decompressed_data)
 

@@ -1,3 +1,17 @@
-# What is ExtensiveTesting?
+# What is ExtensiveAutomation?
 
-ExtensiveTesting is a generic automation framework designed to make integration, validation, regression and end-to-end testing with a collaborative workspace environment. http://extensivetesting.org/
+https://www.extensiveautomation.org/
+
+ExtensiveAutomation is a test and deployment automation framework for integration, regression and end-to-end usages.
+The framework provided a rich and collaborative workspace environment.
+
+## Authors
+
+It was created by 
+ * Denis MACHARD
+ 
+## Documentations
+
+For english users - http://extensiveautomation.readthedocs.io/en/latest/
+
+Pour les utilisateurs français - http://extensiveautomation.readthedocs.io/fr/latest/

@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,8 +30,11 @@ import sys
 from Libs.PyXmlDict import Xml2Dict
 from Libs.PyXmlDict import Dict2Xml
 
-import templates_term
-
+try:
+	import templates_term
+except ImportError: # python3 support
+	from . import templates_term
+	
 import re
 import time
 import codecs
@@ -121,7 +124,6 @@ class Codec(object):
 		if current != self.snapshot_screen:
 			if not self.connected:
 				self.connected=True
-#				self.handleScreen(screen=("opened", templates_term.term_opened(data=current.strip() )  ))
 				self.handleScreen(screen=("opened", templates_term.term_opened(data="success")  ))
 				self.handleScreen(screen=("screen", templates_term.term_data(data=current.strip() )  ))
 			else:

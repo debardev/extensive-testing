@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,16 +30,16 @@
 #        AUTHOR:  Denis Machard
 #====================================================================
 
-PKG_NAME="ExtensiveTesting"
+PKG_NAME="ExtensiveAutomation"
 PRODUCT_SVC_NAME="$(echo $PKG_NAME | sed 's/.*/\L&/')"
 APP_PATH="$(pwd)"
 APP_SRC_PATH="$(pwd)/$PKG_NAME/"
 LOG_FILE="$APP_PATH/install.log"
 
 echo "========================================"
-echo "=  Build the $PKG_NAME product  ="
+echo "=      Build the $PKG_NAME product     ="
 echo "=           Denis Machard              ="
-echo "=      www.extensivetesting.org        ="
+echo "=      www.extensiveautomation.org     ="
 echo "========================================"
 
 
@@ -48,6 +48,7 @@ PKG_VERSION=$(cat $APP_SRC_PATH/VERSION)
 TMP_BACKUP=/tmp/backuptestserver/
 
 echo "Creating package $PKG_VERSION"
+echo "with source $APP_SRC_PATH"
 
 # clean code
 find $APP_SRC_PATH/. -name "*.pyo" -exec rm -rf {} \;
@@ -179,8 +180,8 @@ dos2unix $APP_SRC_PATH/Scripts/decode-trx.py 1>> "$LOG_FILE" 2>&1
 chmod +x $APP_SRC_PATH/Scripts/*.sh
 
 echo "- generate doc api"
-$APP_SRC_PATH/Scripts/generate-api-docs.sh $APP_SRC_PATH
+$APP_SRC_PATH/Scripts/yaml-restapi-docs.sh $APP_SRC_PATH
 
 echo "- create pkg"
-tar -czvf /tmp/$PKG_NAME-$PKG_VERSION.tar.gz ../$PKG_NAME-$PKG_VERSION/  1>> /dev/null 2>&1
+tar -czvf /tmp/$PKG_NAME-$PKG_VERSION.tar.gz ../$PKG_NAME-$PKG_VERSION/
 echo "=> Result tar.gz file is located in /tmp"

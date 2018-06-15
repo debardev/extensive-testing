@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -79,7 +79,8 @@ class WTestTxt(Document.WDocument):
         @param nonameId: 
         @type nonameId: 
         """
-        Document.WDocument.__init__(self, parent, path, filename, extension, nonameId, remoteFile, repoDest, project, isLocked)
+        Document.WDocument.__init__(self, parent, path, filename, extension, 
+                                    nonameId, remoteFile, repoDest, project, isLocked)
 
         self.srcEditor = None
         self.createWidgets()
@@ -97,7 +98,9 @@ class WTestTxt(Document.WDocument):
         |       PyEditor        |
         |_______________________|
         """
-        self.srcWidget = EditorWidget( editorId=self.TEST_TXT_EDITOR, title="Txt Definition:", parent=self, activePyLexer=False )
+        self.srcWidget = EditorWidget( editorId=self.TEST_TXT_EDITOR, 
+                                       title="Txt Definition:", parent=self, 
+                                       activePyLexer=False )
         self.srcEditor = self.srcWidget.editor
 
         layout = QVBoxLayout()

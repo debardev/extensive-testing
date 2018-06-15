@@ -1,9 +1,9 @@
 <?php
 	/*
 	---------------------------------------------------------------
-	 Copyright (c) 2010-2017 Denis Machard. All rights reserved.
+	 Copyright (c) 2010-2018 Denis Machard. All rights reserved.
 
-	 This file is part of the extensive testing project; you can redistribute it and/or
+	 This file is part of the extensive automation project; you can redistribute it and/or
 	 modify it under the terms of the GNU General Public License, Version 3.
 
 	 This file is distributed in the hope that it will be useful, but
@@ -70,6 +70,10 @@
 		'gui'							=> 'GUI',
 		'web'							=> 'Web',
 		'api'							=> 'API',
+        'api-key'				        => 'API Key',
+		'tester-api'					=> 'Tester API',
+        'common-api'					=> 'Common API',
+        'admin-api'					    => 'Admin API',
 		'value'							=> 'Value',
 		'account'						=> 'Account',
 		'quickstart'					=> 'Quickstarts',
@@ -116,7 +120,7 @@
 		# Users
 		'administrator'					=> 'Administrator',
 		'tester'						=> 'Tester',
-		'leader'						=> 'Leader',
+		'monitor'						=> 'Monitor',
 		'developer'						=> 'Developer',
 
 		# Menu
@@ -136,7 +140,7 @@
 		'about-rn-probes'				=> 'Probes',
         'about-rn-toolbox'				=> 'Toolbox',
 		'about-licenses'				=> 'Licenses',
-		'about-product-description'		=> 'Extensive Testing is an open and generic test automation framework designed to make integration and validation tests with a collaborative workspace environment. This environment is open source and try to save your time and make your life easier at work. Enjoy!',
+		'about-product-description'		=> 'ExtensiveTesting is a test and deployment automation framework for integration, regression and end-to-end usages. This environment is open source and try to save your time and make your life easier at work. Enjoy!',
 		'about-developped-by'			=> 'Main Developer/Maintener by',
 		'about-what'					=> 'What\'s it?',
 		'about-what-new'				=> 'What\'s new',
@@ -214,7 +218,7 @@
 		'admin-users'					=> 'Users',
 		'admin-users-email'				=> 'Email',
 		'admin-users-lang'				=> 'Language',
-		'admin-users-rights'			=> 'Rights',
+		'admin-users-rights'			=> 'Role',
 		'admin-users-access'			=> 'Access',
 		'admin-users-style'				=> 'Style',
 		'admin-users-old-pwd'			=> 'Current Password',

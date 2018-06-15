@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,8 @@ import TestExecutorLib.TestAdapterLib as TestAdapterLib
 import TestExecutorLib.TestLibraryLib as TestLibraryLib
 import sys
 
-def ws(fin=None, mask=None, opcode=None, data=None, rsv1=None, rsv2=None, rsv3=None, data_length=None, more=None):
+def ws(fin=None, mask=None, opcode=None, data=None, rsv1=None, 
+        rsv2=None, rsv3=None, data_length=None, more=None):
 	"""
 	Construct a template for a WS packet
 	"""

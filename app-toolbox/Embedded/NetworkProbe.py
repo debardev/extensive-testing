@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -223,19 +223,32 @@ class Network(GenericTool.Tool):
                 if sys.platform == "win32" :
                     __dump_name__ = 'probe-netdump-%s.cap' % time.time()
                     __outputFile = "%s/%s/%s" % ( self.__tmpPath__ , callid, __dump_name__) 
-                    __cmd__ = '"%s" -i "%s" -p -w "%s" %s' % (self.binTshark, eth['interface'], __outputFile , eth['filter'])
+                    __cmd__ = '"%s" -i "%s" -p -w "%s" %s' % (self.binTshark, 
+                                                              eth['interface'], 
+                                                              __outputFile , 
+                                                              eth['filter'])
                 else:
                     __dump_name__ = 'probe-netdump-%s-%s.cap' % ( eth['interface'] ,time.time() )
                     __outputFile = "%s/%s/%s" % ( self.__tmpPath__ , callid, __dump_name__) 
-                    __cmd__ = "%s -i %s -s0 -nn -w %s %s" % ( self.binTcpdump, eth['interface'], __outputFile, eth['filter'])
+                    __cmd__ = "%s -i %s -s0 -nn -w %s %s" % ( self.binTcpdump, 
+                                                              eth['interface'], 
+                                                              __outputFile, 
+                                                              eth['filter'])
                     
                 self.trace( "[onStart] %s" % __cmd__ )
                 try:
                     __cmd_args__ = shlex.split(__cmd__)
                     if sys.platform == "win32" :
-                        p = subprocess.Popen(__cmd_args__, stdin=sys.stdout, stdout=sys.stdout, stderr=sys.stdout, shell=True )
+                        p = subprocess.Popen(__cmd_args__, 
+                                             stdin=sys.stdout, 
+                                             stdout=sys.stdout, 
+                                             stderr=sys.stdout, 
+                                             shell=True )
                     else:
-                        p = subprocess.Popen(__cmd_args__, stdin=sys.stdout, stdout=sys.stdout, stderr=sys.stdout )
+                        p = subprocess.Popen(__cmd_args__, 
+                                             stdin=sys.stdout, 
+                                             stdout=sys.stdout, 
+                                             stderr=sys.stdout )
                     if sys.platform == "win32":  time.sleep(5.0)
                     self.__pids__[ callid ].append( p.pid )             
                 except Exception as e:

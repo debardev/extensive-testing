@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -36,11 +36,17 @@ AdapterUDP = sys.modules['SutAdapters.%s.UDP' % TestAdapterLib.getVersion()]
 SutLibraries = sys.modules['SutLibraries.%s' % TestLibraryLib.getVersion()]
 MediaTools = sys.modules['SutLibraries.%s.Media' % TestLibraryLib.getVersion()]
 
-import codec
-import templates
-import streamer 
-import defaultpayloads
-
+try:
+	import codec
+	import templates
+	import streamer 
+	import defaultpayloads
+except ImportError: # python3 support
+	from . import codec
+	from . import templates
+	from . import streamer 
+	from . import defaultpayloads
+	
 import os
 import threading
 import time

@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,7 +30,11 @@ from TestExecutorLib.TestExecutorLib import doc_public
 
 import sys
 import time
-import Queue
+
+try:
+	import Queue
+except ImportError: # python3 support
+	import queue as Queue
 
 from Libs.PyXmlDict import Xml2Dict
 from Libs.PyXmlDict import Dict2Xml
@@ -40,9 +44,14 @@ AdapterTCP = sys.modules['SutAdapters.%s.TCP' % TestAdapter.getVersion()]
 AdapterSSL = sys.modules['SutAdapters.%s.SSL' % TestAdapter.getVersion()]
 AdapterSOCKS = sys.modules['SutAdapters.%s.SOCKS' % TestAdapter.getVersion()]
 
-import codec
 import copy
-import templates
+
+try:
+	import codec
+	import templates
+except ImportError: # python3 support
+	from . import codec
+	from . import templates
 
 __NAME__="""HTTP_SERVER"""
 
@@ -206,7 +215,8 @@ class Server(TestAdapter.Adapter):
 	def __init__(self, parent, name=None, debug=False, shared=False, agentSupport=False, agent=None,
 														 bindIp = '', bindPort=0,  sslSupport=False,  strictMode=False, octetStreamSupport=True, 
 														 manStreamSupport=True, websocketMode=False, truncateBody=False,
-														  logEventSent=True, logEventReceived=True):
+														  logEventSent=True, logEventReceived=True, checkCert=AdapterSSL.CHECK_CERT_NO, 
+														 certfile="/tmp/cert.file",keyfile="/tmp/key.file"):
 		"""
 		HTTP server, based on TCP server adapter.
 		
@@ -236,6 +246,15 @@ class Server(TestAdapter.Adapter):
 
 		@param sslSupport: activate SSL channel (default=False)
 		@type sslSupport: boolean
+		
+		@param checkCert: SutAdapters.SSL.CHECK_CERT_NO | SutAdapters.SSL.CHECK_CERT_OPTIONAL | SutAdapters.SSL.CHECK_CERT_REQUIRED
+		@type checkCert: strconstant
+
+		@param certFile:  certificate file (default=/tmp/cert.file)
+		@type certFile:   string
+		
+		@param keyFile:  key file (default=/tmp/key.file)
+		@type keyFile:   string
 		"""
 		# check the agent
 		if agentSupport and agent is None:
@@ -258,10 +277,7 @@ class Server(TestAdapter.Adapter):
 			self.cfg['agent'] = agent
 			self.cfg['agent-name'] = agent['name']
 		self.cfg['agent-support'] = agentSupport
-		
-#		self.TIMER_ALIVE_AGT = TestAdapter.Timer(parent=self, duration=20, name="keepalive-agent", callback=self.aliveAgent,
-#																																logEvent=False, enabled=True)
-																																
+
 		self.logEventSent = logEventSent
 		self.logEventReceived = logEventReceived
 		self.cfg['http_truncate_body'] = truncateBody
@@ -276,7 +292,8 @@ class Server(TestAdapter.Adapter):
 		
 		self.ADP_TCP = AdapterTCP.Server(parent=parent, bindIp = bindIp, bindPort=bindPort, separatorDisabled=True, 
 																													logEventSent=False, logEventReceived=False, agent=agent, shared=shared,
-																													agentSupport=agentSupport, sslSupport=sslSupport)
+																													agentSupport=agentSupport, sslSupport=sslSupport,
+																													checkCert=checkCert, certfile=certfile,keyfile=keyfile)
 		self.ADP_TCP.onClientIncomingData = self.onClientIncomingData	
 		self.ADP_TCP.onClientNoMoreData = self.onClientNoMoreData
 		
@@ -301,13 +318,7 @@ class Server(TestAdapter.Adapter):
 		"""
 		Called automatically on reset adapter
 		"""
-#		if self.cfg['agent-support'] :
-			# stop timer
-#			self.TIMER_ALIVE_AGT.stop()
-			# cleanup remote agent
-#			self.resetAgent()
-#		self.stopRunning()
-		
+		pass
 
 	# specific functions
 	@doc_public

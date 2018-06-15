@@ -2,8 +2,8 @@
 # -*- coding=utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -39,9 +39,16 @@ import threading
 import socket
 import select
 import time
-import Queue
-import templates
 
+try:
+	import Queue
+except ImportError: # python3 support
+	import queue as Queue
+
+try:
+	import templates
+except ImportError: # python3 support
+	from . import templates
 
 __NAME__="""TCP"""
 
@@ -64,7 +71,7 @@ class Client(TestAdapterLib.Adapter):
 								debug=False, logEventSent=True, logEventReceived=True, parentName=None,
 								agentSupport=False, agent=None, shared=False, 
 								caCerts=None, checkHost=False, hostCn=None, verbose=True, 
-								certfile=None, keyfile=None
+								certfile=None, keyfile=None, clientCiphers=None
 						):
 		"""
 		This class enable to use TCP as client only, with support and dns resolution.
@@ -169,6 +176,9 @@ class Client(TestAdapterLib.Adapter):
 
 		@param keyfile: path to the key file (default=None)
 		@type keyfile: string/none
+
+		@param clientCiphers: ciphers client side (default=None)
+		@type clientCiphers: string/none
 		"""
 		# check agent
 		if agentSupport and agent is None:
@@ -249,7 +259,8 @@ class Client(TestAdapterLib.Adapter):
 																						logEventSent=logEventSent, logEventReceived=logEventReceived, 
 																						shared=shared, name=name, caCerts=caCerts, checkHost=checkHost, 
 																						host=hostCn, verbose=verbose,
-																						keyfile=keyfile,certfile=certfile)
+																						keyfile=keyfile,certfile=certfile,
+																						clientCiphers=clientCiphers)
 		
 		# dns client
 		self.dns = AdapterDNS.Client(parent=parent, debug=debug, logEventSent=True, logEventReceived=True,

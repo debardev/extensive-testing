@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -59,7 +59,7 @@ except ImportError:
 import Settings
 from Libs import QtHelper, Logger
 import DefaultTemplates
-import UserClientInterface as UCI
+# import UserClientInterface as UCI
 import RestClientInterface as RCI
 
 class Item(QTreeWidgetItem):
@@ -71,7 +71,8 @@ class Item(QTreeWidgetItem):
         """
         Constructor
 
-        @param data: {'default-args': [['description', 'None']], 'args': ['expected', 'description'], 'type': 'method', 'name': 'addStep', 'desc': 'todo'}
+        @param data: {'default-args': [['description', 'None']], 'args': ['expected', 'description'], 
+                      'type': 'method', 'name': 'addStep', 'desc': 'todo'}
         @type data:
 
         @param parent: 
@@ -101,14 +102,14 @@ class Item(QTreeWidgetItem):
         self.setMetadata()
 
         if isGeneric and isDefault and self.itemData['type'] in [ 'libraries', 'adapters' ]:
-            self.setText(0, "%s (default)" % self.itemData['name'])
+            self.setText(0, "%s (extra)" % self.itemData['name'])
             self.setExpanded(True)
         else:  
             if isGeneric and self.itemData['type'] in [ 'libraries', 'adapters' ] :
                 self.setText(0, "%s (generic)" % self.itemData['name'])
                 self.setExpanded(True)
             elif isDefault and self.itemData['type'] in [ 'libraries', 'adapters' ] :
-                self.setText(0, "%s (default)" % self.itemData['name'])
+                self.setText(0, "%s (extra)" % self.itemData['name'])
                 self.setExpanded(True)
             else:
                 self.setText(0, self.itemData['name'])
@@ -223,6 +224,15 @@ class Item(QTreeWidgetItem):
                         self.metadata = [ '@obj = SutLibraries.Generic.%s.%s(%s)' % (__name, className,methodArgs) , '']
                     else:
                         self.metadata = [ '@obj = %s.%s(%s)' % (self.parent.itemData['realname'], className,methodArgs) , '']
+                if not self.isGeneric and self.isDefault:
+                    if self.parent.itemData['realname'].startswith("SutAdapters."):
+                        __name = self.parent.itemData['realname'].split("SutAdapters.")[1]
+                        self.metadata = [ '@obj = SutAdapters.Extra.%s.%s(%s)' % (__name, className,methodArgs) , '']
+                    elif self.parent.itemData['realname'].startswith("SutLibraries."):
+                        __name = self.parent.itemData['realname'].split("SutLibraries.")[1]
+                        self.metadata = [ '@obj = SutLibraries.Extra.%s.%s(%s)' % (__name, className,methodArgs) , '']
+                    else:
+                        self.metadata = [ '@obj = %s.%s(%s)' % (self.parent.itemData['realname'], className,methodArgs) , '']
                 else:
                     self.metadata = [ '@obj = %s.%s(%s)' % (self.parent.itemData['realname'], className,methodArgs) , '']
         
@@ -311,37 +321,57 @@ class Item(QTreeWidgetItem):
             elif self.parent.itemData['name'] == 'TestTemplates':
                 parentName = self.parent.itemData['name']
                 if not self.returnValue:
-                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, 
+                                                                                                          methodName, 
+                                                                                                          methodArgs) ]
                 else:
-                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, 
+                                                                                                                       methodName, 
+                                                                                                                       methodArgs) ]
                     
             elif self.parent.itemData['name'] == 'SutAdapter':
                 parentName = "SutAdapter"
                 if not self.returnValue:
-                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, 
+                                                                                                          methodName, 
+                                                                                                          methodArgs) ]
                 else:
-                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, 
+                                                                                                                       methodName, 
+                                                                                                                       methodArgs) ]
                     
             elif self.parent.itemData['name'] == 'SutLibrary':
                 parentName = "SutLibrary"
                 if not self.returnValue:
-                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, 
+                                                                                                          methodName, 
+                                                                                                          methodArgs) ]
                 else:
-                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, 
+                                                                                                                       methodName, 
+                                                                                                                       methodArgs) ]
             
             elif self.parent.itemData['name'] == 'TestRepositories':
                 parentName = "TestRepositories"
                 if not self.returnValue:
-                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, 
+                                                                                                          methodName, 
+                                                                                                          methodArgs) ]
                 else:
-                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, 
+                                                                                                                       methodName, 
+                                                                                                                       methodArgs) ]
         
             else:
                 parentName = self.parent.itemData['realname']
                 if not self.returnValue:
-                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '%s.%s(%s)' % (parentName, methodName, methodArgs),  '%s.%s(%s)' % (parentName, 
+                                                                                                          methodName, 
+                                                                                                          methodArgs) ]
                 else:
-                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs) ]
+                    self.metadata = [ '@obj = %s.%s(%s)' % (parentName, methodName, methodArgs), '@obj = %s.%s(%s)' % (parentName, 
+                                                                                                                       methodName, 
+                                                                                                                       methodArgs) ]
         
         elif self.itemData['type'] == 'module':
             pass    
@@ -801,7 +831,7 @@ class WHelper(QWidget, Logger.ClassLogger):
         self.helperLibraries.setContextMenuPolicy(Qt.CustomContextMenu)
         
         self.areaTab.addTab(self.helper, QIcon(":/processes.png"), "Framework")
-        self.areaTab.addTab(self.helperInterop, QIcon(":/plugin.png"), "Interoperability")
+        self.areaTab.addTab(self.helperInterop, QIcon(":/plugin.png"), "Third party tools")
         self.extsTab.addTab(self.helperAdapters, QIcon(":/adapters-help.png"), "Adapters")
         self.extsTab.addTab(self.helperLibraries, QIcon(":/libraries-help.png"), "Libraries")
 
@@ -897,16 +927,13 @@ class WHelper(QWidget, Logger.ClassLogger):
         self.collapseAllAction.setEnabled(False)
         self.generateAdaptersAction.setEnabled(False)
         self.generateLibrariesAction.setEnabled(False)
-        # self.generateAllAction.setEnabled(False)
-        # new in v11.1
-        # self.prepareAssistantAction.setEnabled(False)
         self.generateAdapterWsdlAction.setEnabled(False)
 
     def generateAdapterWSDL(self):
         """
         Generate adapter from WSDL file or url
         """
-        if not UCI.instance().isAuthenticated():
+        if not RCI.instance().isAuthenticated():
             QMessageBox.warning(self, "Capture desktop" , "Connect to the test center in first!")
             return
 
@@ -918,33 +945,20 @@ class WHelper(QWidget, Logger.ClassLogger):
                 # read the file
                 fd = QFile(fileWsdl)
                 if not fd.open(QIODevice.ReadOnly):
-                    QMessageBox.warning(self, self.tr("Error opening file"), self.tr("Could not open the file ") + fileWsdl)
+                    QMessageBox.warning(self, self.tr("Error opening file"), 
+                                        self.tr("Could not open the file ") + fileWsdl)
                 else:
                     wsdlData= fd.readAll()
                     wsdlEncoded = base64.b64encode(wsdlData)
-            
-            UCI.instance().generateAdapterFromWSDL(wsdlUrl=url, wsdlFile=wsdlEncoded, 
-                                                    pkg=pkg, overwrite=overwrite)
-        
-    # def prepareAssistant(self):
-        # """
-        # Generate all packages
-        # """
-        # reply = QMessageBox.question(self, self.tr("Prepare assistant"), 
-                                     # self.tr("Are you sure to prepare assistant?"),
-                                     # QMessageBox.Yes | QMessageBox.Cancel )
-        # if reply == QMessageBox.Yes:
-            # UCI.instance().prepareAssistant()
-            
-    # def generateAll(self):
-        # """
-        # Generate all packages
-        # """
-        # reply = QMessageBox.question(self, self.tr("Generate all"), 
-                                     # self.tr("Are you sure to re-generate all packages?"),
-                                     # QMessageBox.Yes | QMessageBox.Cancel )
-        # if reply == QMessageBox.Yes:
-            # UCI.instance().generateAll()
+
+            if len(url):
+                RCI.instance().addAdapterByWsdlUrl(packageName=pkg, 
+                                                   overwriteAdapter=overwrite, 
+                                                   wsdlUrl=url)
+            else:
+                RCI.instance().addAdapterByWsdlFile(packageName=pkg, 
+                                                    overwriteAdapter=overwrite, 
+                                                    wsdlFile=wsdlEncoded)
 
     def generateAdapters(self):
         """
@@ -954,7 +968,6 @@ class WHelper(QWidget, Logger.ClassLogger):
                                      self.tr("Are you sure to re-generate adapters?"),
                                      QMessageBox.Yes | QMessageBox.Cancel )
         if reply == QMessageBox.Yes:
-            # UCI.instance().generateAdapters()
             RCI.instance().buildAdapters()
 
     def generateLibraries(self):
@@ -965,7 +978,6 @@ class WHelper(QWidget, Logger.ClassLogger):
                                      self.tr("Are you sure to re-generate libraries?"),
                                      QMessageBox.Yes | QMessageBox.Cancel )
         if reply == QMessageBox.Yes:
-            # UCI.instance().generateLibraries()
             RCI.instance().buildLibraries()
             
     def rebuild(self):
@@ -976,14 +988,12 @@ class WHelper(QWidget, Logger.ClassLogger):
                                      self.tr("Are you sure to re-generate the documentation?"),
                         QMessageBox.Yes | QMessageBox.Cancel )
         if reply == QMessageBox.Yes:
-            # UCI.instance().genCacheHelp()
             RCI.instance().buildDocumentations()
             
     def reloadAll(self):
         """
         Reload the tree
         """
-        # UCI.instance().reloadHelper()
         RCI.instance().cacheDocs()
 
     def expandItem(self, itm):
@@ -1095,7 +1105,6 @@ class WHelper(QWidget, Logger.ClassLogger):
         """
         Set not connected
         """
-        # self.labelHelp.setEnabled(False)
         self.textEdit.setSytleSheetTextEdit()
         self.setDefaultActionsValues()
 
@@ -1109,19 +1118,15 @@ class WHelper(QWidget, Logger.ClassLogger):
         self.masterTab.setEnabled(True)
 
         self.reloadAllAction.setEnabled(True)
-        if UCI.RIGHTS_ADMIN in RCI.instance().userRights or  UCI.RIGHTS_DEVELOPER in RCI.instance().userRights :
+        if RCI.RIGHTS_ADMIN in RCI.instance().userRights :
             self.rebuildCacheAction.setEnabled(True)
             self.generateAdaptersAction.setEnabled(True)
             self.generateLibrariesAction.setEnabled(True)
-            # self.generateAllAction.setEnabled(True)
-            # self.prepareAssistantAction.setEnabled(True)
             self.generateAdapterWsdlAction.setEnabled(True)
         else:
             self.rebuildCacheAction.setEnabled(False)
             self.generateAdaptersAction.setEnabled(False)
             self.generateLibrariesAction.setEnabled(False)
-            # self.generateAllAction.setEnabled(False)
-            # self.prepareAssistantAction.setEnabled(False)
             self.generateAdapterWsdlAction.setEnabled(False)
             
         self.expandSubtreeAction.setEnabled(True)
@@ -1222,10 +1227,14 @@ class WHelper(QWidget, Logger.ClassLogger):
                     hide = False
                     if dct['name'] == '__init__': # hide __init__ function
                         hide = True
-                    item = Item( parent = parent, data = dct , type = QTreeWidgetItem.UserType+4, icon=QIcon(":/methods.png"), hide=hide )
+                    item = Item( parent = parent, data = dct , 
+                                 type = QTreeWidgetItem.UserType+4, 
+                                 icon=QIcon(":/methods.png"), hide=hide )
                 
                 elif dct["type"] == "function":
-                    item = Item( parent = parent, data = dct , type = QTreeWidgetItem.UserType+4, icon=QIcon(":/functions.png") )
+                    item = Item( parent = parent, data = dct , 
+                                 type = QTreeWidgetItem.UserType+4, 
+                                 icon=QIcon(":/functions.png") )
                 
                 else:
                     self.error( "type not supported: %s" % dct )
@@ -1261,18 +1270,16 @@ class WHelper(QWidget, Logger.ClassLogger):
                 self.assistantData = helpObj
             except Exception as e:
                 self.error( 'unable to loads helper data: %s' % str(e) )
+                
+        self.setConnected() 
 
-        if  UCI.RIGHTS_ADMIN in RCI.instance().userRights or UCI.RIGHTS_TESTER in RCI.instance().userRights or \
-                UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
-            self.setConnected() 
+        self.helper.setEnabled(True)
+        self.helperInterop.setEnabled(True)
+        self.helperAdapters.setEnabled(True)
+        self.helperLibraries.setEnabled(True)
 
-            self.helper.setEnabled(True)
-            self.helperInterop.setEnabled(True)
-            self.helperAdapters.setEnabled(True)
-            self.helperLibraries.setEnabled(True)
-
-            self.textEdit.setEnabled(True)
-            self.initialize(listing=helpObj)
+        self.textEdit.setEnabled(True)
+        self.initialize(listing=helpObj)
          
     def helpAllObjects(self):
         """
@@ -1312,7 +1319,7 @@ class WHelper(QWidget, Logger.ClassLogger):
                                                     if f['name'] == functionName: 
                                                         return f
 
-    def helpAdapters(self, name=None):
+    def helpAdapters(self, name=None, generic=False):
         """
         return help all objects
         """
@@ -1321,12 +1328,15 @@ class WHelper(QWidget, Logger.ClassLogger):
         for h in self.assistantData:
             if  h['type'] == 'package-adapters':
                 for sutadp in h['adapters']:
-                    if name is not None:
-                        if sutadp['name'] == name:
-                            return sutadp['modules']
+                    if generic:
+                        return sutadp['modules']
                     else:
-                        if sutadp['is-default']:
-                            return sutadp['modules']
+                        if name is not None:
+                            if sutadp['name'] == name:
+                                return sutadp['modules']
+                        else:
+                            if sutadp['is-default']:
+                                return sutadp['modules']
                 return []
 
     def isGuiGeneric(self, name="GUI"):
@@ -1345,7 +1355,7 @@ class WHelper(QWidget, Logger.ClassLogger):
                                 break
         return isGeneric
         
-    def helpLibraries(self, name=None):
+    def helpLibraries(self, name=None, generic=False):
         """
         return help all objects
         """
@@ -1354,12 +1364,15 @@ class WHelper(QWidget, Logger.ClassLogger):
         for h in self.assistantData:
             if  h['type'] == 'package-libraries':
                 for sutlib in h['libraries']:
-                    if name is not None:
-                        if sutlib['name'] == name:
-                            return sutlib['modules']
+                    if generic:
+                        return sutlib['modules']
                     else:
-                        if sutlib['is-default']:
-                            return sutlib['modules']
+                        if name is not None:
+                            if sutlib['name'] == name:
+                                return sutlib['modules']
+                        else:
+                            if sutlib['is-default']:
+                                return sutlib['modules']
                 return []
 
     def onReset(self):

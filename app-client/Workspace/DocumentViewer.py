@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # -------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -35,6 +35,7 @@ try:
 except ImportError: # python3 support
     import cPickle as pickle
 import sys
+import copy
 
 try:
     xrange
@@ -51,7 +52,7 @@ try:
                             QIcon, QKeySequence, QMenu, QDialog, QTextDocument, 
                             QPrinter, QPrintPreviewDialog,
                             QFileDialog, QToolButton, QTabBar)
-    from PyQt4.QtCore import (Qt, pyqtSignal, QUrl, QSize)
+    from PyQt4.QtCore import (Qt, pyqtSignal, QUrl, QSize, QFile, QIODevice)
 except ImportError:
     from PyQt5.QtGui import (QCursor, QPixmap, QDesktopServices, QIcon, QKeySequence, QTextDocument)
     from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QHBoxLayout, QApplication, 
@@ -59,7 +60,7 @@ except ImportError:
                                 QDialog,  QFileDialog, 
                                 QToolButton, QTabBar)
     from PyQt5.QtPrintSupport import (QPrinter, QPrintPreviewDialog)
-    from PyQt5.QtCore import (Qt, pyqtSignal, QUrl, QSize)
+    from PyQt5.QtCore import (Qt, pyqtSignal, QUrl, QSize, QFile, QIODevice)
     
 try:
     from PythonEditor import FindReplace
@@ -100,6 +101,12 @@ import Settings
 import TestResults
 import UserClientInterface as UCI
 import RestClientInterface as RCI
+
+import Workspace.FileModels.TestData as FileModelTestData
+import Workspace.FileModels.TestSuite as FileModelTestSuite
+import Workspace.FileModels.TestUnit as FileModelTestUnit
+import Workspace.FileModels.TestAbstract as FileModelTestAbstract
+import Workspace.FileModels.TestPlan as FileModelTestPlan
 
 try:
     import ScheduleDialog as SchedDialog
@@ -308,7 +315,6 @@ class WelcomePage(QWidget):
         rightLayout.setContentsMargins(0, 0, 0, 0)     
         rightFrame.setLayout(rightLayout)
         
-        #*****************************************#
         # prepare the product frame
         self.productFrame = QFrame(self)
         productLayout = QVBoxLayout()
@@ -322,7 +328,7 @@ class WelcomePage(QWidget):
                             font-weight: bold;
                          } """)
         self.productLink = QLabelEnhanced(self)
-        self.productLink.setTextLink("Extensive Testing")
+        self.productLink.setTextLink( Settings.instance().readValue( key = 'Common/product-name' ) )
         self.productLink.setTextDescription("Visit the project's website")
         self.productLink.setIcon(QPixmap(":/logo.png") )
         self.productLink.onClicked = self.onProductLinkClicked
@@ -332,7 +338,6 @@ class WelcomePage(QWidget):
         productLayout.setSpacing(0)
         productLayout.addStretch(1)
         
-        #*****************************************#
         # prepare the generators frame
         self.devFrame = QFrame(self)
         self.devFrame.setEnabled(False)
@@ -405,7 +410,6 @@ class WelcomePage(QWidget):
         capturetLayout.setSpacing(0)
         capturetLayout.addStretch(1)
         
-        #*****************************************#
         # prepare the get started frame
         self.connectFrame = QFrame(self)
         self.connectFrame.setStyleSheet( """
@@ -424,13 +428,13 @@ class WelcomePage(QWidget):
                          } """)
         self.connectLink = QLabelEnhanced(self)
         self.connectLink.setTextLink("Log In")
-        self.connectLink.setTextDescription("Connection to the test center")
+        self.connectLink.setTextDescription("Connection to the automation center")
         self.connectLink.setIcon(QPixmap(":/connect.png") )
         self.connectLink.onClicked = self.onConnectLinkClicked
 
         self.onlineLink = QLabelEnhanced(self)
         self.onlineLink.setTextLink("Online")
-        self.onlineLink.setTextDescription("Website of the test center")
+        self.onlineLink.setTextDescription("Website of the automation center")
         self.onlineLink.setIcon(QPixmap(":/http.png") )
         self.onlineLink.onClicked = self.onOnlineLinkClicked
         
@@ -440,11 +444,7 @@ class WelcomePage(QWidget):
         connectLayout.setSpacing(0)
         connectLayout.addStretch(1)
         self.connectFrame.setLayout(connectLayout)
-        
-        # end of get started frame
-        
-         
-        #*****************************************#
+
         # prepare the files frame
         self.filesFrame = QFrame(self)
         self.filesFrame.setStyleSheet( """
@@ -501,8 +501,6 @@ class WelcomePage(QWidget):
         filesLayout.addStretch(1)
         self.filesFrame.setLayout(filesLayout)
         self.filesFrame.setEnabled(False)
-        # end of get started frame
-        
 
         leftLayout.addWidget(self.connectFrame)
         leftLayout.addWidget(self.productFrame)
@@ -605,7 +603,8 @@ class WelcomePage(QWidget):
         On online link clicked
         """
         if not len(UCI.instance().getHttpAddress()):
-            QMessageBox.warning(self, self.tr("Website"), self.tr("Please to configure a test server."))
+            QMessageBox.warning(self, self.tr("Website"), 
+                                self.tr("Please to configure a test server."))
         else:
             self.OpenWeb.emit()
 
@@ -636,10 +635,14 @@ class WelcomePage(QWidget):
             self.captureLink.setEnabled(True)
             self.captureWebLink.setEnabled(True)
             self.captureMobileLink.setEnabled(True)
+            self.basicLink.setEnabled(True)
+            self.sysLink.setEnabled(True)
         else:
             self.captureLink.setEnabled(False)
             self.captureWebLink.setEnabled(False)
             self.captureMobileLink.setEnabled(False)
+            self.basicLink.setEnabled(False)
+            self.sysLink.setEnabled(False)
             
     def updateConnectLink(self, connected=False):
         """
@@ -655,11 +658,9 @@ class WelcomePage(QWidget):
                 return
                 
             self.connectLink.setTextLink("Log Out")
-            self.connectLink.setTextDescription("Disconnection from the test center")
+            self.connectLink.setTextDescription("Disconnection from the automation center")
             self.connectLink.setIcon(QPixmap(":/disconnect.png") )
             self.captureFrame.setEnabled(True)
-            if UCI.RIGHTS_DEVELOPER in RCI.instance().userRights:
-                self.devFrame.setEnabled(True)
         else:
             self.filesFrame.setEnabled(False)
             self.captureFrame.setEnabled(False)
@@ -667,7 +668,7 @@ class WelcomePage(QWidget):
             if self.connectLink.textUpQLabel.text() == 'Log In':
                 return
             self.connectLink.setTextLink("Log In")
-            self.connectLink.setTextDescription("Connection to the test center")
+            self.connectLink.setTextDescription("Connection to the automation center")
             self.connectLink.setIcon(QPixmap(":/connect.png") )
             
 class WorkspaceTab(QTabWidget):
@@ -714,7 +715,18 @@ class WorkspaceTab(QTabWidget):
                             remoteFile=False, contentFile=None, repoDest=data['repotype'])
             else: 
                 # open the file from the remote repo
-                UCI.instance().openFileRepo( repo=data['repotype'], pathFile = data['pathfile'], project=data['projectid'])
+                if data['repotype'] == UCI.REPO_TESTS:
+                    RCI.instance().openFileTests(projectId=data['projectid'], 
+                                                 filePath=data['pathfile'])
+                elif data['repotype'] == UCI.REPO_ADAPTERS:
+                    RCI.instance().openFileAdapters(filePath=data['pathfile'], 
+                                                    ignoreLock=False, readOnly=False)
+                elif data['repotype'] == UCI.REPO_LIBRARIES:
+                    RCI.instance().openFileLibraries(filePath=data['pathfile'], 
+                                                     ignoreLock=False, readOnly=False)
+                else:
+                    pass
+                    
         else:
             QTabWidget.dropEvent(self, event)   
 
@@ -776,7 +788,10 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         self.whitespaceVisible = QtHelper.str2bool( Settings.instance().readValue( key = 'Editor/ws-visible' ) )
         self.linesNumbering = QtHelper.str2bool( Settings.instance().readValue( key = 'Editor/lines-numbering' ) )
 
-        self.runsDialog = RunsDialog.RunsDialog( self, iRepo=self.iRepo, lRepo=self.lRepo, rRepo=self.rRepo )
+        self.runsDialog = RunsDialog.RunsDialog(self, 
+                                                iRepo=self.iRepo, 
+                                                lRepo=self.lRepo, 
+                                                rRepo=self.rRepo )
 
         self.createWidgets()
         self.createActions()
@@ -875,15 +890,20 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                         icon = QIcon(":/%s.png" % TestUnit.TYPE), 
                                         tip = 'Creates a new test unit')
         self.newTestConfigAction = QtHelper.createAction(self, "Test Config", self.newTestConfig,
-                                        icon = QIcon(":/%s.png" % TestConfig.TYPE), tip = 'Creates a new test config')
+                                        icon = QIcon(":/%s.png" % TestConfig.TYPE), 
+                                        tip = 'Creates a new test config')
         self.newTestSuiteAction = QtHelper.createAction(self, "Test Suite", self.newTestSuite,
-                                        icon = QIcon(":/%s.png" % TestSuite.TYPE), shortcut = "Ctrl+N", tip = 'Creates a new test suite')
+                                        icon = QIcon(":/%s.png" % TestSuite.TYPE), 
+                                        shortcut = "Ctrl+N", tip = 'Creates a new test suite')
         self.newTestPlanAction = QtHelper.createAction(self, "Test Plan", self.newTestPlan,
-                                        icon = QIcon(":/%s.png" % TestPlan.TYPE), tip = 'Creates a new test plan')
+                                        icon = QIcon(":/%s.png" % TestPlan.TYPE), 
+                                        tip = 'Creates a new test plan')
         self.newTestGlobalAction = QtHelper.createAction(self, "Test Global", self.newTestGlobal,
-                                        icon = QIcon(":/%s.png" % TestPlan.TYPE_GLOBAL), tip = 'Creates a new test global')
+                                        icon = QIcon(":/%s.png" % TestPlan.TYPE_GLOBAL), 
+                                        tip = 'Creates a new test global')
         self.newTestDataAction = QtHelper.createAction(self, "Test Data", self.newTestData,
-                                        icon = QIcon(":/%s.png" % TestData.TYPE), tip = 'Creates a new test data')
+                                        icon = QIcon(":/%s.png" % TestData.TYPE), 
+                                        tip = 'Creates a new test data')
         self.newAdapterAction = QtHelper.createAction(self, "Adapter", self.newTestAdapter,
                                         icon = QIcon(":/file-adp2.png"), tip = 'Creates a new adapter')
         self.newLibraryAction = QtHelper.createAction(self, "Library", self.newTestLibrary,
@@ -895,7 +915,8 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                         icon = QIcon(":/open-test.png"), shortcut = "Ctrl+O", tip = 'Open')
         self.saveAction = QtHelper.createAction(self, self.tr("Save"), self.saveTab, 
                                         shortcut = Settings.instance().readValue( key = 'KeyboardShorcuts/save' ),
-                                        icon = QIcon(":/save-test.png"), tip = 'Saves the active document')
+                                        icon = QIcon(":/save-test.png"), 
+                                        tip = 'Saves the active document')
         self.saveAsAction = QtHelper.createAction(self, self.tr("Save As"), self.saveTabAs,
                                         icon = QIcon(":/filesave.png"), tip = 'Saves the active document as ...')
         self.exportAsAction = QtHelper.createAction(self, self.tr("Export"), self.exportTabAs,
@@ -922,7 +943,8 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                         tip = 'Copies the selection and puts it on the clipboard' )
         self.copyAction.setShortcutContext(Qt.WidgetWithChildrenShortcut)
         self.pasteAction = QtHelper.createAction(self, self.tr("Paste"), callback = self.globalCallback,
-                                        data='paste', shortcut = QKeySequence.Paste, tip = 'Inserts clipboard contents' )
+                                        data='paste', shortcut = QKeySequence.Paste, 
+                                        tip = 'Inserts clipboard contents' )
         self.pasteAction.setShortcutContext(Qt.WidgetWithChildrenShortcut)
         self.deleteAction = QtHelper.createAction( self, "Delete Selection", callback = self.globalCallback,
                                         data='removeSelectedText', tip = 'Deletes the selection' )
@@ -933,14 +955,16 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                         icon =  QIcon(":/uncomment.png"), data='uncomment', 
                                         tip = 'Remove comment sign at the begining of line' )
         self.selectAllAction = QtHelper.createAction(self, "Select All", self.globalCallback, 
-                                        QIcon(":/select_all.png"), data='selectAll', tip = 'Selects the entire document' )
+                                        QIcon(":/select_all.png"), data='selectAll', 
+                                        tip = 'Selects the entire document' )
         self.indentAction = QtHelper.createAction(self, "Indent", self.globalCallback, data='indent', 
                                         shortcut = "Tab", tip = 'Indent current line or selection' )
         self.unindentAction = QtHelper.createAction(self, "Unindent", self.globalCallback, data='unindent', 
                                         shortcut = "Shift+Tab", tip = 'Unindent current line or selection' )
         
         self.foldAllAction = QtHelper.createAction(self, "Fold/Unfold all", callback = self.globalCallback,
-                                        icon = QIcon(":/toggle-expand.png"), data='foldAllLines', tip = 'Fold all lines' )
+                                        icon = QIcon(":/toggle-expand.png"), 
+                                        data='foldAllLines', tip = 'Fold all lines' )
         self.codefoldingAction = QtHelper.createAction(self, "Code Folding", self.toggleCodeFolding, 
                                         icon =  QIcon(":/folding.png"), toggled = True)
         self.codefoldingAction.setChecked( self.codeFolding )
@@ -972,7 +996,8 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                         tip = 'Executes the current test in background')
 
         self.runWithoutProbesAction = QtHelper.createAction(self, "Without probes", self.runDocumentWithoutProbes,
-                                        tip = 'Executes the current test without probes', icon=QIcon(":/test-play-without-probes.png") )
+                                        tip = 'Executes the current test without probes', 
+                                        icon=QIcon(":/test-play-without-probes.png") )
         self.runDebugAction = QtHelper.createAction(self, "&Debug", self.runDocumentDebug,
                                         tip = 'Executes the current test with debug traces on server' )
         self.runWithoutNotifAction = QtHelper.createAction(self, "&Without notifications", self.runDocumentWithoutNotif,
@@ -981,26 +1006,32 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                         tip = 'Do not keep test result on archive' )
 
         self.runSchedAction = QtHelper.createAction(self, self.tr("Schedule"), self.schedRunDocument,
-                                        icon =  QIcon(":/schedule.png"), tip = self.tr('Scheduling a run of the current tab') )
+                                        icon =  QIcon(":/schedule.png"), 
+                                        tip = self.tr('Scheduling a run of the current tab') )
         
         self.runSeveralAction = QtHelper.createAction(self, self.tr("Grouped"), self.runSeveralTests,
                                         icon =  QIcon(":/test-play-several.png"), tip = self.tr('Run several tests')  )
         self.runSeveralAction.setEnabled(False)
 
         self.runStepByStepAction = QtHelper.createAction(self, "Steps", self.runDocumentStepByStep,
-                                        tip = 'Execute the current test step by step', icon=QIcon(":/run-state.png"),
+                                        tip = 'Execute the current test step by step', 
+                                        icon=QIcon(":/run-state.png"),
                                         shortcut = Settings.instance().readValue( key = 'KeyboardShorcuts/steps' ) )
         self.runBreakpointAction = QtHelper.createAction(self, "Break Point", self.runDocumentBreakpoint,
-                                        tip = 'Execute the current test with breakpoint', icon=QIcon(":/breakpoint.png"),
+                                        tip = 'Execute the current test with breakpoint', 
+                                        icon=QIcon(":/breakpoint.png"),
                                         shortcut = Settings.instance().readValue( key = 'KeyboardShorcuts/breakpoint' ) )
 
         self.checkSyntaxAction = QtHelper.createAction(self, self.tr("&Syntax"), self.checkSyntaxDocument,
-                                        icon =  QIcon(":/check-syntax.png"), tip = self.tr('Checking syntax of the current tab'),
+                                        icon =  QIcon(":/check-syntax.png"), 
+                                        tip = self.tr('Checking syntax of the current tab'),
                                         shortcut = Settings.instance().readValue( key = 'KeyboardShorcuts/syntax' ) )
         self.checkDesignAction = QtHelper.createAction(self, self.tr("&Design"), self.checkDesignDocument,
-                                        icon =  QIcon(":/tds.png"), tip = self.tr('Checking design of the current tab') )
+                                        icon =  QIcon(":/tds.png"), 
+                                        tip = self.tr('Checking design of the current tab') )
         self.updateTestAction = QtHelper.createAction(self, self.tr("&Assistant"), self.updateMacro,
-                                        icon =  QIcon(":/recorder.png") , tip = self.tr('Update the test with the automation assistant'),
+                                        icon =  QIcon(":/recorder.png") , 
+                                        tip = self.tr('Update the test with the automation assistant'),
                                         shortcut = Settings.instance().readValue( key = 'KeyboardShorcuts/assistant' ) )
                              
         menu1 = QMenu(self)
@@ -1255,18 +1286,22 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         Run several tests
         """
         self.runsDialog.initProjects( projects= Settings.instance().serverContext['projects'],
-                            defaultProject=Settings.instance().serverContext['default-project'] )
+                                      defaultProject=Settings.instance().serverContext['default-project'] )
         if self.runsDialog.exec_() == QDialog.Accepted:
             tests, runLater, runAt, runSimultaneous = self.runsDialog.getTests()
-            UCI.instance().scheduleTests(tests=tests, later=runLater, runAt=runAt, runSimultaneous=runSimultaneous)
 
+            # rest call
+            RCI.instance().scheduleTests(tests=tests,
+                                         postponeMode=runLater,
+                                         postponeAt=runAt,
+                                         parallelMode=runSimultaneous)
+                                         
     def onProjectChangedInRuns(self, projectName):
         """
         On project changed for several runs
         """
         projectId = self.iRepo.remote().getProjectId(project=projectName)
-        # UCI.instance().refreshRepo(project=self.iRepo.remote().getProjectId(project=projectName), forRuns=True)
-        
+
         # rest call
         RCI.instance().listingTests(projectId=projectId, forSaveAs=False, forRuns=True)
         
@@ -1274,7 +1309,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         """
         On refresh repository runs
         """
-        self.runsDialog.initializeTests(listing=self.decodeData(data) )
+        self.runsDialog.initializeTests(listing=data )
 
     def printDoc(self):
         """
@@ -1513,9 +1548,11 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             _filename = tmp[1].rsplit(".", 1)[0]
         else:
             _filename = tmp[0].rsplit(".", 1)[0]
-        self.newTab( path = path, filename = _filename, extension = extension, repoDest=UCI.REPO_UNDEFINED)
+        self.newTab( path = path, filename = _filename, 
+                     extension = extension, repoDest=UCI.REPO_UNDEFINED)
 
-    def openRemoteTestFile(self, filePath, fileName, fileExtension, fileContent, projectId, isLocked, lockedBy):
+    def openRemoteTestFile(self, filePath, fileName, fileExtension, fileContent, 
+                           projectId, isLocked, lockedBy, subtest_id):
         """
         """
         content = base64.b64decode(fileContent)
@@ -1540,19 +1577,15 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                        QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel )
                         
             # force to open the file
-            if reply == QMessageBox.Yes:   
-                # UCI.instance().openFileRepo( pathFile = "%s/%s.%s" % (path_file, name_file, ext_file), 
-                                                # project=projectId, repo=repoType, forceOpen=True)
+            if reply == QMessageBox.Yes:
                 RCI.instance().openFileTests(projectId=int(projectId), 
-                                             filePath="%s/%s.%s" % (path_file, name_file, ext_file), 
+                                             filePath="%s/%s.%s" % (filePath, fileName, fileExtension), 
                                              ignoreLock=True, 
                                              readOnly=False)
             # force as read only
-            if reply == QMessageBox.No:   
-                # UCI.instance().openFileRepo( pathFile = "%s/%s.%s" % (path_file, name_file, ext_file), project=projectId, 
-                                                # repo=repoType, forceOpen=True, readOnly=True)
+            if reply == QMessageBox.No: 
                 RCI.instance().openFileTests(projectId=int(projectId), 
-                                             filePath="%s/%s.%s" % (path_file, name_file, ext_file), 
+                                             filePath="%s/%s.%s" % (filePath, fileName, fileExtension), 
                                              ignoreLock=True, 
                                              readOnly=True)
             # cancel the opening
@@ -1562,7 +1595,8 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         if newTab:
             self.newTab( path = filePath, filename = fileName, extension = fileExtension, 
                         remoteFile=True, contentFile=content,  repoDest=UCI.REPO_TESTS, newAdp=False, 
-                        newLib=False, project=projectId, isReadOnly=isReadOnly, isLocked=isLocked)
+                        newLib=False, project=projectId, isReadOnly=isReadOnly, isLocked=isLocked,
+                        subtest_id=subtest_id)
                         
     def openRemoteAdapterFile(self, filePath, fileName, fileExtension, fileContent, isLocked, lockedBy):
         """
@@ -1589,17 +1623,13 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                        QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel )
                         
             # force to open the file
-            if reply == QMessageBox.Yes:   
-                # UCI.instance().openFileRepo( pathFile = "%s/%s.%s" % (path_file, name_file, ext_file), 
-                                                # project=0, repo=repoType, forceOpen=True)
+            if reply == QMessageBox.Yes: 
                 RCI.instance().openFileAdapters(projectId=0, 
                                                  filePath="%s/%s.%s" % (path_file, name_file, ext_file), 
                                                  ignoreLock=True, 
                                                  readOnly=False)
             # force as read only
-            if reply == QMessageBox.No:   
-                # UCI.instance().openFileRepo( pathFile = "%s/%s.%s" % (path_file, name_file, ext_file), project=0, 
-                                                # repo=repoType, forceOpen=True, readOnly=True)
+            if reply == QMessageBox.No:
                 RCI.instance().openFileAdapters(projectId=0, 
                                                  filePath="%s/%s.%s" % (path_file, name_file, ext_file), 
                                                  ignoreLock=True, 
@@ -1638,17 +1668,13 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                        QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel )
                         
             # force to open the file
-            if reply == QMessageBox.Yes:   
-                # UCI.instance().openFileRepo( pathFile = "%s/%s.%s" % (path_file, name_file, ext_file), 
-                                                # project=0, repo=repoType, forceOpen=True)
+            if reply == QMessageBox.Yes: 
                 RCI.instance().openFileLibraries(projectId=0, 
                                                  filePath="%s/%s.%s" % (path_file, name_file, ext_file), 
                                                  ignoreLock=True, 
                                                  readOnly=False)
             # force as read only
-            if reply == QMessageBox.No:   
-                # UCI.instance().openFileRepo( pathFile = "%s/%s.%s" % (path_file, name_file, ext_file), project=0, 
-                                                # repo=repoType, forceOpen=True, readOnly=True)
+            if reply == QMessageBox.No: 
                 RCI.instance().openFileLibraries(projectId=int(projectId), 
                                                  filePath="%s/%s.%s" % (path_file, name_file, ext_file), 
                                                  ignoreLock=True, 
@@ -1661,59 +1687,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             self.newTab( path = filePath, filename = fileName, extension = fileExtension, 
                         remoteFile=True, contentFile=content,  repoDest=UCI.REPO_LIBRARIES, newAdp=False, 
                         newLib=True, project=0, isReadOnly=isReadOnly, isLocked=isLocked)
-                        
-    # def openRemoteFile(self, data):
-        # """
-        # Open remote file
-
-        # @param data: 
-        # @type data: 
-        # """
-        # repoType, path_file, name_file, ext_file, encoded_data, project, is_locked = data 
-
-        # locked, locked_by = is_locked # new in v12
-        # content = base64.b64decode(encoded_data)
-        # adpDetected=False
-        # if repoType == UCI.REPO_ADAPTERS:
-            # adpDetected=True
-            # project = 0
-        # libDetected=False
-        # if repoType == UCI.REPO_LIBRARIES:
-            # libDetected=True
-            # project = 0
-        
-        # newTab = False
-        # isReadOnly = False
-        # if not locked:
-            # newTab = True
-        # else:
-            # messageBox = QMessageBox(self)
-
-            # if sys.version_info > (3,): # python3 support
-                # msg = "User (%s) is editing this file. Edit the test anyway?\n\nYes = Edit the test\nNo = Open as read only\nCancel = Do nothing.\n" % bytes2str(base64.b64decode(locked_by))
-            # else:
-                # msg = "User (%s) is editing this file. Edit the test anyway?\n\nYes = Edit the test\nNo = Open as read only\nCancel = Do nothing.\n" % base64.b64decode(locked_by)
-            # reply = messageBox.warning(self, self.tr("File locked"), msg, QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel )
-                        
-            # force to open the file
-            # if reply == QMessageBox.Yes:   
-                # UCI.instance().openFileRepo( pathFile = "%s/%s.%s" % (path_file, name_file, ext_file), 
-                                                # project=project, repo=repoType, forceOpen=True)
-
-            # force as read only
-            # if reply == QMessageBox.No:   
-                # UCI.instance().openFileRepo( pathFile = "%s/%s.%s" % (path_file, name_file, ext_file), project=project, 
-                                                # repo=repoType, forceOpen=True, readOnly=True)
-                
-            # cancel the opening
-            # else:
-                # newTab = False
-        
-        # if newTab:
-            # self.newTab( path = path_file, filename = name_file, extension = ext_file, 
-                        # remoteFile=True, contentFile=content,  repoDest=repoType, newAdp=adpDetected, 
-                        # newLib=libDetected, project=project, isReadOnly=isReadOnly, isLocked=locked)
-                        
+ 
     def onRemoteTestFileSaved(self, filePath, fileName, fileExtension,
                                 projectId, overwriteFile, closeAfter):
         """
@@ -1845,48 +1819,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             # close the tab ?
             if closeAfter:
                 self.closeTab( tabId = tabId )
-                
-    # def remoteFileSaved(self, data):
-        # """
-        # Called when a remote file is saved
-
-        # @param data: 
-        # @type data: 
-        # """
-
-        # repoType, path_file, name_file, ext_file, file_already_exists, project, closeAfter = data
-        # if len(path_file) > 0:
-            # complete_path = "%s/%s.%s" % (path_file, name_file, ext_file)
-        # else:
-            # complete_path = "%s.%s" % ( name_file, ext_file)
-        
-        # tabId = None
-
-        # if file_already_exists:
-            # tabId = self.checkAlreadyOpened(path = complete_path, remoteFile=True, repoType=repoType, project=project)
-        # else:
-            # for tid in xrange( self.tab.count() ):
-                # doc = self.tab.widget(tid)
-                
-                # bypass the welcome page
-                # if isinstance(doc, WelcomePage): continue
-
-                # if doc.isRemote == True and doc.getPath() == complete_path and doc.project == project and doc.repoDest==repoType:
-                    # tabId = tid
-                    # break
-                
-                # first remote save
-                # if doc.isRemote == True and doc.getPath() == complete_path and doc.repoDest==UCI.REPO_UNDEFINED:
-                    # tabId = tid
-                    # break
-
-        # if tabId is not None:
-            # doc = self.tab.widget(tabId)
-            # doc.setUnmodify(repoType=repoType)
-            # close the tab ?
-            # if closeAfter:
-                # self.closeTab( tabId = tabId )
-                
+  
     def remoteTestsFileRenamed(self, projectId, filePath, fileName, fileExtension, newName):
         """
         Called when a remote file is renamed
@@ -1909,7 +1842,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             answer = QMessageBox.question(self, Settings.instance().readValue( key = 'Common/name' ), 
                             self.tr("This file has been renamed.\nDo you want to update the name ?") , buttons)
             if answer == QMessageBox.Yes:
-                doc.updateFilename( filename=new_name_file )
+                doc.updateFilename( filename=newName )
                 doc.setUnmodify()
             elif answer == QMessageBox.No:
                 doc.unSaved()
@@ -1937,7 +1870,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             answer = QMessageBox.question(self, Settings.instance().readValue( key = 'Common/name' ), 
                             self.tr("This file has been renamed.\nDo you want to update the name ?") , buttons)
             if answer == QMessageBox.Yes:
-                doc.updateFilename( filename=new_name_file )
+                doc.updateFilename( filename=newName )
                 doc.setUnmodify()
             elif answer == QMessageBox.No:
                 doc.unSaved()
@@ -1965,38 +1898,12 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             answer = QMessageBox.question(self, Settings.instance().readValue( key = 'Common/name' ), 
                             self.tr("This file has been renamed.\nDo you want to update the name ?") , buttons)
             if answer == QMessageBox.Yes:
-                doc.updateFilename( filename=new_name_file )
+                doc.updateFilename( filename=newName )
                 doc.setUnmodify()
             elif answer == QMessageBox.No:
                 doc.unSaved()
                 doc.setModify()
-                
-    # def remoteFileRenamed(self, data):
-        # """
-        # Called when a remote file is renamed
 
-        # @param data: 
-        # @type data: 
-        # """
-        # repoType, path_file, name_file, new_name_file, ext_file, project = data
-        # if len(path_file) > 0:
-            # complete_path = "%s/%s.%s" % (path_file, name_file, ext_file)
-        # else:
-            # complete_path = "%s.%s" % ( name_file, ext_file)
-        # tabId = self.checkAlreadyOpened(path = complete_path, remoteFile=True, repoType=repoType, project=project)
-        # if tabId is not None:
-            # doc = self.tab.widget(tabId)
-            # self.tab.setCurrentIndex(tabId)
-            # buttons = QMessageBox.Yes | QMessageBox.No 
-            # answer = QMessageBox.question(self, Settings.instance().readValue( key = 'Common/name' ), 
-                            # self.tr("This file has been renamed.\nDo you want to update the name ?") , buttons)
-            # if answer == QMessageBox.Yes:
-                # doc.updateFilename( filename=new_name_file )
-                # doc.setUnmodify()
-            # elif answer == QMessageBox.No:
-                # doc.unSaved()
-                # doc.setModify()
-    
     def remoteTestsDirRenamed(self, projectId, directoryPath, directoryName, newName):
         """
         Called when a remote directory is renamed
@@ -2007,7 +1914,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         else:
             complete_old = directoryName
             complete_new = newName
-        
+
         for tabId in xrange( self.tab.count() ):    
             doc = self.tab.widget(tabId)
             
@@ -2016,8 +1923,9 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                 continue
             # end of bypass
             
+            
             if doc.isRemote == True and doc.getPathOnly().startswith(complete_old) and \
-                    doc.project == projectId and doc.repoDest==UCI.REPO_TESTS:  
+                    doc.project == int(projectId) and doc.repoDest==UCI.REPO_TESTS:  
                 to_keep = doc.getPathOnly().split(complete_old)
                 if len(to_keep) > 1: to_keep = to_keep[1]
                 else: to_keep = to_keep[0]
@@ -2116,47 +2024,6 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                 elif answer == QMessageBox.No:
                     doc.unSaved()
                     doc.setModify()
-                    
-    # def remoteDirRenamed(self, data):
-        # """
-        # Called when a remote file is renamed
-
-        # @param data: 
-        # @type data: 
-        # """
-        # repoType, main_path, old_path, new_path, project = data
-        # if len(main_path) > 0:
-            # complete_old = "%s/%s" % (main_path, old_path)
-            # complete_new = "%s/%s" % (main_path, new_path)
-        # else:
-            # complete_old = old_path
-            # complete_new = new_path
-        
-        # for tabId in xrange( self.tab.count() ):    
-            # doc = self.tab.widget(tabId)
-            
-            # bypass the welcome page
-            # if isinstance(doc, WelcomePage): 
-                # continue
-            # end of bypass
-            
-            # if doc.isRemote == True and doc.getPathOnly().startswith(complete_old) and doc.repoDest==repoType:  
-                # to_keep = doc.getPathOnly().split(complete_old)
-                # if len(to_keep) > 1: to_keep = to_keep[1]
-                # else: to_keep = to_keep[0]
-
-                # full_new_path = "%s%s" % (complete_new, to_keep)
-
-                # self.tab.setCurrentIndex(tabId)
-                # buttons = QMessageBox.Yes | QMessageBox.No 
-                # answer = QMessageBox.question(self, Settings.instance().readValue( key = 'Common/name' ), 
-                                # self.tr("The path of this file has been renamed.\nDo you want to update the path ?") , buttons)
-                # if answer == QMessageBox.Yes:
-                    # doc.updatePath( pathFilename=full_new_path )
-                    # doc.setUnmodify()
-                # elif answer == QMessageBox.No:
-                    # doc.unSaved()
-                    # doc.setModify()
                     
     def onRemoteTestFileSavedError(self, filePath, fileName, fileExtension,
                                     projectId, overwriteFile, closeAfter):
@@ -2262,42 +2129,9 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         if tabId is not None:
             doc = self.tab.widget(tabId)
             doc.unSaved()
-            
-    # def remoteFileSaveErr(self, data):
-        # """
-        # Called when the save of a remote file failed
 
-        # @param data: 
-        # @type data: 
-        # """
-        # repoType, path_file, name_file, ext_file, file_already_exists, project, closeAfter  = data
-        # if len(path_file) > 0:
-            # complete_path = "%s/%s.%s" % (path_file, name_file, ext_file)
-        # else:
-            # complete_path = "%s.%s" % (name_file, ext_file)
-
-        # tabId = None # issue Issue 224
-        # if file_already_exists:
-            # tabId = self.checkAlreadyOpened(path = complete_path, remoteFile=True, 
-                                            # repoType=repoType, project=project)
-        # else:
-            # for tid in xrange( self.tab.count() ):
-                # doc = self.tab.widget(tid)
-                
-                # bypass the welcome page
-                # if isinstance(doc, WelcomePage): 
-                    # continue
-                # end of bypass
-                
-                # if doc.isRemote == True and doc.getPath() == complete_path and doc.repoDest==UCI.REPO_UNDEFINED:
-                    # tabId = tid
-                    # break
-
-        # if tabId is not None:
-            # doc = self.tab.widget(tabId)
-            # doc.unSaved()
-
-    def updateRemoteTestOnTestglobal(self, data, parametersOnly=True, mergeParameters=False):
+    def updateRemoteTestOnTestglobal(self, data, parametersOnly=True, 
+                                     mergeParameters=False, refreshOtherItems=False):
         """
         Update remote testsuite on testplan
 
@@ -2315,10 +2149,21 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         if currentDoc.extension == TestPlan.TYPE_GLOBAL :
             content = base64.b64decode(encoded_data)
             if parametersOnly:
-                currentDoc.onUpdateRemotePropertiesSubItem(path_file, name_file, ext_file, content, 
-                                                            testId, project, mergeParameters=mergeParameters)
+                currentDoc.onUpdateRemotePropertiesSubItem(path_file, 
+                                                           name_file, 
+                                                           ext_file, 
+                                                           content, 
+                                                           testId, 
+                                                           project, 
+                                                           mergeParameters=mergeParameters)
             else:
-                currentDoc.onUpdateRemoteTestSubItem(path_file, name_file, ext_file, content, testId, project)
+                currentDoc.onUpdateRemoteTestSubItem(path_file, 
+                                                     name_file, 
+                                                     ext_file, 
+                                                     content, 
+                                                     testId, 
+                                                     project, 
+                                                     refreshOtherItems=refreshOtherItems)
 
     def addRemoteTestToTestglobal(self, data, testParentId=0):
         """
@@ -2335,7 +2180,12 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
 
         if currentDoc.extension == TestPlan.TYPE_GLOBAL :
             content = base64.b64decode(encoded_data)
-            currentDoc.addRemoteSubItem(path_file, name_file, ext_file, content, project, testParentId=testParentId)
+            currentDoc.addRemoteSubItem(path_file, 
+                                        name_file, 
+                                        ext_file, 
+                                        content, 
+                                        project, 
+                                        testParentId=testParentId)
 
     def insertRemoteTestToTestglobal(self, data, below=False, testParentId=0):
         """
@@ -2355,10 +2205,16 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
  
         if currentDoc.extension == TestPlan.TYPE_GLOBAL :
             content = base64.b64decode(encoded_data)
-            currentDoc.insertRemoteSubItem(path_file, name_file, ext_file, content, 
-                                            project, below, testParentId=testParentId)
+            currentDoc.insertRemoteSubItem(path_file, 
+                                           name_file, 
+                                           ext_file, 
+                                           content, 
+                                           project, 
+                                           below, 
+                                           testParentId=testParentId)
 
-    def updateRemoteTestOnTestplan(self, data, parametersOnly=True, mergeParameters=False):
+    def updateRemoteTestOnTestplan(self, data, parametersOnly=True, 
+                                   mergeParameters=False, refreshOtherItems=False):
         """
         Update remote testsuite on testplan
 
@@ -2377,11 +2233,21 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         if currentDoc.extension == TestPlan.TYPE :
             content = base64.b64decode(encoded_data)
             if parametersOnly:
-                currentDoc.onUpdateRemotePropertiesSubItem(path_file, name_file, ext_file, content, 
-                                                            testId, project, mergeParameters=mergeParameters)
+                currentDoc.onUpdateRemotePropertiesSubItem(path_file, 
+                                                           name_file, 
+                                                           ext_file, 
+                                                           content, 
+                                                           testId, 
+                                                           project, 
+                                                           mergeParameters=mergeParameters)
             else:
-                currentDoc.onUpdateRemoteTestSubItem(path_file, name_file, ext_file, 
-                                                    content, testId, project)
+                currentDoc.onUpdateRemoteTestSubItem(path_file, 
+                                                     name_file, 
+                                                     ext_file, 
+                                                     content, 
+                                                     testId, 
+                                                     project,
+                                                     refreshOtherItems=refreshOtherItems)
 
     def addRemoteTestToTestplan(self, data, testParentId=0):
         """
@@ -2398,8 +2264,12 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         # 
         if currentDoc.extension == TestPlan.TYPE :
             content = base64.b64decode(encoded_data)
-            currentDoc.addRemoteSubItem(path_file, name_file, ext_file, content, 
-                                        project, testParentId=testParentId)
+            currentDoc.addRemoteSubItem(path_file, 
+                                        name_file, 
+                                        ext_file, 
+                                        content, 
+                                        project, 
+                                        testParentId=testParentId)
 
     def insertRemoteTestToTestplan(self, data, below=False, testParentId=0):
         """
@@ -2416,8 +2286,13 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
 
         if currentDoc.extension == TestPlan.TYPE :
             content = base64.b64decode(encoded_data)
-            currentDoc.insertRemoteSubItem(path_file, name_file, ext_file, content, 
-                                            project, below, testParentId=testParentId)
+            currentDoc.insertRemoteSubItem(path_file, 
+                                           name_file, 
+                                           ext_file, 
+                                           content, 
+                                           project, 
+                                           below, 
+                                           testParentId=testParentId)
 
     def setDefaultActionsValues (self):
         """
@@ -2478,7 +2353,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         @param wdocument: 
         @type wdocument: 
         """
-        if UCI.instance() is None:
+        if RCI.instance() is None:
             return
             
         if wdocument is None:
@@ -3209,7 +3084,7 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         
         # unlock the file on server side
         if doc.extension not in [ TestPng.TYPE ]:
-            if doc.isRemote:
+            if doc.isRemote and doc.path is not None:
                 if RCI.instance().isAuthenticated():
                     if doc.repoDest == UCI.REPO_TESTS:
                         RCI.instance().unlockTestFile(filePath=doc.path, fileName=doc.filename, 
@@ -3354,7 +3229,8 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
 
     def newTab(self, path = None, filename = None, extension = None, remoteFile=False, contentFile=None, 
                     repoDest=None, newAdp=False, newLib=False, project=0, testDef=None, testExec=None,
-                    testInputs=None, testOutputs=None, testAgents=None, isReadOnly=False, isLocked=False):
+                    testInputs=None, testOutputs=None, testAgents=None, isReadOnly=False, isLocked=False,
+                    subtest_id=""):
         """
         Called to open a document
 
@@ -3415,6 +3291,13 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                                         repoType=repoDest, project=cur_prj_id)
         if tabId is not None:
             self.tab.setCurrentIndex(tabId)
+            
+            # dbr13 >>> Find usage
+            if extension in [TestPlan.TYPE, TestPlan.TYPE_GLOBAL]:
+                doc = self.getCurrentDocument()
+                doc.showFileUsageLine(line_id=subtest_id)
+            # dbr13 <<<
+            
         else:
             __error__ = False
             if extension == TestAbstract.TYPE:
@@ -3453,7 +3336,6 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                     self.setCloseButton(tabId=tabId, doc=doc)
  
             elif extension == TestUnit.TYPE:
-                # self.findWidget.show()
                 doc = TestUnit.WTestUnit(self, path, filename, extension, self.nonameIdTs, 
                                             remoteFile, repoDest, project, isLocked)
                 if filename is None:
@@ -3866,6 +3748,11 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                 self.findWidget.setEnabled(True)
                 self.DocumentOpened.emit(doc)
                 
+                # dbr13 >>>> Find Usage functionality
+                if extension in [TestPlan.TYPE, TestPlan.TYPE_GLOBAL]:
+                    doc.showFileUsageLine(line_id=subtest_id)
+                # dbr13 <<<
+                
     def addToRecent(self, filepath, repodest, project=''):
         """
         Add file to recent list
@@ -4276,7 +4163,9 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
                 res = os.path.exists( completeFileName )
                 if res:
                     document.path = None
-                    QMessageBox.warning(self, self.tr("Save As") , self.tr("This filename already exists!") )
+                    QMessageBox.warning(self, 
+                                        self.tr("Save As") , 
+                                        self.tr("This filename already exists!") )
                     isSaved = False
                     return isSaved
         if not document.isRemote:
@@ -4284,24 +4173,41 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             if isSaved:
                 self.tab.setTabText(tabId, filename )
             if isSaved is None:     
-                QMessageBox.critical(self, self.tr("Save As") , self.tr("Unable to save the file...") )
+                QMessageBox.critical(self, 
+                                     self.tr("Save As") , 
+                                     self.tr("Unable to save the file...") )
                 isSaved = False
             self.iRepo.local().refreshAll()
+            
+            QMessageBox.information(self, 
+                                    self.tr("Export"), 
+                                    self.tr("File exported with success!") )
+            
         else:
             document.project = project
             
             if repoDest == UCI.REPO_ADAPTERS:
-                RCI.instance().uploadAdapterFile( filePath=document.path, fileName=document.filename, 
-                                                  fileExtension=document.extension, fileContent=document.getraw_encoded(), 
-                                                  updateMode=False, closeTabAfter=False )
+                RCI.instance().uploadAdapterFile( filePath=document.path, 
+                                                  fileName=document.filename, 
+                                                  fileExtension=document.extension, 
+                                                  fileContent=document.getraw_encoded(), 
+                                                  updateMode=False, 
+                                                  closeTabAfter=False )
             elif repoDest == UCI.REPO_LIBRARIES:
-                RCI.instance().uploadLibraryFile( filePath=document.path, fileName=document.filename, 
-                                                  fileExtension=document.extension, fileContent=document.getraw_encoded(), 
-                                                  updateMode=False, closeTabAfter=False )
+                RCI.instance().uploadLibraryFile( filePath=document.path, 
+                                                  fileName=document.filename, 
+                                                  fileExtension=document.extension, 
+                                                  fileContent=document.getraw_encoded(), 
+                                                  updateMode=False, 
+                                                  closeTabAfter=False )
             elif repoDest == UCI.REPO_TESTS:
-                RCI.instance().uploadTestFile( filePath=document.path, fileName=document.filename, projectId=int(project),
-                                               fileExtension=document.extension, fileContent=document.getraw_encoded(), 
-                                               updateMode=False, closeTabAfter=False )
+                RCI.instance().uploadTestFile( filePath=document.path, 
+                                               fileName=document.filename, 
+                                               projectId=int(project),
+                                               fileExtension=document.extension, 
+                                               fileContent=document.getraw_encoded(), 
+                                               updateMode=False, 
+                                               closeTabAfter=False )
             else:
                 pass
 
@@ -4383,9 +4289,385 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
 
         currentDocument = self.tab.widget(tabId)
         projectName = self.iRepo.remote().getProjectName(project=currentDocument.project)
-        UCI.instance().checkDesignTest(  wdocument = currentDocument,  
-                                        prjId=currentDocument.project, prjName=projectName )
 
+        _json = self.prepareTest( wdocument = currentDocument, 
+                                  prjId=currentDocument.project, 
+                                  basicMode=False)    
+            
+        if currentDocument.extension in [ RCI.EXT_TESTSUITE, RCI.EXT_TESTABSTRACT, RCI.EXT_TESTUNIT]:
+            RCI.instance().createTestDesign( req=_json )
+        elif currentDocument.extension in [ RCI.EXT_TESTPLAN, RCI.EXT_TESTGLOBAL]:
+            RCI.instance().createTestDesignTpg( req=_json )
+        else:
+            pass
+            
+    def prepareTest (self, wdocument=None, tabId=0, background = False, runAt = (0,0,0,0,0,0), 
+                           runType=0, runNb=-1, withoutProbes=False, debugActivated=False, 
+                           withoutNotif=False, keepTr=True, prjId=0, testFileExtension=None, 
+                           testFilePath=None, testFileName=None, fromTime=(0,0,0,0,0,0), 
+                           toTime=(0,0,0,0,0,0), prjName='', stepByStep=False, breakpoint=False,
+                           channelId=False, basicMode=False):
+        """
+        Prepare test
+
+        @param testId: 
+        @type testId:
+
+        @param background: 
+        @type background: boolean
+
+        @param runAt: 
+        @type runAt: tuple of integer
+
+        @param runType: 
+        @type runType: Integer
+
+        @param runNb: 
+        @type runNb:
+
+        @param withoutProbes: 
+        @type withoutProbes:
+
+        @param debugActivated: 
+        @type debugActivated:
+
+        @param withoutNotif: 
+        @type withoutNotif:
+
+        @param noKeepTr: 
+        @type noKeepTr:
+
+        @param prjId: 
+        @type prjId:
+
+        @param testFileExtension: 
+        @type testFileExtension:
+
+        @param testFilePath: 
+        @type testFilePath:
+
+        @param testFileName: 
+        @type testFileName:
+        
+        @return:
+        @rtype:
+        """
+        data__ = {}
+        try:
+            if not basicMode:
+                data__ =  { 'project-id': prjId, 
+                            'tab-id': tabId, 
+                            'background-mode': background, 
+                            'schedule-at': runAt, 
+                            'schedule-id': runType, 
+                            'schedule-repeat': runNb, 
+                            'probes-enabled': withoutProbes, 
+                            'debug-enabled': debugActivated, 
+                            'notifications-enabled': withoutNotif, 
+                            'logs-enabled': keepTr,
+                            'from-time': fromTime, 
+                            'to-time': toTime, 
+                            'step-mode': stepByStep, 
+                            'breakpoint-mode': breakpoint, 
+                            'channel-id': channelId 
+                            }
+
+            if wdocument is None:
+                self.trace('no content, prepare test, type %s' % testFileExtension)
+                data__.update( { 'test-definition': '', 
+                                 'test-execution': '', 
+                                 'test-properties': '',
+                                 'test-name': testFileName,
+                                 'test-path': testFilePath,
+                                 'test-extension': testFileExtension } )
+            else:
+                self.trace('prepare test, type %s' % wdocument.extension)
+                properties = copy.deepcopy( wdocument.dataModel.properties['properties'] )
+                testfileName = wdocument.getShortName( withAsterisk = False, 
+                                                       withLocalTag=False)
+                testPath = ""
+                if wdocument.isRemote:
+                    testPath = wdocument.getPath(withExtension = False, withLocalTag=False)
+
+                if wdocument.extension in [ RCI.EXT_TESTSUITE, RCI.EXT_TESTABSTRACT, RCI.EXT_TESTUNIT]:
+                    # load datasets
+                    self.__loadDataset(parameters=properties['inputs-parameters']['parameter'])
+                    self.__loadDataset(parameters=properties['outputs-parameters']['parameter'])
+
+                    # load images
+                    self.__loadImage(parameters=properties['inputs-parameters']['parameter'])
+                    self.__loadImage(parameters=properties['outputs-parameters']['parameter'])
+
+                if wdocument.extension == RCI.EXT_TESTSUITE:
+                    data__.update( { 'test-definition': unicode( wdocument.srcEditor.text() ), 
+                                     'test-execution': unicode( wdocument.execEditor.text() ), 
+                                     'test-properties': properties, 
+                                     'test-name': testfileName,
+                                     'test-path': testPath,
+                                     'test-extension': wdocument.extension } )
+
+                elif wdocument.extension == RCI.EXT_TESTABSTRACT:
+                    data__.update( { 'test-definition': unicode( wdocument.constructTestDef() ), 
+                                     'test-execution': '', 
+                                     'test-properties': properties,
+                                     'test-name': testfileName, 
+                                     'test-path': testPath,
+                                     'test-extension': wdocument.extension } )
+
+                elif wdocument.extension == RCI.EXT_TESTUNIT:
+                    data__.update( { 
+                                        'test-definition': unicode( wdocument.srcEditor.text() ), 
+                                        'test-execution': '', 
+                                        'test-properties': properties,
+                                        'test-name': testfileName, 
+                                        'test-path': testPath,
+                                        'test-extension': wdocument.extension } )
+
+                elif wdocument.extension == RCI.EXT_TESTGLOBAL:
+                    testglobal =  copy.deepcopy( wdocument.getDataModelSorted() )
+                    localConfigured = Settings.instance().readValue( key = 'Common/local-repo' )
+                    alltests = []
+                    all_id = [] 
+                    for ts in testglobal:   
+                        all_id.append(ts['id'])
+                        if ts['type'] == RCI.TESTPLAN_REPO_FROM_LOCAL or ts['type'] == RCI.TESTPLAN_REPO_FROM_LOCAL_REPO_OLD:
+                            if localConfigured != "Undefined":
+                                absPath = '%s/%s' % ( localConfigured, ts['file'] )
+                            else:
+                                raise Exception("local repository not configured")
+                        elif ts['type'] == RCI.TESTPLAN_REPO_FROM_OTHER or ts['type'] == RCI.TESTPLAN_REPO_FROM_HDD:
+                            absPath = ts['file'] 
+                        elif ts['type'] == RCI.TESTPLAN_REPO_FROM_REMOTE:
+                            pass
+                        else:
+                            raise Exception("test type from unknown: %s" % ts['type'])
+                        
+                        # load dataset
+                        self.__loadDataset(parameters=ts['properties']['inputs-parameters']['parameter'])
+                        self.__loadDataset(parameters=ts['properties']['outputs-parameters']['parameter'])
+
+                        # load image
+                        self.__loadImage(parameters=ts['properties']['inputs-parameters']['parameter'])
+                        self.__loadImage(parameters=ts['properties']['outputs-parameters']['parameter'])
+
+                        if ts['type'] != RCI.TESTPLAN_REPO_FROM_REMOTE:
+            
+                            if not os.path.exists( absPath ):
+                                raise Exception("the following test file is missing: %s " % absPath)
+                            
+                            if absPath.endswith(EXT_TESTSUITE):
+                                doc = FileModelTestSuite.DataModel()
+                            elif absPath.endswith(EXT_TESTUNIT):
+                                doc = FileModelTestUnit.DataModel()
+                            elif absPath.endswith(EXT_TESTABSTRACT):
+                                doc = FileModelTestAbstract.DataModel()
+                            elif absPath.endswith(EXT_TESTPLAN):
+                                doc = FileModelTestPlan.DataModel()
+                            else:
+                                raise Exception("the following test extension file is incorrect: %s " % absPath)
+
+                            res = doc.load( absPath = absPath )
+                            if res:
+                                try:
+                                    tmp = str(ts['file']).rsplit("/", 1)
+                                    if len(tmp) ==1:
+                                        filenameTs = tmp[0].rsplit(".", 1)[0]
+                                    else:
+                                        filenameTs = tmp[1].rsplit(".", 1)[0]
+                                except Exception as e:
+                                    self.error( 'fail to parse filename: %s' % e)
+                                    raise Exception('fail to parse filename')                                
+                                # Update current test suite parameters with testplan parameter
+                                self.__updateParameter( currentParam=doc.properties['properties']['inputs-parameters']['parameter'],
+                                                            newParam=ts['properties']['inputs-parameters']['parameter'] )
+                                self.__updateParameter( currentParam=doc.properties['properties']['outputs-parameters']['parameter'],
+                                                            newParam=ts['properties']['outputs-parameters']['parameter'] )
+
+                                ts['properties']['inputs-parameters'] = doc.properties['properties']['inputs-parameters']
+                                ts['properties']['outputs-parameters'] = doc.properties['properties']['outputs-parameters']
+
+                                if absPath.endswith(RCI.EXT_TESTSUITE):
+                                    ts.update( { 'test-definition': doc.testdef, 
+                                                 'test-execution': doc.testexec, 
+                                                 'path': filenameTs } )
+                                    alltests.append( ts )
+                                elif absPath.endswith(RCI.EXT_TESTUNIT):
+                                    ts.update( { 'test-definition': doc.testdef, 
+                                                 'test-execution': '', 
+                                                 'path': filenameTs } ) 
+                                    alltests.append( ts )
+                                elif absPath.endswith(RCI.EXT_TESTABSTRACT):
+                                    ts.update( { 'test-definition': doc.testdef, 
+                                                 'test-execution': '', 
+                                                 'path': filenameTs } ) 
+                                    alltests.append( ts )
+                                elif absPath.endswith(RCI.EXT_TESTPLAN):
+                                    pass #todo
+                        else:
+                            alltests.append( ts )
+                    data__.update( { 
+                                        'test-execution': alltests, 
+                                        'test-properties': properties, 
+                                        'test-name': testfileName, 
+                                        'test-path': testPath,
+                                        'test-extension': wdocument.extension 
+                                     } )
+                    self.trace('TestGlobal, tests id order: %s' % all_id)
+
+                elif wdocument.extension == RCI.EXT_TESTPLAN:
+                    testplan =  copy.deepcopy( wdocument.getDataModelSorted() )                    
+                    self.localConfigured = Settings.instance().readValue( key = 'Common/local-repo' )
+                    all_id = [] 
+                    for ts in testplan: 
+                        all_id.append(ts['id'])
+                        if ts['type'] == RCI.TESTPLAN_REPO_FROM_LOCAL or ts['type'] == RCI.TESTPLAN_REPO_FROM_LOCAL_REPO_OLD:
+                            if self.localConfigured != "Undefined":
+                                absPath = '%s/%s' % ( self.localConfigured, ts['file'] )
+                            else:
+                                raise Exception("local repository not configured")
+                        elif ts['type'] == RCI.TESTPLAN_REPO_FROM_OTHER or ts['type'] == RCI.TESTPLAN_REPO_FROM_HDD:
+                            absPath = ts['file'] 
+                        elif ts['type'] == RCI.TESTPLAN_REPO_FROM_REMOTE:
+                            pass
+                        else:
+                            raise Exception("test type from unknown: %s" % ts['type'])
+                        
+                        # load dataset
+                        self.__loadDataset(parameters=ts['properties']['inputs-parameters']['parameter'])
+                        self.__loadDataset(parameters=ts['properties']['outputs-parameters']['parameter'])
+
+                        # load image
+                        self.__loadImage(parameters=ts['properties']['inputs-parameters']['parameter'])
+                        self.__loadImage(parameters=ts['properties']['outputs-parameters']['parameter'])
+
+                        if ts['type'] != RCI.TESTPLAN_REPO_FROM_REMOTE:
+            
+                            if not os.path.exists( absPath ):
+                                raise Exception("the following test file is missing: %s " % absPath)
+                            
+                            if absPath.endswith(RCI.EXT_TESTSUITE):
+                                doc = FileModelTestSuite.DataModel()
+                            elif absPath.endswith(RCI.EXT_TESTABSTRACT):
+                                doc = FileModelTestAbstract.DataModel()
+                            else:
+                                doc = FileModelTestUnit.DataModel()
+                            res = doc.load( absPath = absPath )
+                            if res:
+                                tmp = str(ts['file']).rsplit("/", 1)
+                                filenameTs = tmp[1].rsplit(".", 1)[0]
+                                
+                                # Update current test suite parameters with testplan parameter
+                                self.__updateParameter( currentParam=doc.properties['properties']['inputs-parameters']['parameter'],
+                                                            newParam=ts['properties']['inputs-parameters']['parameter'] )
+                                self.__updateParameter( currentParam=doc.properties['properties']['outputs-parameters']['parameter'],
+                                                            newParam=ts['properties']['outputs-parameters']['parameter'] )
+
+                                ts['properties']['inputs-parameters'] = doc.properties['properties']['inputs-parameters']
+                                ts['properties']['outputs-parameters'] = doc.properties['properties']['outputs-parameters']
+
+                                ts.update( { 'test-definition': doc.testdef, 
+                                             'test-execution': doc.testexec, 
+                                             'path': filenameTs } )
+            
+                    data__.update( { 
+                                        'test-execution': testplan, 
+                                        'test-properties': properties, 
+                                        'test-name': testfileName, 
+                                        'test-path': testPath,
+                                        'test-extension': wdocument.extension 
+                                        } )
+                    self.trace('TestPlan, tests id order: %s' % all_id)
+
+            # compress
+            self.trace('test prepared')
+        except Exception as e:
+            self.error( e )
+        return data__
+
+    def __loadImage(self, parameters):
+        """
+        Private function
+        Load image
+
+        @param parameters: 
+        @type parameters:
+        """
+        # self.localConfigured = Settings.instance().readValue( key = 'Common/local-repo' )
+        for pr in parameters:
+            if pr['type'] == 'image':
+                if pr['value'].startswith('undefined:/'):
+                    fileName = pr['value'].split('undefined:/')[1]
+                    if not os.path.exists( fileName ):
+                        raise Exception("the following image file is missing: %s " % fileName)
+
+                    file = QFile(fileName)
+                    if not file.open(QIODevice.ReadOnly):
+                        raise Exception("error opening image file %s" % fileName )
+                    else:
+                        imageData= file.readAll()
+                        pr['value'] = "undefined:/%s" % base64.b64encode(imageData)
+                elif pr['value'].startswith('local-tests:/'):
+                    fileName = pr['value'].split('local-tests:/')[1]
+
+                    if not os.path.exists( fileName ):
+                        raise Exception("the following image file is missing: %s " % fileName)
+                    
+                    file = QFile(fileName)
+                    if not file.open(QIODevice.ReadOnly):
+                        raise Exception("error opening image file %s" % fileName )
+                    else:
+                        imageData= file.readAll()
+                        pr['value'] = "local-tests:/%s" % base64.b64encode(imageData)
+                else:
+                    pass
+
+    def __loadDataset(self, parameters):
+        """
+        Private function
+        Load dataset
+
+        @param parameters: 
+        @type parameters:
+        """
+        # self.localConfigured = Settings.instance().readValue( key = 'Common/local-repo' )
+        for pr in parameters:
+            if pr['type'] == 'dataset':
+                if pr['value'].startswith('undefined:/'):
+                    fileName = pr['value'].split('undefined:/')[1]
+                    if not os.path.exists( fileName ):
+                        raise Exception("the following test data file is missing: %s " % fileName)
+
+                    doc = FileModelTestData.DataModel()
+                    res = doc.load( absPath = fileName )
+                    pr['value'] = "undefined:/%s" % doc.getRaw()
+                elif pr['value'].startswith('local-tests:/'):
+                    fileName = pr['value'].split('local-tests:/')[1]
+
+                    if not os.path.exists( fileName ):
+                        raise Exception("the following test data file is missing: %s " % fileName)
+                    
+                    doc = FileModelTestData.DataModel()
+                    res = doc.load( absPath = fileName )
+                    pr['value'] = "local-tests:/%s" % doc.getRaw()
+                else:
+                    pass
+
+    def __updateParameter(self, currentParam, newParam):
+        """
+        Private function
+        Update current test suite parameters with testplan parameter
+
+        @param currentParam: 
+        @type currentParam:
+
+        @param newParam: 
+        @type newParam:
+        """
+        for i in xrange(len(currentParam)):
+            for np in newParam:
+                if np['name'] == currentParam[i]['name']:
+                    currentParam[i] = np
+        
     def checkSyntaxDocument (self):
         """
         Gets the current document and send it the server to check the syntax
@@ -4397,35 +4679,42 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         currentDocument = self.tab.widget(tabId)
         
         if isinstance(currentDocument, TestAdapter.WTestAdapter):
-            UCI.instance().checkSyntaxAdapter(  wdocument = currentDocument )
+            RCI.instance().checkSyntaxAdapter( fileContent=currentDocument.getraw_encoded() )
             
         elif isinstance(currentDocument, TestLibrary.WTestLibrary):
-            UCI.instance().checkSyntaxLibrary(  wdocument = currentDocument )
+            RCI.instance().checkSyntaxLibrary( fileContent=currentDocument.getraw_encoded() )
             
         else:
             testId = TestResults.instance().getTestId()
-            UCI.instance().checkSyntaxTest(  wdocument = currentDocument, testId = testId, 
-                                            runAt = (0,0,0,0,0,0), runType=UCI.SCHED_NOW )
 
+            _json = self.prepareTest( wdocument = currentDocument, basicMode=True)    
+            
+            if currentDocument.extension in [ RCI.EXT_TESTSUITE, RCI.EXT_TESTABSTRACT, RCI.EXT_TESTUNIT]:
+                RCI.instance().checkTestSyntax( req=_json )
+            elif currentDocument.extension in [ RCI.EXT_TESTPLAN, RCI.EXT_TESTGLOBAL]:
+                RCI.instance().checkTestSyntaxTpg( req=_json )
+            else:
+                pass
+                
     def schedRunDocument (self):
         """
         Gets the current document, send to the server and schedule the launch
         """
         dSched = SchedDialog.SchedDialog( self )
         if dSched.exec_() == QDialog.Accepted:
-            runAt, runType, runNb, withoutProbes, runEnabled, noKeepTr, withoutNotifs, runFrom, runTo = dSched.getSchedtime()
+            runAt, runType, runNb, withoutProbes, runEnabled, keepTr, withoutNotifs, runFrom, runTo = dSched.getSchedtime()
             recursive = False
             if runType > UCI.SCHED_IN:
                 recursive = True
             self.runDocument( background = True, runAt = runAt, runType=runType, runNb=runNb, 
-                                withoutProbes=withoutProbes, noKeepTr=noKeepTr, 
+                                withoutProbes=withoutProbes, keepTr=not keepTr, 
                                withoutNotif=withoutNotifs, fromTime=runFrom, toTime=runTo)
         
     def runDocumentNoKeepTr(self):
         """
         Run document without keep testresult
         """
-        self.runDocument(noKeepTr=True)
+        self.runDocument(keepTr=False)
 
     def runDocumentWithoutNotif(self):
         """
@@ -4488,9 +4777,11 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         currentDocument = self.tab.widget(tabId)
         return currentDocument
 
-    def runDocument (self, background = False, runAt = (0,0,0,0,0,0) , runType=None, runNb=-1, withoutProbes=False, debugActivated=False, 
-                           withoutNotif=False, noKeepTr=False, fromTime=(0,0,0,0,0,0), toTime=(0,0,0,0,0,0), hideApplication=False,
-                           reduceApplication=False, stepByStep=False, breakpoint=False):
+    def runDocument (self, background = False, runAt = (0,0,0,0,0,0) , 
+                     runType=None, runNb=-1, withoutProbes=False, debugActivated=False, 
+                     withoutNotif=False, keepTr=True, fromTime=(0,0,0,0,0,0), 
+                     toTime=(0,0,0,0,0,0), hideApplication=False,
+                     reduceApplication=False, stepByStep=False, breakpoint=False):
         """
         Run document
     
@@ -4526,17 +4817,33 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             schedType = UCI.SCHED_NOW
         else:
             schedType = runType
+
         currentDocument = self.tab.widget(tabId)
         testId = TestResults.instance().getTestId()
-        
-        # if background:
-        UCI.instance().scheduleTest(  
-                                      wdocument = currentDocument, testId = testId, background = background , runAt = runAt, 
-                                      runType=schedType, runNb=runNb, withoutProbes=withoutProbes, debugActivated=debugActivated, 
-                                      withoutNotif=withoutNotif, noKeepTr=noKeepTr, fromTime=fromTime, toTime=toTime, 
-                                      prjId=currentDocument.project, stepByStep=stepByStep, breakpoint=breakpoint
-                                    )
-    
+
+        _json = self.prepareTest (  wdocument=currentDocument, 
+                                    tabId=testId, 
+                                    background = background, 
+                                    runAt = runAt, 
+                                    runType=schedType, 
+                                    runNb=runNb, 
+                                    withoutProbes=withoutProbes, 
+                                    debugActivated=debugActivated, 
+                                    withoutNotif=withoutNotif, 
+                                    keepTr=keepTr, 
+                                    prjId=currentDocument.project, 
+                                    fromTime=fromTime, 
+                                    toTime=toTime, 
+                                    stepByStep=stepByStep, 
+                                    breakpoint=breakpoint  )
+
+        if currentDocument.extension in [ RCI.EXT_TESTSUITE, RCI.EXT_TESTABSTRACT, RCI.EXT_TESTUNIT]:
+            RCI.instance().scheduleTest(req=_json, wdocument=currentDocument)
+        elif currentDocument.extension in [ RCI.EXT_TESTPLAN, RCI.EXT_TESTGLOBAL]:
+            RCI.instance().scheduleTestTpg(req=_json, wdocument=currentDocument)
+        else:
+            pass
+            
     def checkAlreadyOpened (self, path, remoteFile=False, repoType=None, project=0):
         """
         Returns tab id if the document is already opened
@@ -4547,6 +4854,9 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
         @return: TabId
         @rtype: None or Integer
         """
+        # convert to int
+        project = int(project)
+        
         for tabId in xrange( self.tab.count() ):
             doc = self.tab.widget(tabId)
             # bypass the welcome page
@@ -4556,13 +4866,16 @@ class WDocumentViewer(QWidget, Logger.ClassLogger):
             
             if project:
                 if not remoteFile:
-                    if doc.isRemote == remoteFile and doc.getPath() == path and doc.repoDest==repoType:
+                    if doc.isRemote == remoteFile and doc.getPath() == path \
+                        and doc.repoDest==repoType:
                         return tabId
                 else:
-                    if doc.isRemote == remoteFile and doc.getPath() == path and doc.repoDest==repoType and doc.project==project:
+                    if doc.isRemote == remoteFile and doc.getPath() == path \
+                        and doc.repoDest==repoType and doc.project==project:
                         return tabId
             else:
-                if doc.isRemote == remoteFile and doc.getPath() == path and doc.repoDest==repoType :
+                if doc.isRemote == remoteFile and doc.getPath() == path \
+                    and doc.repoDest==repoType :
                     return tabId
         return None
 

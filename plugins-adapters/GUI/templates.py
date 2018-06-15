@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # ------------------------------------------------------------------
-# Copyright (c) 2010-2017 Denis Machard
-# This file is part of the extensive testing project
+# Copyright (c) 2010-2018 Denis Machard
+# This file is part of the extensive automation project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -29,9 +29,11 @@ import TestExecutorLib.TestLibraryLib as TestLibraryLib
 import sys
 
 # templates for gui client
-def gui(more=None, action=None, actionId=None, description=None, result=None, text=None, length=None,
-							img=None, mainImg=None, mainLength=None, countResult=None, textResult=None, value=None, parameters=None,
-							x=None, y=None, steps=None, repeat=None, out=None, state=None):
+def gui(more=None, action=None, actionId=None, description=None,
+        result=None, text=None, length=None,
+        img=None, mainImg=None, mainLength=None, countResult=None, 
+        textResult=None, value=None, parameters=None,
+        x=None, y=None, steps=None, repeat=None, out=None, state=None):
 	"""
 	Construct a template for a gui event
 	"""
